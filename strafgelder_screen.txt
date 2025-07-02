@@ -1,5 +1,7 @@
 // lib/screens/strafgelder_screen.dart
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class StrafgelderScreen extends StatefulWidget {
   @override
@@ -7,20 +9,61 @@ class StrafgelderScreen extends StatefulWidget {
 }
 
 class _StrafgelderScreenState extends State<StrafgelderScreen> {
-  final List<Map<String, String>> strafgelder = [
-    {'member': 'Max Mustermann', 'reason': 'Zu spät erschienen'},
-    {'member': 'Erika Musterfrau', 'reason': 'Handy geklingelt'},
-  ];
-
+  final Map<String, List<Map<String, String>>> strafgelderByMember = {};
   final bool isSpiess = true; // ⛳ Dummy für Spießrolle (true = hat Rechte)
 
   final TextEditingController memberController = TextEditingController();
   final TextEditingController reasonController = TextEditingController();
 
-  void addStrafgeld(String member, String reason) {
-    setState(() {
-      strafgelder.add({'member': member, 'reason': reason});
-    });
+  final String apiBaseUrl = 'https://your-api-gateway-url.com';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStrafgelder();
+  }
+
+  Future<void> fetchStrafgelder() async {
+    try {
+      final response = await http.get(Uri.parse('$apiBaseUrl/fines/all'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          strafgelderByMember.clear();
+          for (var item in data) {
+            final member = item['memberId'] ?? '';
+            final reason = item['reason'] ?? '';
+            if (!strafgelderByMember.containsKey(member)) {
+              strafgelderByMember[member] = [];
+            }
+            strafgelderByMember[member]!.add({'reason': reason});
+          }
+        });
+      } else {
+        print('Fehler beim Laden: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Fehler beim Abrufen: $e');
+    }
+  }
+
+  Future<void> addStrafgeld(String member, String reason) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/fines'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'memberId': member, 'reason': reason}),
+      );
+
+      if (response.statusCode == 200) {
+        await fetchStrafgelder();
+      } else {
+        print('Fehler beim Speichern: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Fehler beim Speichern: $e');
+    }
+
     memberController.clear();
     reasonController.clear();
   }
@@ -64,15 +107,17 @@ class _StrafgelderScreenState extends State<StrafgelderScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('💰 Strafgelder')),
-      body: ListView.builder(
-        itemCount: strafgelder.length,
-        itemBuilder: (context, index) {
-          final eintrag = strafgelder[index];
-          return ListTile(
-            title: Text(eintrag['member'] ?? ''),
-            subtitle: Text(eintrag['reason'] ?? ''),
+      body: ListView(
+        children: strafgelderByMember.entries.map((entry) {
+          return ExpansionTile(
+            title: Text(entry.key),
+            children: entry.value.map((fine) {
+              return ListTile(
+                title: Text(fine['reason'] ?? ''),
+              );
+            }).toList(),
           );
-        },
+        }).toList(),
       ),
       floatingActionButton: isSpiess
           ? FloatingActionButton(
