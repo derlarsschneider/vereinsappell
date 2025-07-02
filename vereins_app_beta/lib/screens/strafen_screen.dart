@@ -58,27 +58,37 @@ class _StrafenScreenState extends State<StrafenScreen> {
     );
   }
 
+  double getTotalAmount() {
+    return strafen.fold(
+        0, (sum, item) => sum + (item['amount'] != null ? item['amount'].toDouble() : 0));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🛑 Deine Strafen'),
+        title: Text('🛑 Deine Strafen:     ${getTotalAmount().toStringAsFixed(2)} €'),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : strafen.isEmpty
-          ? Center(child: Text('Keine Strafen vorhanden'))
-          : ListView.builder(
-        itemCount: strafen.length,
-        itemBuilder: (context, index) {
-          return _buildStrafeItem(strafen[index]);
-        },
-      ),
-      // Optional: Pull-to-refresh
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.refresh),
-        onPressed: fetchStrafen,
-        tooltip: 'Aktualisieren',
+      body: Column(
+        children: [
+          Expanded(
+            child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : strafen.isEmpty
+            ? Center(child: Text('Keine Strafen vorhanden'))
+            : ListView.builder(
+              itemCount: strafen.length,
+              itemBuilder: (context, index) {
+                return _buildStrafeItem(strafen[index]);
+              },
+            ),
+          ),
+          FloatingActionButton(
+            child: Icon(Icons.refresh),
+            onPressed: fetchStrafen,
+            tooltip: 'Aktualisieren',
+          ),
+        ],
       ),
     );
   }
