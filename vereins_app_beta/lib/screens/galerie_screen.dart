@@ -4,22 +4,27 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:vereins_app_beta/screens/default_screen.dart';
 
-class FotogalerieScreen extends StatefulWidget {
-  final String apiBaseUrl;
-  final bool isAdmin;
+class FotogalerieScreen extends DefaultScreen {
 
   const FotogalerieScreen({
     Key? key,
-    required this.apiBaseUrl,
-    required this.isAdmin,
-  }) : super(key: key);
+    required apiBaseUrl,
+    required currentUserId,
+    required isAdmin,
+  }) : super(key: key,
+             title: 'Fotogalerie',
+             apiBaseUrl: apiBaseUrl,
+             currentUserId: currentUserId,
+             isAdmin: isAdmin
+  );
 
   @override
-  _FotogalerieScreenState createState() => _FotogalerieScreenState();
+  DefaultScreenState createState() => _FotogalerieScreenState();
 }
 
-class _FotogalerieScreenState extends State<FotogalerieScreen> {
+class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
   List<Map<String, dynamic>> photos = [];
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;

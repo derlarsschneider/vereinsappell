@@ -2,18 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class SpiessScreen extends StatefulWidget {
-  final String apiBaseUrl;
+import 'package:vereins_app_beta/screens/default_screen.dart';
+
+class SpiessScreen extends DefaultScreen {
 
   const SpiessScreen({
     Key? key,
-    required this.apiBaseUrl,
-  }) : super(key: key);
+    required apiBaseUrl,
+    required currentUserId,
+    required isAdmin,
+  }) : super(key: key,
+      title: 'Fotogalerie',
+      apiBaseUrl: apiBaseUrl,
+      currentUserId: currentUserId,
+      isAdmin: isAdmin
+  );
+
   @override
-  _SpiessScreenState createState() => _SpiessScreenState();
+  DefaultScreenState createState() => _SpiessScreenState();
 }
 
-class _SpiessScreenState extends State<SpiessScreen> {
+class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
   List<dynamic> members = [];
   List<dynamic> selectedMemberFines = [];
   String? selectedMemberId;

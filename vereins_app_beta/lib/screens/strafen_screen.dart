@@ -2,20 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class StrafenScreen extends StatefulWidget {
-  final String currentUserId;
+import 'package:vereins_app_beta/screens/default_screen.dart';
 
-  const StrafenScreen({Key? key, required this.currentUserId}) : super(key: key);
+class StrafenScreen extends DefaultScreen {
+
+  const StrafenScreen({
+    Key? key,
+    required apiBaseUrl,
+    required currentUserId,
+    required isAdmin,
+  }) : super(key: key,
+             title: 'Fotogalerie',
+             apiBaseUrl: apiBaseUrl,
+             currentUserId: currentUserId,
+             isAdmin: isAdmin
+  );
 
   @override
-  _StrafenScreenState createState() => _StrafenScreenState();
+  DefaultScreenState createState() => _StrafenScreenState();
 }
 
-class _StrafenScreenState extends State<StrafenScreen> {
+class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
   List<dynamic> strafen = [];
   bool isLoading = false;
-  // final String apiBaseUrl = 'https://your-api-gateway-url.com';
-  final String apiBaseUrl = 'http://localhost:5000';
 
   @override
   void initState() {
@@ -30,7 +39,7 @@ class _StrafenScreenState extends State<StrafenScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('$apiBaseUrl/fines?memberId=${widget.currentUserId}'),
+        Uri.parse('${widget.apiBaseUrl}/fines?memberId=${widget.currentUserId}'),
       );
 
       if (response.statusCode == 200) {
