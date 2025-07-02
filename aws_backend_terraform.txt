@@ -103,3 +103,39 @@ resource "aws_lambda_permission" "apigw" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
+
+
+# SNS-Topic für Push Notifications
+resource "aws_sns_topic" "push_topic" {
+  name = "schuetzenverein-push"
+}
+
+# Lambda-Umgebungsvariable setzen
+resource "aws_lambda_function" "create_fine" {
+  # ... (deine bestehende Konfiguration)
+  environment {
+    variables = {
+      FINES_TABLE    = aws_dynamodb_table.fines.name
+      PUSH_TOPIC_ARN = aws_sns_topic.push_topic.arn
+    }
+  }
+}
+
+# Berechtigung für Lambda zum Publizieren in SNS
+resource "aws_iam_policy" "lambda_sns_publish" {
+  name        = "LambdaSNSPublishPolicy"
+  description = "Allow Lambda to publish to SNS topic"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Action = "sns:Publish",
+      Resource = aws_sns_topic.push_topic.arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_sns_attach" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.lambda_sns_publish.arn
+}
