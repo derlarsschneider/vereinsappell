@@ -107,6 +107,31 @@ class _SpiessScreenState extends State<SpiessScreen> {
     }
   }
 
+  Future<void> deleteFine(String fineId) async {
+    try {
+      final response = await http.delete(Uri.parse('${widget.apiBaseUrl}/fines/$fineId'));
+
+      if (response.statusCode == 200) {
+        if (selectedMemberId != null) {
+          await fetchFines(selectedMemberId!);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Strafe gelöscht')),
+        );
+      } else {
+        print('Fehler beim Löschen der Strafe: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Löschen')),
+        );
+      }
+    } catch (e) {
+      print('Fehler beim Löschen: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler beim Löschen')),
+      );
+    }
+  }
+
   void openAddFineDialog() {
     if (selectedMemberId == null) return;
     selectedAmount = 1;
@@ -206,7 +231,37 @@ class _SpiessScreenState extends State<SpiessScreen> {
     return ListTile(
       leading: Icon(Icons.warning, color: Colors.red),
       title: Text(fine['reason'] ?? 'Unbekannter Grund'),
-      trailing: Text('${fine['amount'] ?? '-'} €'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${fine['amount'] ?? '-'} €'),
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.grey),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: Text('Strafe löschen'),
+                  content: Text('Möchtest du diese Strafe wirklich löschen?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('Abbrechen'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        deleteFine(fine['id']);
+                      },
+                      child: Text('Löschen'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
