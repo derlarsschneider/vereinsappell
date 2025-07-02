@@ -6,7 +6,11 @@ import boto3
 from datetime import datetime
 
 dynamodb = boto3.resource('dynamodb')
+sns = boto3.client('sns')
+
 table_name = os.environ.get('FINES_TABLE', 'fines')
+sns_topic_arn = os.environ.get('PUSH_TOPIC_ARN')
+
 table = dynamodb.Table(table_name)
 
 def handler(event, context):
@@ -32,6 +36,20 @@ def handler(event, context):
                 'createdAt': timestamp
             }
         )
+
+        # Push Notification versenden
+        if sns_topic_arn:
+            sns.publish(
+                TopicArn=sns_topic_arn,
+                Message=json.dumps({
+                    'type': 'fine',
+                    'memberId': member_id,
+                    'fineId': fine_id,
+                    'reason': reason,
+                    'timestamp': timestamp
+                }),
+                Subject='Neues Strafgeld'
+            )
 
         return {
             'statusCode': 200,
