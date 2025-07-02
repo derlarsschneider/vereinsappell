@@ -111,7 +111,7 @@ class _SpiessScreenState extends State<SpiessScreen> {
 
   void openAddFineDialog() {
     if (selectedMemberId == null) return;
-
+    int? selectedAmount = 1;
     reasonController.clear();
     amountController.clear();
 
@@ -131,6 +131,21 @@ class _SpiessScreenState extends State<SpiessScreen> {
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(labelText: 'Betrag (€)'),
             ),
+            SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              children: [1, 2, 5, 10].map((euro) {
+                return ChoiceChip(
+                  label: Text('$euro €'),
+                  selected: selectedAmount == euro,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      selectedAmount = euro;
+                    });
+                  },
+                );
+              }).toList(),
+            )
           ],
         ),
         actions: [
@@ -141,14 +156,17 @@ class _SpiessScreenState extends State<SpiessScreen> {
           ElevatedButton(
             onPressed: () {
               final reason = reasonController.text.trim();
-              final amount = double.tryParse(amountController.text.trim()) ?? 0;
-              if (reason.isNotEmpty && amount > 0) {
-                addFine(selectedMemberId!, reason, amount);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Bitte gültigen Grund und Betrag eingeben')),
-                );
-              }
+              final amount = selectedAmount?.toDouble();
+              addFine(selectedMemberId!, reason, amount??0);
+
+              // final amount = double.tryParse(amountController.text.trim()) ?? 0;
+              // if (reason.isNotEmpty && amount > 0) {
+              //   addFine(selectedMemberId!, reason, amount);
+              // } else {
+              //   ScaffoldMessenger.of(context).showSnackBar(
+              //     SnackBar(content: Text('Bitte gültigen Grund und Betrag eingeben')),
+              //   );
+              // }
             },
             child: Text('Hinzufügen'),
           ),
