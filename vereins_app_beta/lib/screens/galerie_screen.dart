@@ -9,16 +9,11 @@ import 'package:vereins_app_beta/screens/default_screen.dart';
 class FotogalerieScreen extends DefaultScreen {
 
   const FotogalerieScreen({
-    Key? key,
-    required apiBaseUrl,
-    required currentUserId,
-    required isAdmin,
-  }) : super(key: key,
-             title: 'Fotogalerie',
-             apiBaseUrl: apiBaseUrl,
-             currentUserId: currentUserId,
-             isAdmin: isAdmin
-  );
+    super.key,
+    required super.apiBaseUrl,
+    required super.currentUserId,
+    required super.isAdmin,
+  }) : super(title: 'Fotogalerie',);
 
   @override
   DefaultScreenState createState() => _FotogalerieScreenState();

@@ -7,16 +7,11 @@ import 'package:vereins_app_beta/screens/default_screen.dart';
 class SpiessScreen extends DefaultScreen {
 
   const SpiessScreen({
-    Key? key,
-    required apiBaseUrl,
-    required currentUserId,
-    required isAdmin,
-  }) : super(key: key,
-      title: 'Fotogalerie',
-      apiBaseUrl: apiBaseUrl,
-      currentUserId: currentUserId,
-      isAdmin: isAdmin
-  );
+    super.key,
+    required super.apiBaseUrl,
+    required super.currentUserId,
+    required super.isAdmin,
+  }) : super(title: 'Spieß',);
 
   @override
   DefaultScreenState createState() => _SpiessScreenState();
@@ -278,7 +273,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🛡️ Spiess'),
+        title: Text('🛡️ Spieß'),
       ),
       body: Row(
         children: [

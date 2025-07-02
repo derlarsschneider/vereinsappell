@@ -7,16 +7,11 @@ import 'package:vereins_app_beta/screens/default_screen.dart';
 class StrafenScreen extends DefaultScreen {
 
   const StrafenScreen({
-    Key? key,
-    required apiBaseUrl,
-    required currentUserId,
-    required isAdmin,
-  }) : super(key: key,
-             title: 'Fotogalerie',
-             apiBaseUrl: apiBaseUrl,
-             currentUserId: currentUserId,
-             isAdmin: isAdmin
-  );
+    super.key,
+    required super.apiBaseUrl,
+    required super.currentUserId,
+    required super.isAdmin,
+  }) : super(title: 'Fotogalerie',);
 
   @override
   DefaultScreenState createState() => _StrafenScreenState();

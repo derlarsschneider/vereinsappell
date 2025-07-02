@@ -53,7 +53,7 @@ class MainMenu extends StatelessWidget {
             ),
           ),
           ListTile(
-            title: Text('🛡️ Spiess'),
+            title: Text('🛡️ Spieß'),
             onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => SpiessScreen(apiBaseUrl: apiBaseUrl, currentUserId: currentUserId, isAdmin: isAdmin,)),
             ),
