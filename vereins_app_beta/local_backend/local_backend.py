@@ -1,3 +1,7 @@
+import os
+import uuid
+import base64
+from flask import send_from_directory
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -60,6 +64,83 @@ def add_fine():
     print(f"Push-Notification an Mitglied {member_id}: Neue Strafe '{reason}' über {amount}€")
 
     return jsonify(new_fine), 200
+
+
+# Speicherordner für Fotos
+UPLOAD_FOLDER = 'uploaded_photos'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# --- FOTO APIs ---
+
+@app.route('/photos', methods=['GET'])
+def get_photos():
+    # Gibt Liste aller Fotos zurück mit URL
+    result = []
+    for photo in photos:
+        result.append({
+            'id': photo['id'],
+            'url': request.host_url + 'photos/' + photo['filename']
+        })
+    return jsonify(result)
+
+
+@app.route('/photos', methods=['POST'])
+def upload_photo():
+    data = request.get_json()
+    image_b64 = data.get('imageBase64')
+
+    if not image_b64:
+        return jsonify({'error': 'Kein Bild gesendet'}), 400
+
+    try:
+        # Base64 zu Bytes dekodieren
+        image_data = base64.b64decode(image_b64)
+
+        # Eindeutigen Dateinamen erzeugen
+        filename = f"{uuid.uuid4().hex}.jpg"
+
+        # Datei speichern
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        with open(filepath, 'wb') as f:
+            f.write(image_data)
+
+        # Foto registrieren
+        photo_id = uuid.uuid4().hex
+        photos.append({'id': photo_id, 'filename': filename})
+
+        return jsonify({'id': photo_id, 'url': request.host_url + 'photos/' + filename})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/photos/<filename>', methods=['GET'])
+def serve_photo(filename):
+    # Liefert lokale Foto-Datei aus
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+@app.route('/photos/<photo_id>', methods=['DELETE'])
+def delete_photo(photo_id):
+    global photos
+    # Foto mit photo_id finden
+    photo = next((p for p in photos if p['id'] == photo_id), None)
+    if not photo:
+        return jsonify({'error': 'Foto nicht gefunden'}), 404
+
+    try:
+        # Datei löschen
+        filepath = os.path.join(UPLOAD_FOLDER, photo['filename'])
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        # Foto aus Liste entfernen
+        photos = [p for p in photos if p['id'] != photo_id]
+
+        return jsonify({'message': 'Foto gelöscht'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':
