@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 // import 'screens/termine_screen.dart';
 import 'screens/strafen_screen.dart';
 import 'screens/spiess_screen.dart';
-// import 'screens/fotogalerie_screen.dart';
+import 'screens/galerie_screen.dart';
 // import 'screens/knobeln_screen.dart';
+
+// final String apiBaseUrl = 'https://your-api-gateway-url.com';
+final String apiBaseUrl = 'http://localhost:5000';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,13 +52,13 @@ class MainMenu extends StatelessWidget {
           ListTile(
             title: Text('🛡️ Spiess'),
             onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (_) => SpiessScreen()),
+              context, MaterialPageRoute(builder: (_) => SpiessScreen(apiBaseUrl: apiBaseUrl,)),
             ),
           ),
           ListTile(
             title: Text('📸 Fotogalerie'),
             onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (_) => FotogalerieScreen()),
+              context, MaterialPageRoute(builder: (_) => FotogalerieScreen(isAdmin: true, apiBaseUrl: apiBaseUrl,)),
             ),
           ),
           ListTile(
@@ -73,15 +76,6 @@ class MainMenu extends StatelessWidget {
 class KnobelnScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
-    throw UnimplementedError();
-  }
-}
-
-class FotogalerieScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() {
-
     // TODO: implement createState
     throw UnimplementedError();
   }

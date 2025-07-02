@@ -3,13 +3,17 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class SpiessScreen extends StatefulWidget {
+  final String apiBaseUrl;
+
+  const SpiessScreen({
+    Key? key,
+    required this.apiBaseUrl,
+  }) : super(key: key);
   @override
   _SpiessScreenState createState() => _SpiessScreenState();
 }
 
 class _SpiessScreenState extends State<SpiessScreen> {
-  // final String apiBaseUrl = 'https://your-api-gateway-url.com';
-  final String apiBaseUrl = 'http://localhost:5000';
 
   List<dynamic> members = [];
   List<dynamic> selectedMemberFines = [];
@@ -33,7 +37,7 @@ class _SpiessScreenState extends State<SpiessScreen> {
       isLoadingMembers = true;
     });
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/members'));
+      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/members'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -57,7 +61,7 @@ class _SpiessScreenState extends State<SpiessScreen> {
       selectedMemberFines.clear();
     });
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/fines?memberId=$memberId'));
+      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/fines?memberId=$memberId'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -78,7 +82,7 @@ class _SpiessScreenState extends State<SpiessScreen> {
   Future<void> addFine(String memberId, String reason, double amount) async {
     try {
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/fines'),
+        Uri.parse('${widget.apiBaseUrl}/fines'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'memberId': memberId,
