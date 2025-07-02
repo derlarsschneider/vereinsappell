@@ -109,8 +109,17 @@ class _SpiessScreenState extends State<SpiessScreen> {
 
   void openAddFineDialog() {
     if (selectedMemberId == null) return;
-    reasonController.clear();
     selectedAmount = 1;
+
+    // Vorschlagsliste für Gründe
+    final List<String> reasons = [
+      'Unpünktlichkeit',
+      'Falsche Kleidung',
+      'Unangebrachtes Verhalten',
+      'Nicht erschienen',
+      'Sonstiges',
+    ];
+    String? selectedReason = reasons.first;
 
     showDialog(
       context: context,
@@ -120,9 +129,20 @@ class _SpiessScreenState extends State<SpiessScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: reasonController,
+              DropdownButtonFormField<String>(
+                value: selectedReason,
                 decoration: InputDecoration(labelText: 'Grund'),
+                items: reasons.map((reason) {
+                  return DropdownMenuItem(
+                    value: reason,
+                    child: Text(reason),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setStateDialog(() {
+                    selectedReason = value;
+                  });
+                },
               ),
               SizedBox(height: 10),
               Wrap(
@@ -153,18 +173,11 @@ class _SpiessScreenState extends State<SpiessScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                final reason = reasonController.text.trim();
+                final reason = selectedReason ?? '';
                 final amount = selectedAmount?.toDouble();
-              addFine(selectedMemberId!, reason, amount??0);
-
-              // final amount = double.tryParse(amountController.text.trim()) ?? 0;
-              // if (reason.isNotEmpty && amount > 0) {
-              //   addFine(selectedMemberId!, reason, amount);
-              // } else {
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     SnackBar(content: Text('Bitte gültigen Grund und Betrag eingeben')),
-              //   );
-              // }
+                if (reason.isNotEmpty && amount != null && amount > 0) {
+                  addFine(selectedMemberId!, reason, amount);
+                }
               },
               child: Text('Hinzufügen'),
             ),
