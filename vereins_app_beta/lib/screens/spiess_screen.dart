@@ -14,17 +14,16 @@ class SpiessScreen extends StatefulWidget {
 }
 
 class _SpiessScreenState extends State<SpiessScreen> {
-
   List<dynamic> members = [];
   List<dynamic> selectedMemberFines = [];
   String? selectedMemberId;
   String? selectedMemberName;
 
   final TextEditingController reasonController = TextEditingController();
-  final TextEditingController amountController = TextEditingController();
 
   bool isLoadingMembers = false;
   bool isLoadingFines = false;
+  int? selectedAmount = 1;
 
   @override
   void initState() {
@@ -92,9 +91,8 @@ class _SpiessScreenState extends State<SpiessScreen> {
       );
 
       if (response.statusCode == 200) {
-        // Nach erfolgreichem Hinzufügen Strafen neu laden
         await fetchFines(memberId);
-        Navigator.of(context).pop(); // Dialog schließen
+        Navigator.of(context).pop();
       } else {
         print('Fehler beim Speichern der Strafe: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -111,52 +109,52 @@ class _SpiessScreenState extends State<SpiessScreen> {
 
   void openAddFineDialog() {
     if (selectedMemberId == null) return;
-    int? selectedAmount = 1;
     reasonController.clear();
-    amountController.clear();
+    selectedAmount = 1;
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Neue Strafe für $selectedMemberName'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: reasonController,
-              decoration: InputDecoration(labelText: 'Grund'),
-            ),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(labelText: 'Betrag (€)'),
-            ),
-            SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              children: [1, 2, 5, 10].map((euro) {
-                return ChoiceChip(
-                  label: Text('$euro €'),
-                  selected: selectedAmount == euro,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      selectedAmount = euro;
-                    });
-                  },
-                );
-              }).toList(),
-            )
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Abbrechen'),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: Text('Neue Strafe für $selectedMemberName'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: reasonController,
+                decoration: InputDecoration(labelText: 'Grund'),
+              ),
+              SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                children: [1, 2, 5, 10].map((euro) {
+                  final isSelected = selectedAmount == euro;
+                  return ChoiceChip(
+                    label: Text('€$euro'),
+                    selected: isSelected,
+                    selectedColor: Colors.blue,
+                    onSelected: (_) {
+                      setStateDialog(() {
+                        selectedAmount = euro;
+                      });
+                    },
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              final reason = reasonController.text.trim();
-              final amount = selectedAmount?.toDouble();
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Abbrechen'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final reason = reasonController.text.trim();
+                final amount = selectedAmount?.toDouble();
               addFine(selectedMemberId!, reason, amount??0);
 
               // final amount = double.tryParse(amountController.text.trim()) ?? 0;
@@ -167,10 +165,11 @@ class _SpiessScreenState extends State<SpiessScreen> {
               //     SnackBar(content: Text('Bitte gültigen Grund und Betrag eingeben')),
               //   );
               // }
-            },
-            child: Text('Hinzufügen'),
-          ),
-        ],
+              },
+              child: Text('Hinzufügen'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -206,7 +205,6 @@ class _SpiessScreenState extends State<SpiessScreen> {
       ),
       body: Row(
         children: [
-          // Mitglieder Liste links
           Expanded(
             flex: 2,
             child: isLoadingMembers
@@ -217,7 +215,6 @@ class _SpiessScreenState extends State<SpiessScreen> {
             ),
           ),
           VerticalDivider(width: 1),
-          // Strafen rechts
           Expanded(
             flex: 3,
             child: selectedMemberId == null
