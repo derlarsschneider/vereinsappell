@@ -29,7 +29,7 @@ fine_id_counter = 2
 # In-memory Storage für Fotos
 UPLOAD_FOLDER = 'uploaded_photos'
 #photos = [{'id': 'p2', 'filename': 'xyz.jpg'}]
-photos = [{'id': '', 'filename': os.path.join(UPLOAD_FOLDER, f)} for f in os.listdir(UPLOAD_FOLDER)]
+photos = [{'id': f, 'filename': f} for f in os.listdir(UPLOAD_FOLDER)]
 
 
 @app.route('/members', methods=['GET'])
