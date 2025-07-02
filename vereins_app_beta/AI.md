@@ -25,3 +25,10 @@ Bitte generiere einen Screen namens Strafen in Flutter der Strafen für den aktu
 
 # Spiess Screen
 Bitte generiere einen Screen namens Spiess in Flutter. Es sollen alle Mitglieder in einer Liste angezeigt werden. Beim Klick auf ein Mitglied werden dessen Strafen angezeigt. Mit einem Plus soll eine neue Strafe für dieses Mitglied hinzugefügt werden können. Dies wird im AWS Backend gespeichert. Das Mitglied bekommt diese Strafe angezeigt und wird per Push darüber informiert.
+
+# Fotogalerie
+Bitte generiere einen Screen namens Fotogalerie in Flutter. Es sollen Fotos hochgeladen werden können, die im AWS Backend in S3 gespeichert werden. Alle Fotos aller Mitglieder sollen in einer Galerie angezeigt werden. Ein Admin User soll auch Fotos löschen können.
+
+# Termine
+
+# Knobeln
