@@ -12,7 +12,7 @@ CORS(app)  # Für Cross-Origin Requests von Flutter lokal
 # Statische Mitgliederliste (Beispiel)
 members = [
     {"id": "1", "name": "Max Mustermann"},
-    {"id": "2", "name": "Anna Beispiel"},
+    {"id": "2", "name": "Der Spiess"},
     {"id": "3", "name": "Peter Pan"},
 ]
 
@@ -70,6 +70,21 @@ def add_fine():
     print(f"Push-Notification an Mitglied {member_id}: Neue Strafe '{reason}' über {amount}€")
 
     return jsonify(new_fine), 200
+
+
+@app.route('/fines/<fine_id>', methods=['DELETE'])
+def delete_fine(fine_id):
+    found = False
+    for member_id, member_fines in fines.items():
+        for fine in member_fines:
+            if fine['id'] == fine_id:
+                member_fines.remove(fine)
+                found = True
+                print(f"Strafe {fine_id} gelöscht für Mitglied {member_id}")
+                return jsonify({'message': f'Strafe {fine_id} gelöscht'}), 200
+
+    if not found:
+        return jsonify({'error': 'Strafe nicht gefunden'}), 404
 
 
 # Speicherordner für Fotos
