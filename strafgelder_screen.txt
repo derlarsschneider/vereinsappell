@@ -1,0 +1,86 @@
+// lib/screens/strafgelder_screen.dart
+import 'package:flutter/material.dart';
+
+class StrafgelderScreen extends StatefulWidget {
+  @override
+  _StrafgelderScreenState createState() => _StrafgelderScreenState();
+}
+
+class _StrafgelderScreenState extends State<StrafgelderScreen> {
+  final List<Map<String, String>> strafgelder = [
+    {'member': 'Max Mustermann', 'reason': 'Zu spät erschienen'},
+    {'member': 'Erika Musterfrau', 'reason': 'Handy geklingelt'},
+  ];
+
+  final bool isSpiess = true; // ⛳ Dummy für Spießrolle (true = hat Rechte)
+
+  final TextEditingController memberController = TextEditingController();
+  final TextEditingController reasonController = TextEditingController();
+
+  void addStrafgeld(String member, String reason) {
+    setState(() {
+      strafgelder.add({'member': member, 'reason': reason});
+    });
+    memberController.clear();
+    reasonController.clear();
+  }
+
+  void openAddDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Strafgeld vergeben'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: memberController,
+              decoration: InputDecoration(labelText: 'Mitglied'),
+            ),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(labelText: 'Grund'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Abbrechen'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              addStrafgeld(memberController.text, reasonController.text);
+              Navigator.pop(context);
+            },
+            child: Text('Vergabe'),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('💰 Strafgelder')),
+      body: ListView.builder(
+        itemCount: strafgelder.length,
+        itemBuilder: (context, index) {
+          final eintrag = strafgelder[index];
+          return ListTile(
+            title: Text(eintrag['member'] ?? ''),
+            subtitle: Text(eintrag['reason'] ?? ''),
+          );
+        },
+      ),
+      floatingActionButton: isSpiess
+          ? FloatingActionButton(
+              onPressed: openAddDialog,
+              child: Icon(Icons.add),
+              tooltip: 'Strafgeld vergeben',
+            )
+          : null,
+    );
+  }
+}
