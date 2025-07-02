@@ -1,6 +1,7 @@
 import os
 import uuid
 import base64
+from datetime import datetime
 from flask import send_from_directory
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -24,6 +25,11 @@ fines = {
 
 # Hilfsfunktion für neue ID (einfach hochzählen)
 fine_id_counter = 2
+
+# In-memory Storage für Fotos
+UPLOAD_FOLDER = 'uploaded_photos'
+#photos = [{'id': 'p2', 'filename': 'xyz.jpg'}]
+photos = [{'id': '', 'filename': os.path.join(UPLOAD_FOLDER, f)} for f in os.listdir(UPLOAD_FOLDER)]
 
 
 @app.route('/members', methods=['GET'])
@@ -67,7 +73,6 @@ def add_fine():
 
 
 # Speicherordner für Fotos
-UPLOAD_FOLDER = 'uploaded_photos'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- FOTO APIs ---
@@ -97,7 +102,8 @@ def upload_photo():
         image_data = base64.b64decode(image_b64)
 
         # Eindeutigen Dateinamen erzeugen
-        filename = f"{uuid.uuid4().hex}.jpg"
+        now = datetime.now()
+        filename = f'{now.strftime("%Y%m%d-%H%M%S")}{int(now.microsecond / 1000):03d}.jpg'
 
         # Datei speichern
         filepath = os.path.join(UPLOAD_FOLDER, filename)
