@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -62,9 +63,9 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
 
   Widget _buildStrafeItem(dynamic strafe) {
     return ListTile(
-      leading: Icon(Icons.warning, color: Colors.red),
+      // leading: Icon(Icons.warning, color: Colors.red),
       title: Text(strafe['reason'] ?? 'Unbekannter Grund'),
-      subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €'),
+      subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €uro'),
     );
   }
 
@@ -77,7 +78,12 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🛑 Strafen von ${memberName}:     ${getTotalAmount().toStringAsFixed(2)} €'),
+        title: AutoSizeText(
+          '💰 Strafen von ${memberName}:     ${getTotalAmount().toStringAsFixed(2)} €',
+          style: TextStyle(fontSize: 20),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: Column(
         children: [

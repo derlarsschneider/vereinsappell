@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -229,7 +230,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
   Widget _buildMemberItem(dynamic member) {
     final bool isSelected = selectedMemberId == member['id'];
     return ListTile(
-      title: Text(member['name'] ?? 'Unbekannt'),
+      title: AutoSizeText(
+        member['name'] ?? 'Unbekannt',
+        maxLines: 1,
+      ),
       selected: isSelected,
       onTap: () {
         setState(() {
@@ -243,7 +247,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
   Widget _buildFineItem(dynamic fine) {
     return ListTile(
-      leading: Icon(Icons.warning, color: Colors.red),
+      // leading: Icon(Icons.warning, color: Colors.red),
       title: Text(fine['reason'] ?? 'Unbekannter Grund'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
