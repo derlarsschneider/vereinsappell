@@ -45,3 +45,8 @@ app.*.map.json
 /android/app/release
 
 /local_backend/uploaded_photos/
+
+/aws_backend/remote_state/.terraform/
+/aws_backend/remote_state/.terraform.lock.hcl
+/aws_backend/remote_state/terraform.tfstate
+/aws_backend/remote_state/.terraform/environment
