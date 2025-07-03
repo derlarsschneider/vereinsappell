@@ -97,23 +97,35 @@ def delete_member(event):
 def get_fines(event):
     params = event.get('queryStringParameters') or {}
     member_id = params.get('memberId')
+    name = member_id
 
     if not member_id:
         return {'statusCode': 400, 'body': json.dumps({'error': 'memberId fehlt'})}
 
-    response = fines_table.query(
+    member_response = members_table.query(
         KeyConditionExpression=Key('memberId').eq(member_id)
     )
-    items = response.get('Items', {})
+    member = member_response.get('Items', [])
+    # member should have one elem
+    if member:
+        member = member[0]
+        name = member.get('name', member_id)
+
+
+    fines_response = fines_table.query(
+        KeyConditionExpression=Key('memberId').eq(member_id)
+    )
+    items = fines_response.get('Items', [])
     import decimal
     class DecimalEncoder(json.JSONEncoder):
         def default(self, o):
             if isinstance(o, decimal.Decimal):
                 return str(o)
             return super(DecimalEncoder, self).default(o)
+
     return {
         'statusCode': 200,
-        'body': json.dumps(items, cls=DecimalEncoder)
+        'body': json.dumps({"name": name, "fines": items}, cls=DecimalEncoder)
     }
 
 

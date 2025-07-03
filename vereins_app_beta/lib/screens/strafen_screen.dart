@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -18,6 +19,7 @@ class StrafenScreen extends DefaultScreen {
 }
 
 class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
+  String memberName = '';
   List<dynamic> strafen = [];
   bool isLoading = false;
 
@@ -33,17 +35,21 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
     });
 
     try {
-      final response = await http.get(
+      final finesResponse = await http.get(
         Uri.parse('${widget.apiBaseUrl}/fines?memberId=${widget.currentUserId}'),
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+      if (finesResponse.statusCode == 200) {
+        // Response is {"name": "<NAME>, "fines": [...]}
+        final Map<String, dynamic> response = json.decode(finesResponse.body);
+        final String name = response['name'];
+        final List<dynamic> data = response['fines'];
         setState(() {
           strafen = data;
+          memberName = name;
         });
       } else {
-        print('Fehler beim Laden: ${response.statusCode}');
+        print('Fehler beim Laden: ${finesResponse.statusCode}');
       }
     } catch (e) {
       print('Fehler beim Abrufen: $e');
@@ -64,14 +70,14 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
 
   double getTotalAmount() {
     return strafen.fold(
-        0, (sum, item) => sum + (item['amount'] != null ? item['amount'].toDouble() : 0));
+        0, (sum, item) => sum + (item['amount'] != null ? Decimal.parse(item['amount']).toDouble() : 0));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🛑 Deine Strafen:     ${getTotalAmount().toStringAsFixed(2)} €'),
+        title: Text('🛑 Strafen von ${memberName}:     ${getTotalAmount().toStringAsFixed(2)} €'),
       ),
       body: Column(
         children: [

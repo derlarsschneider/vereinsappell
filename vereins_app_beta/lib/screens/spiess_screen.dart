@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -64,14 +65,16 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       selectedMemberFines.clear();
     });
     try {
-      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/fines?memberId=$memberId'));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+      final finesResponse = await http.get(Uri.parse('${widget.apiBaseUrl}/fines?memberId=$memberId'));
+      if (finesResponse.statusCode == 200) {
+        final Map<String, dynamic> response = json.decode(finesResponse.body);
+        final String name = response['name'];
+        final List<dynamic> data = response['fines'];
         setState(() {
           selectedMemberFines = data;
         });
       } else {
-        print('Fehler beim Laden der Strafen: ${response.statusCode}');
+        print('Fehler beim Laden der Strafen: ${finesResponse.statusCode}');
       }
     } catch (e) {
       print('Fehler beim Abrufen der Strafen: $e');
@@ -84,13 +87,18 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
   Future<void> addFine(String memberId, String reason, double amount) async {
     try {
+      // Float types are not supported. Use Decimal types instead
+      final decimalAmount = Decimal.parse(amount.toString());
+      // Generate a unique ID for the fine
+      final fineId = DateTime.now().millisecondsSinceEpoch.toString();
       final response = await http.post(
         Uri.parse('${widget.apiBaseUrl}/fines'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
+          'fineId': fineId,
           'memberId': memberId,
           'reason': reason,
-          'amount': amount,
+          'amount': decimalAmount,
         }),
       );
 
@@ -98,6 +106,8 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
         await fetchFines(memberId);
         Navigator.of(context).pop();
       } else {
+        print(response.body);
+        print(response.headers);
         print('Fehler beim Speichern der Strafe: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Fehler beim Speichern der Strafe')),
