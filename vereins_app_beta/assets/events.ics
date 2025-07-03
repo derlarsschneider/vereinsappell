@@ -1,0 +1,37 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Willkommen bei der Schützenlust Neuss-Gnadental//NONSGML kigkonsu
+ lt.se iCalcreator 2.20//
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+X-WR-CALNAME:Calendar
+X-WR-CALDESC:Calendar Description
+BEGIN:VEVENT
+UID:event249@Willkommen bei der Schützenlust Neuss-Gnadental
+DTSTAMP:20250703T154458Z
+CATEGORIES:Schützenlust Gnadental
+DESCRIPTION:Generalversammlung\nKategorie: Schützenlust Gnadental\nICS-Link
+ : https://www.schuetzenlust-gnadental.de/index.php?option=com_jem&view=eve
+ nt&id=249:generalversammlung&Itemid=552\n
+DTSTART:20250802T190000
+DTEND:20250802T190000
+LOCATION:Gaststätte Pilsstübchen\,Grüner Weg\,41468 Neuss\,Germany
+SUMMARY:Generalversammlung
+URL:https://www.schuetzenlust-gnadental.de/index.php?option=com_jem&view=ev
+ ent&id=249:generalversammlung&Itemid=552
+END:VEVENT
+BEGIN:VEVENT
+UID:event240@Willkommen bei der Schützenlust Neuss-Gnadental
+DTSTAMP:20250703T154458Z
+CATEGORIES:BHV
+DESCRIPTION:Krönung Schützengilde\nKategorie: BHV\nICS-Link: https://www.sc
+ huetzenlust-gnadental.de/index.php?option=com_jem&view=event&id=240:kroenu
+ ng-schuetzengilde&Itemid=552\n
+DTSTART;VALUE=DATE:20251004
+DTEND;VALUE=DATE:20251005
+SUMMARY:Krönung Schützengilde
+URL:https://www.schuetzenlust-gnadental.de/index.php?option=com_jem&view=ev
+ ent&id=240:kroenung-schuetzengilde&Itemid=552
+END:VEVENT
+END:VCALENDAR
