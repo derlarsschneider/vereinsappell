@@ -307,6 +307,13 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                 ? Center(child: Text('Mitglied auswählen'))
                 : Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    selectedMemberName!,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
                 Expanded(
                   child: isLoadingFines
                       ? Center(child: CircularProgressIndicator())
