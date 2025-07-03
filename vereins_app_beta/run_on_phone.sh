@@ -1,0 +1,32 @@
+#!/bin/bash -e
+
+device="192.168.0.195:46597"
+
+# if command line arguments are given, use them
+if [ "$#" -gt 0 ]; then
+  STEP="$1"
+fi
+
+#~/tools/android/platform-tools/adb pair 192.168.0.195:39763
+echo CONNECT
+~/tools/android/platform-tools/adb connect ${device}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# if STEP is BUILD or empty:
+if [ -z "$STEP" ] || [ "$STEP" == "BUILD" ]; then
+  echo BUILD
+  flutter build apk --release
+fi
+
+if [ -z "$STEP" ] || [ "$STEP" == "INSTALL" ]; then
+  echo INSTALL
+  ~/tools/android/platform-tools/adb -s ${device} install -r build/app/outputs/flutter-apk/app-release.apk
+fi
+
+if [ -z "$STEP" ] || [ "$STEP" == "RUN" ]; then
+  echo RUN
+  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p com.example.vereins_app_beta -c android.intent.category.LAUNCHER 1
+fi
+#~/tools/android/platform-tools/adb shell am start -n com.example.vereins_app_beta/com.example.vereins_app_beta.MainActivity
