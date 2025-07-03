@@ -8,9 +8,11 @@ import 'screens/spiess_screen.dart';
 import 'screens/galerie_screen.dart';
 // import 'screens/knobeln_screen.dart';
 
-// final String apiBaseUrl = 'https://your-api-gateway-url.com';
-final String apiBaseUrl = 'http://localhost:5000';
-final String currentUserId = '2';
+// final String apiBaseUrl = 'http://localhost:5000';
+final String apiBaseUrl = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+final String app = 'vereins-app-beta';
+final String memberId = 'm2';
+final String currentUserId = '${memberId}';
 final bool isAdmin = true;
 final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
 void main() async {
