@@ -223,10 +223,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       selected: isSelected,
       onTap: () {
         setState(() {
-          selectedMemberId = member['id'];
+          selectedMemberId = member['memberId'];
           selectedMemberName = member['name'];
         });
-        fetchFines(member['id']);
+        fetchFines(member['memberId']);
       },
     );
   }
