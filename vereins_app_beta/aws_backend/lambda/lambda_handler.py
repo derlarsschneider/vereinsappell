@@ -88,15 +88,14 @@ def add_member(event):
 def delete_member(event):
     try:
         member_id = event['pathParameters']['memberId']
-        member_id = event['queryStringParameters']['memberId']
 
         members_table.delete_item(
-            Key={'app-memberId': member_id}
+            Key={'memberId': member_id}
         )
 
         return {'statusCode': 200, 'body': json.dumps({'message': 'Mitglied gelöscht'})}
     except Exception as e:
-        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+        return {'statusCode': 500, 'body': json.dumps({'error': str(event)})}
 
 
 

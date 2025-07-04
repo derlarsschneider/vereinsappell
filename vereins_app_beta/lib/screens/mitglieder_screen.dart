@@ -87,6 +87,35 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
     }
   }
 
+  Future<void> deleteMember() async {
+    if (selectedMember == null) return;
+
+    final memberId = selectedMember!['memberId'];
+    final url = Uri.parse('${widget.apiBaseUrl}/members/$memberId');
+
+    try {
+      final response = await http.delete(url);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Mitglied gelöscht')),
+        );
+        setState(() {
+          mitglieder.removeWhere((m) => m['memberId'] == memberId);
+          selectedMember = null;
+        });
+      } else {
+        print(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Löschen: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Netzwerkfehler beim Löschen')),
+      );
+    }
+  }
+
   Widget _buildMemberList() {
     return ListView.builder(
       itemCount: mitglieder.length,
@@ -157,10 +186,44 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
             ),
             SizedBox(height: 20),
             Center(
-              child: ElevatedButton.icon(
-                onPressed: saveMember,
-                icon: Icon(Icons.save),
-                label: Text('Speichern'),
+              child: Column(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: saveMember,
+                    icon: Icon(Icons.save),
+                    label: Text('Speichern'),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text('Mitglied löschen'),
+                          content: Text('Bist du sicher, dass du dieses Mitglied löschen willst?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text('Abbrechen'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                deleteMember();
+                              },
+                              child: Text('Löschen'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.delete),
+                    label: Text('Löschen'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
