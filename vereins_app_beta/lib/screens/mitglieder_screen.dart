@@ -61,6 +61,32 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
     });
   }
 
+  Future<void> saveMember() async {
+    if (selectedMember == null) return;
+
+    final url = Uri.parse('${widget.apiBaseUrl}/members');
+    final headers = {'Content-Type': 'application/json'};
+    final body = json.encode(selectedMember);
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Mitglied erfolgreich gespeichert')),
+        );
+      } else {
+        print(body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Speichern: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Netzwerkfehler beim Speichern')),
+      );
+    }
+  }
+
   Widget _buildMemberList() {
     return ListView.builder(
       itemCount: mitglieder.length,
@@ -127,6 +153,14 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
                 data: qrData,
                 version: QrVersions.auto,
                 size: 180.0,
+              ),
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: saveMember,
+                icon: Icon(Icons.save),
+                label: Text('Speichern'),
               ),
             ),
           ],

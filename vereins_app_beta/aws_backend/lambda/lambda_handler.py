@@ -60,10 +60,16 @@ def get_members(event):
 def add_member(event):
     try:
         data = json.loads(event['body'])
-        member_id = data['app-memberId']
+        member_id = data['memberId']
+        name = data['name']
+        is_admin = data.get('isAdmin', False)
+        is_spiess = data.get('isSpiess', False)
 
         item = {
-            'app-memberId': member_id,
+            'memberId': member_id,
+            'name': name,
+            'isAdmin': is_admin,
+            'isSpiess': is_spiess
         }
 
         members_table.put_item(Item=item)
