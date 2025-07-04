@@ -5,22 +5,19 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vereins_app_beta/main.dart';
+import 'package:vereins_app_beta/screens/default_screen.dart';
 
-class MitgliederScreen extends StatefulWidget {
-  final String apiBaseUrl;
-  final String applicationId;
-
+class MitgliederScreen extends DefaultScreen {
   const MitgliederScreen({
     super.key,
-    required this.apiBaseUrl,
-    required this.applicationId,
-  });
+    required super.config,
+  }) : super(title: 'Mitglieder',);
 
   @override
-  State<MitgliederScreen> createState() => _MitgliederScreenState();
+  DefaultScreenState createState() => _MitgliederScreenState();
 }
 
-class _MitgliederScreenState extends State<MitgliederScreen> {
+class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   List<dynamic> mitglieder = [];
   Map<String, dynamic>? selectedMember;
   bool isLoading = false;
@@ -42,7 +39,7 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
   Future<void> fetchMitglieder() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/members'));
+      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/members'));
       if (response.statusCode == 200) {
         setState(() {
           mitglieder = json.decode(response.body);
@@ -67,7 +64,7 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
   Future<void> saveMember() async {
     if (selectedMember == null) return;
 
-    final url = Uri.parse('${widget.apiBaseUrl}/members');
+    final url = Uri.parse('${widget.config.apiBaseUrl}/members');
     final headers = {'Content-Type': 'application/json'};
     final body = json.encode(selectedMember);
 
@@ -94,7 +91,7 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
     if (selectedMember == null) return;
 
     final memberId = selectedMember!['memberId'];
-    final url = Uri.parse('${widget.apiBaseUrl}/members/$memberId');
+    final url = Uri.parse('${widget.config.apiBaseUrl}/members/$memberId');
 
     try {
       final response = await http.delete(url);
@@ -122,7 +119,7 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
   Future<void> createMember(String name) async {
     if (name.trim().isEmpty) return;
     final memberId = applicationId + DateTime.now().millisecondsSinceEpoch.toString();
-    final url = Uri.parse('${widget.apiBaseUrl}/members');
+    final url = Uri.parse('${widget.config.apiBaseUrl}/members');
 
     final newMember = {
       'name': name,
@@ -198,8 +195,8 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
     }
 
     final qrData = json.encode({
-      "apiBaseUrl": widget.apiBaseUrl,
-      "applicationId": widget.applicationId,
+      "apiBaseUrl": widget.config.apiBaseUrl,
+      "applicationId": widget.config.applicationId,
       "memberId": selectedMember!['memberId'],
     });
 

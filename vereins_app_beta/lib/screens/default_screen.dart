@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../config_loader.dart';
+
 class DefaultScreen extends StatefulWidget {
   final String title;
-  final String apiBaseUrl;
-  final String memberId;
-  final bool isAdmin;
+  final AppConfig config;
 
   const DefaultScreen({
     Key? key,
     required this.title,
-    required this.apiBaseUrl,
-    required this.memberId,
-    required this.isAdmin,
+    required this.config,
   }) : super(key: key);
 
   @override

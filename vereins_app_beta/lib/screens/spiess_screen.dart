@@ -10,9 +10,7 @@ class SpiessScreen extends DefaultScreen {
 
   const SpiessScreen({
     super.key,
-    required super.apiBaseUrl,
-    required super.memberId,
-    required super.isAdmin,
+    required super.config,
   }) : super(title: 'Spieß',);
 
   @override
@@ -42,7 +40,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       isLoadingMembers = true;
     });
     try {
-      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/members'));
+      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/members'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -66,7 +64,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       selectedMemberFines.clear();
     });
     try {
-      final finesResponse = await http.get(Uri.parse('${widget.apiBaseUrl}/fines?memberId=$memberId'));
+      final finesResponse = await http.get(Uri.parse('${widget.config.apiBaseUrl}/fines?memberId=$memberId'));
       if (finesResponse.statusCode == 200) {
         final Map<String, dynamic> response = json.decode(finesResponse.body);
         final String name = response['name'];
@@ -93,7 +91,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       // Generate a unique ID for the fine
       final fineId = DateTime.now().millisecondsSinceEpoch.toString();
       final response = await http.post(
-        Uri.parse('${widget.apiBaseUrl}/fines'),
+        Uri.parse('${widget.config.apiBaseUrl}/fines'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'fineId': fineId,
@@ -124,7 +122,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
   Future<void> deleteFine(String fineId) async {
     try {
-      final response = await http.delete(Uri.parse('${widget.apiBaseUrl}/fines/$fineId'));
+      final response = await http.delete(Uri.parse('${widget.config.apiBaseUrl}/fines/$fineId'));
 
       if (response.statusCode == 200) {
         if (selectedMemberId != null) {

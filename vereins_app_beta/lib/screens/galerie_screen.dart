@@ -10,9 +10,7 @@ class FotogalerieScreen extends DefaultScreen {
 
   const FotogalerieScreen({
     super.key,
-    required super.apiBaseUrl,
-    required super.memberId,
-    required super.isAdmin,
+    required super.config,
   }) : super(title: 'Fotogalerie',);
 
   @override
@@ -33,7 +31,7 @@ class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
   Future<void> fetchPhotos() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.apiBaseUrl}/photos'));
+      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -61,7 +59,7 @@ class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
     setState(() => isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('${widget.apiBaseUrl}/photos'),
+        Uri.parse('${widget.config.apiBaseUrl}/photos'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'imageBase64': base64Image}),
       );
@@ -83,7 +81,7 @@ class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
     setState(() => isLoading = true);
     try {
       final response =
-      await http.delete(Uri.parse('${widget.apiBaseUrl}/photos/$photoId'));
+      await http.delete(Uri.parse('${widget.config.apiBaseUrl}/photos/$photoId'));
 
       if (response.statusCode == 200) {
         _showMessage('Foto gelöscht');
@@ -133,7 +131,7 @@ class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
             fit: StackFit.expand,
             children: [
               Image.network(photoUrl, fit: BoxFit.cover),
-              if (widget.isAdmin)
+              if (widget.config.isAdmin)
                 Positioned(
                   top: 4,
                   right: 4,
