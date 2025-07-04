@@ -11,7 +11,7 @@ class StrafenScreen extends DefaultScreen {
   const StrafenScreen({
     super.key,
     required super.apiBaseUrl,
-    required super.currentUserId,
+    required super.memberId,
     required super.isAdmin,
   }) : super(title: 'Fotogalerie',);
 
@@ -37,7 +37,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
 
     try {
       final finesResponse = await http.get(
-        Uri.parse('${widget.apiBaseUrl}/fines?memberId=${widget.currentUserId}'),
+        Uri.parse('${widget.apiBaseUrl}/fines?memberId=${widget.memberId}'),
       );
 
       if (finesResponse.statusCode == 200) {

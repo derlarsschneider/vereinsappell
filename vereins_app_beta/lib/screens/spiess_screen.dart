@@ -11,7 +11,7 @@ class SpiessScreen extends DefaultScreen {
   const SpiessScreen({
     super.key,
     required super.apiBaseUrl,
-    required super.currentUserId,
+    required super.memberId,
     required super.isAdmin,
   }) : super(title: 'Spieß',);
 

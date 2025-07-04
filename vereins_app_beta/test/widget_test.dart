@@ -7,13 +7,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vereins_app_beta/config_loader.dart';
 
 import 'package:vereins_app_beta/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(SchuetzenvereinApp());
+    await tester.pumpWidget(
+      MainApp(config: AppConfig(
+        apiBaseUrl: 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com',
+          applicationId: applicationId,
+          memberId: 'm5',
+          isAdmin: isAdmin,
+          appName: appName),
+      )
+    );
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

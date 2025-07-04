@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 class DefaultScreen extends StatefulWidget {
   final String title;
   final String apiBaseUrl;
-  final String currentUserId;
+  final String memberId;
   final bool isAdmin;
 
   const DefaultScreen({
     Key? key,
     required this.title,
     required this.apiBaseUrl,
-    required this.currentUserId,
+    required this.memberId,
     required this.isAdmin,
   }) : super(key: key);
 
