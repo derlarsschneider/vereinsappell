@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:vereins_app_beta/main.dart';
 
 class MitgliederScreen extends StatefulWidget {
   final String apiBaseUrl;
@@ -116,16 +119,76 @@ class _MitgliederScreenState extends State<MitgliederScreen> {
     }
   }
 
-  Widget _buildMemberList() {
-    return ListView.builder(
-      itemCount: mitglieder.length,
-      itemBuilder: (context, index) {
-        final member = mitglieder[index];
-        return ListTile(
-          title: Text(member['name'] ?? 'Unbekannt'),
-          onTap: () => _selectMember(member),
+  Future<void> createMember(String name) async {
+    if (name.trim().isEmpty) return;
+    final memberId = applicationId + DateTime.now().millisecondsSinceEpoch.toString();
+    final url = Uri.parse('${widget.apiBaseUrl}/members');
+
+    final newMember = {
+      'name': name,
+      'memberId': memberId,
+      'isAdmin': false,
+      'isSpiess': false,
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(newMember),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final newMember = json.decode(response.body);
+        setState(() {
+          mitglieder.add(newMember);
+        });
+        _selectMember(newMember);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Erstellen: ${response.statusCode}')),
         );
-      },
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Netzwerkfehler beim Erstellen')),
+      );
+    }
+  }
+
+  Widget _buildMemberList() {
+    final TextEditingController _newNameController = TextEditingController();
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: mitglieder.length,
+            itemBuilder: (context, index) {
+              final member = mitglieder[index];
+              return ListTile(
+                title: Text(member['name'] ?? 'Unbekannt'),
+                onTap: () => _selectMember(member),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            controller: _newNameController,
+            decoration: InputDecoration(
+              labelText: 'Neues Mitglied hinzufügen',
+              suffixIcon: Icon(Icons.person_add),
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (value) {
+              createMember(value);
+              _newNameController.clear();
+            },
+          ),
+        ),
+      ],
     );
   }
 
