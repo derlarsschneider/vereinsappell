@@ -33,7 +33,10 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _items = data.map((e) => MarschbefehlEintrag.fromJson(e)).toList();
+          _items = data
+              .map((e) => MarschbefehlEintrag.fromJson(e))
+              .toList()
+            ..sort((a, b) => a.datetime.compareTo(b.datetime)); // 🔧 Sortieren nach Datum
           _isLoading = false;
         });
       } else {
@@ -68,10 +71,12 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 100,
+                    width: 120,
                     child: Text(
                       eintrag.getFormattedDateTime(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 12),

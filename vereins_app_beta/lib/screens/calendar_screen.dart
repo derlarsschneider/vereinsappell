@@ -30,8 +30,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
 
     try {
-      // Beispiel ICS URL (kann beliebig geändert werden)
-      final url = Uri.parse('https://www.schuetzenlust-gnadental.de/index.php/termine/eventslist/?format=raw&layout=ics');
+      final url = Uri.parse(
+          'https://www.schuetzenlust-gnadental.de/index.php/termine/eventslist/?format=raw&layout=ics');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -40,6 +40,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
         setState(() {
           events = calendar.data;
+          events.sort((a, b) {
+            final aDate = a['dtstart']?.toDateTime() ?? DateTime(2100);
+            final bDate = b['dtstart']?.toDateTime() ?? DateTime(2100);
+            return aDate.compareTo(bDate);
+          });
         });
       } else {
         setState(() {
@@ -57,45 +62,68 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  String formatDate(String? dt) {
-    if (dt == null) return '';
-    // Einfaches Formatieren von z.B. 20230704T000000Z in lesbares Datum
-    if (dt.length >= 8) {
-      final y = dt.substring(0, 4);
-      final m = dt.substring(4, 6);
-      final d = dt.substring(6, 8);
-      return '$d.$m.$y';
-    }
-    return dt;
+  String formatDateTime(DateTime dt) {
+    return DateFormat('dd.MM.yyyy HH:mm \'Uhr\'').format(dt);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('📅 Termine')),
+      appBar: AppBar(title: const Text('📅 Termine')),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : error != null
           ? Center(child: Text(error!))
           : ListView.builder(
         itemCount: events.length,
         itemBuilder: (context, index) {
           final event = events[index];
-          final summary = event['summary'];
-          // if event has key dtstart
-          final String start = event.containsKey('dtstart') ?  DateFormat('dd.MM.yyyy HH:mm').format(event['dtstart'].toDateTime()): '';
-          final location = event['location'] ?? '?';
-          return ListTile(
-            title: Text(summary),
-            subtitle: Text(
-              '${start} @ ${location}',
+          final title = event['summary'] ?? '';
+          final location = event['location'] ?? '';
+          final start = event['dtstart']?.toDateTime();
+
+          if (start == null) return const SizedBox.shrink();
+
+          return Padding(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 150,
+                  child: Text(
+                    formatDateTime(start),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w500)),
+                      if (location.isNotEmpty)
+                        Text(location,
+                            style:
+                            const TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: fetchIcs,
-        child: Icon(Icons.refresh),
+        child: const Icon(Icons.refresh),
         tooltip: 'Termine neu laden',
       ),
     );
