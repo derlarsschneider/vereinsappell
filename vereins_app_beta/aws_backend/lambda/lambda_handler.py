@@ -217,7 +217,7 @@ def delete_fine(event):
 
 def get_marschbefehl(event):
     now = datetime.now()
-    datetimestamp = now.strftime("%Y-%m-%d %H:%M")
+    datetimestamp = now.strftime("%Y-%m-%d")
 
     items = []
     query_filter = Key('type').eq('marschbefehl') & Key('datetime').gte(datetimestamp)

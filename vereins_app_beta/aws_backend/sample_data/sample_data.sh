@@ -65,8 +65,12 @@ aws dynamodb put-item \
 rm "$ITEM_FILE"
 }
 
-add_marschbefehl "2026-05-30 18:00" "foobar"
+add_marschbefehl "2026-05-30 18:00" "Kirmesplatzeröffnung an der Frankenheim-Bude
+Anschl. Kirmeseröffnungsparty im Festzelt (freiwillig)"
+add_marschbefehl "2026-05-31 12:00" "Eröffnung des Schützenfestes"
+add_marschbefehl "2026-05-31 12:15" "Schießwettbewerbe des Regiments"
 
+exit
 add_member "m1" "André Muller"          "false" "false"
 add_member "m6" "Theo Schneider"        "false" "false"
 add_member "m3" "Thomas Becker"         "false" "false"
