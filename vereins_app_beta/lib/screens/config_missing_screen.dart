@@ -1,11 +1,10 @@
-// lib/screens/config_missing_screen.dart
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path_provider/path_provider.dart';
+
 import '../config_loader.dart';
 import 'create_verein_screen.dart';
 import 'home_screen.dart';
@@ -16,10 +15,20 @@ class ConfigMissingScreen extends StatefulWidget {
 }
 
 class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   bool scanning = false;
+  bool qrHandled = false;
+  final MobileScannerController cameraController = MobileScannerController();
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
+  }
 
   void handleQRCode(String data) async {
+    if (qrHandled) return;
+    qrHandled = true;
+
     try {
       final jsonData = jsonDecode(data);
       final apiBaseUrl = jsonData['apiBaseUrl'];
@@ -59,11 +68,13 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       SnackBar(content: Text(message)),
     );
     setState(() => scanning = false);
+    qrHandled = false;
   }
 
   void startQRScan() {
     setState(() {
       scanning = true;
+      qrHandled = false;
     });
   }
 
@@ -72,13 +83,15 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     if (scanning) {
       return Scaffold(
         appBar: AppBar(title: Text('QR-Code scannen')),
-        body: QRView(
-          key: qrKey,
-          onQRViewCreated: (QRViewController controller) {
-            controller.scannedDataStream.listen((scanData) {
-              controller.dispose();
-              handleQRCode(scanData.code ?? '');
-            });
+        body: MobileScanner(
+          controller: cameraController,
+          onDetect: (capture) {
+            final barcode = capture.barcodes.first;
+            final String? code = barcode.rawValue;
+            if (code != null) {
+              cameraController.stop();
+              handleQRCode(code);
+            }
           },
         ),
       );
