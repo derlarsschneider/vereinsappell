@@ -9,7 +9,9 @@ ITEM_FILE="${SCRIPT_DIR}/temp_item.json"
 jq -nc \
   --arg id "$1" \
   --arg name "$2" \
-  '{memberId: {S: $id}, name: {S: $name}}' | tee "$ITEM_FILE"
+  --arg isSpiess "$3" \
+  --arg isAdmin "$4" \
+  '{memberId: {S: $id}, name: {S: $name}, isSpiess: {BOOL: ($isSpiess == "true")}, isAdmin: {BOOL: ($isAdmin == "true")}}' | tee "$ITEM_FILE"
 
 # Einfügen in DynamoDB über Datei
 aws dynamodb put-item \
@@ -42,22 +44,22 @@ aws dynamodb put-item \
 rm "$ITEM_FILE"
 }
 
-add_member "m1" "André Muller"
-add_member "m6" "Theo Schneider"
-add_member "m3" "Thomas Becker"
-add_member "m4" "René Müller"
-add_member "m5" "Lars Schiller"
-add_member "m2" "Jannik Müller"
-add_member "m7" "Volker Maasch"
-add_member "m8" "Daniel Fellert"
-add_member "m9" "Dominik Schiefer"
-add_member "m10" "Eckhard Linden"
-add_member "m11" "Hermann-Josef Becker"
-add_member "m12" "Jochen Schmidt"
-add_member "m13" "Jörg Michels"
-add_member "m14" "Michael Overmann"
-add_member "m15" "Willi Müller"
-add_member "m16" "Wolfgang Fiedler"
+add_member "m1" "André Muller"          "false" "false"
+add_member "m6" "Theo Schneider"        "false" "false"
+add_member "m3" "Thomas Becker"         "false" "false"
+add_member "m4" "René Müller"           "false" "false"
+add_member "m5" "Lars Schiller"         "true"  "true"
+add_member "m2" "Jannik Müller"         "false" "false"
+add_member "m7" "Volker Maasch"         "false" "false"
+add_member "m8" "Daniel Fellert"        "false" "false"
+add_member "m9" "Dominik Schiefer"      "false" "false"
+add_member "m10" "Eckhard Linden"       "false" "false"
+add_member "m11" "Hermann-Josef Becker" "false" "false"
+add_member "m12" "Jochen Schmidt"       "false" "false"
+add_member "m13" "Jörg Michels"         "false" "false"
+add_member "m14" "Michael Overmann"     "false" "false"
+add_member "m15" "Willi Müller"         "false" "false"
+add_member "m16" "Wolfgang Fiedler"     "false" "false"
 echo "✅ Alle Mitglieder wurden eingefügt."
 
 add_fine "f1" "m1" "Falsche Kleidung" "1.00"
