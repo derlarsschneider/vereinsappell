@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 import uuid
+import base64
 from boto3.dynamodb.conditions import Key
 from datetime import datetime
 
@@ -13,6 +14,9 @@ marschbefehl_table_name = os.environ.get('MARSCHBEFEHL_TABLE_NAME')
 members_table = dynamodb.Table(members_table_name)
 fines_table = dynamodb.Table(fines_table_name)
 marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
+
+s3 = boto3.client('s3')
+s3_bucket_name = os.environ.get('PHOTOS_BUCKET_NAME')
 
 def lambda_handler(event, context):
     try:
@@ -35,6 +39,10 @@ def lambda_handler(event, context):
             return delete_fine(event)
         elif method == 'GET' and path == '/marschbefehl':
             return get_marschbefehl(event)
+        elif method == 'GET' and path == '/photos':
+            return get_photos(event)
+        elif method == 'POST' and path == '/photos':
+            return post_photo(event)
         else:
             return {
                 'statusCode': 404,
@@ -45,7 +53,6 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(e), 'event': event})
         }
-
 
 def get_member_by_id(event):
     try:
@@ -238,4 +245,69 @@ def get_marschbefehl(event):
     return {
         'statusCode': 200,
         'body': json.dumps(items)
+    }
+
+
+def get_photos(event):
+    try:
+        prefix = 'photos/'
+        response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=prefix)
+        items = response.get('Contents', [])
+
+        photo_urls = []
+        for item in items:
+            key = item['Key']
+            if key.endswith('.jpg') or key.endswith('.jpeg') or key.endswith('.png'):
+                url = s3.generate_presigned_url(
+                    ClientMethod='get_object',
+                    Params={'Bucket': s3_bucket_name, 'Key': key},
+                    ExpiresIn=900  # URL 15 Minuten gültig
+                )
+                photo_urls.append({
+                    'key': key,
+                    'url': url
+                })
+
+        return _response(200, photo_urls)
+    except Exception as e:
+        return _response(500, f'Fehler beim Abrufen der Fotos: {str(e)}')
+
+
+def post_photo(event):
+    try:
+        body = event.get('body')
+        if not body:
+            return _response(400, 'Kein Inhalt')
+
+        data = json.loads(body)
+        image_base64 = data.get('imageBase64')
+
+        if not image_base64:
+            return _response(400, 'Kein Bild enthalten')
+
+        image_bytes = base64.b64decode(image_base64)
+        image_id = str(uuid.uuid4())
+        s3_key = f'photos/{image_id}.jpg'
+
+        s3.put_object(
+            Bucket=s3_bucket_name,
+            Key=s3_key,
+            Body=image_bytes,
+            ContentType='image/jpeg',
+        )
+
+        image_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{s3_key}'
+        return _response(200, {
+            'id': image_id,
+            'url': image_url
+        })
+
+    except Exception as e:
+        return _response(500, f'Fehler beim Hochladen: {str(e)}')
+
+def _response(status_code, body):
+    return {
+        'statusCode': status_code,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(body)
     }

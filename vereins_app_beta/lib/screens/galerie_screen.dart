@@ -32,6 +32,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     setState(() => isLoading = true);
     try {
       final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos'));
+      print("Response: " + response.body);
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {

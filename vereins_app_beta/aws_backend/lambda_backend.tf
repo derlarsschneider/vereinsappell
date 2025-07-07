@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "lambda_backend" {
     function_name = "${local.name_prefix}-lambda_backend"
-    role          = aws_iam_role.lambda_exec.arn
+    role          = aws_iam_role.lambda_role.arn
     handler       = "lambda_handler.lambda_handler"
     runtime       = "python3.10"
     filename      = "lambda/lambda.zip"
@@ -10,6 +10,7 @@ resource "aws_lambda_function" "lambda_backend" {
             FINES_TABLE_NAME = aws_dynamodb_table.fines_table.name,
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
+            PHOTOS_BUCKET_NAME = aws_s3_bucket.photos.bucket,
         }
     }
 }
@@ -38,4 +39,21 @@ resource "aws_apigatewayv2_stage" "default" {
     api_id      = aws_apigatewayv2_api.http_api.id
     name        = "$default"
     auto_deploy = true
+}
+
+resource "aws_iam_role" "lambda_role" {
+    name = "${local.name_prefix}-lambda_role"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Action = "sts:AssumeRole"
+                Effect = "Allow"
+                Principal = {
+                    Service = "lambda.amazonaws.com"
+                }
+            },
+        ]
+    })
 }
