@@ -1,30 +1,30 @@
 // lib/config_loader.dart
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConfig {
   final String apiBaseUrl;
   final String applicationId;
   final String memberId;
-  final bool isAdmin;
-  final String appName;
+  final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
+  late final Member member;
 
   AppConfig({
     required this.apiBaseUrl,
     required this.applicationId,
     required this.memberId,
-    required this.isAdmin,
-    required this.appName,
-  });
+  }) {
+    member = Member(config: this);
+  }
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
     return AppConfig(
       apiBaseUrl: json['apiBaseUrl'],
       applicationId: json['applicationId'],
       memberId: json['memberId'],
-      isAdmin: json['isAdmin'],
-      appName: json['appName'],
     );
   }
 }
@@ -44,5 +44,51 @@ Future<AppConfig?> loadConfigFile() async {
   } catch (e) {
     print("Fehler beim Laden der config.json: $e");
     return null;
+  }
+}
+
+class Member extends ChangeNotifier {
+  final AppConfig config;
+  String name = '';
+  bool _isSpiess = false;
+  bool _isAdmin = false;
+
+  Member({required this.config}) {
+    fetchMember();
+  }
+
+  bool get isSpiess => _isSpiess;
+  bool get isAdmin => _isAdmin;
+
+  Future<void> fetchMember() async {
+    try {
+      final response = await http.get(Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic>? member = jsonDecode(response.body);
+        name = member?['name'] ?? '';
+        final bool newIsSpiess = member?['isSpiess'] ?? false;
+        final bool newIsAdmin = member?['isAdmin'] ?? false;
+
+        bool changed = false;
+
+        if (newIsSpiess != _isSpiess) {
+          _isSpiess = newIsSpiess;
+          changed = true;
+        }
+
+        if (newIsAdmin != _isAdmin) {
+          _isAdmin = newIsAdmin;
+          changed = true;
+        }
+
+        if (changed) {
+          notifyListeners(); // UI benachrichtigen
+        }
+      } else {
+        print('Fehler beim Laden des Mitglieds im Config Loader: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Fehler beim Parsen des Mitglieds im Config Loader: $e');
+    }
   }
 }

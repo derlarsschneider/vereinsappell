@@ -18,6 +18,8 @@ def lambda_handler(event, context):
 
         if method == 'GET' and path == '/members':
             return get_members(event)
+        elif method == 'GET' and path.startswith('/members/'):
+            return get_member_by_id(event)
         elif method == 'POST' and path == '/members':
             return add_member(event)
         elif method == 'DELETE' and path.startswith('/members/'):
@@ -39,6 +41,33 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e), 'event': event})
         }
 
+
+def get_member_by_id(event):
+    try:
+        member_id = event['pathParameters']['memberId']
+
+        response = members_table.get_item(
+            Key={'memberId': member_id}
+        )
+
+        item = response.get('Item')
+
+        if not item:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': 'Mitglied nicht gefunden'})
+            }
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(item)
+        }
+
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e), 'event': event})
+        }
 
 def get_members(event):
     items = []

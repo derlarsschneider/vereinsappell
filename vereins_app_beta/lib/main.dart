@@ -7,8 +7,6 @@ import 'config_loader.dart';
 // final String apiBaseUrl = 'http://localhost:5000';
 final String apiBaseUrl = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
 final String applicationId = 'lknfar-lkjfd';
-final bool isAdmin = true;
-final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +26,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: appName,
+      title: config.appName,
       theme: ThemeData(
         primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,

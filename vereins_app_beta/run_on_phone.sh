@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-device="192.168.0.195:46597"
+device="192.168.0.195:37789"
 
 # if command line arguments are given, use them
 if [ "$#" -gt 0 ]; then
@@ -23,6 +23,7 @@ fi
 if [ -z "$STEP" ] || [ "$STEP" == "INSTALL" ]; then
   echo INSTALL
   ~/tools/android/platform-tools/adb -s ${device} install -r build/app/outputs/flutter-apk/app-release.apk
+  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p com.example.vereins_app_beta -c android.intent.category.LAUNCHER 1
 fi
 
 if [ -z "$STEP" ] || [ "$STEP" == "RUN" ]; then

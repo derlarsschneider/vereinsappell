@@ -11,7 +11,7 @@ class StrafenScreen extends DefaultScreen {
   const StrafenScreen({
     super.key,
     required super.config,
-  }) : super(title: 'Fotogalerie',);
+  }) : super(title: 'Strafen',);
 
   @override
   DefaultScreenState createState() => _StrafenScreenState();

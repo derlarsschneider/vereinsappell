@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
@@ -68,9 +69,7 @@ class _MainMenuState extends State<MainMenu> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(member != null
-            ? 'Willkommen, ${member!['name']}'
-            : 'Willkommen'),
+        title: Text(widget.config.appName),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
@@ -78,7 +77,15 @@ class _MainMenuState extends State<MainMenu> {
           ),
         ],
       ),
-      body: _buildGridMenu(context),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildGridMenu(context),
+            const SizedBox(height: 16),
+            _buildMemberInfoCard(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -89,6 +96,8 @@ class _MainMenuState extends State<MainMenu> {
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
       padding: const EdgeInsets.all(12),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(), // wichtig!
       children: [
         _buildMenuTile(context, '📅 Termine', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()))),
         _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "📢 Marschbefehl", config: widget.config)))),
@@ -115,6 +124,45 @@ class _MainMenuState extends State<MainMenu> {
               maxLines: 2,
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberInfoCard() {
+    if (member == null) return const SizedBox();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: GestureDetector(
+        onLongPress: () async {
+          setState(() => isLoading = true);
+          await _loadMember();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mitgliedsdaten aktualisiert')),
+          );
+        },
+        child: Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('👤 Mitglied: ${member!['name'] ?? 'Unbekannt'}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('🛡️ Spieß: ${member!['isSpiess'] == true ? 'Ja' : 'Nein'}'),
+                Text('🛠️ Admin: ${member!['isAdmin'] == true ? 'Ja' : 'Nein'}'),
+                const SizedBox(height: 4),
+                const Text(
+                  '🔄 Lange drücken zum Aktualisieren',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+                ),
+              ],
             ),
           ),
         ),

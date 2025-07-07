@@ -131,7 +131,7 @@ class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
             fit: StackFit.expand,
             children: [
               Image.network(photoUrl, fit: BoxFit.cover),
-              if (widget.config.isAdmin)
+              if (widget.config.member.isAdmin)
                 Positioned(
                   top: 4,
                   right: 4,

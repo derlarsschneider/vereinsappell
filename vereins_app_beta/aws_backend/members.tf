@@ -15,6 +15,12 @@ resource "aws_apigatewayv2_route" "members_get" {
     target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+resource "aws_apigatewayv2_route" "member_get" {
+    api_id    = aws_apigatewayv2_api.http_api.id
+    route_key = "GET /members/{memberId}"
+    target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
 resource "aws_apigatewayv2_route" "members_post" {
     api_id    = aws_apigatewayv2_api.http_api.id
     route_key = "POST /members"
