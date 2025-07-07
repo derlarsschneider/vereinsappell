@@ -19,8 +19,7 @@ void main() {
         apiBaseUrl: 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com',
           applicationId: applicationId,
           memberId: 'm5',
-          isAdmin: isAdmin,
-          appName: appName),
+          ),
       )
     );
 
