@@ -6,18 +6,18 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:vereins_app_beta/screens/default_screen.dart';
 
-class FotogalerieScreen extends DefaultScreen {
+class GalleryScreen extends DefaultScreen {
 
-  const FotogalerieScreen({
+  const GalleryScreen({
     super.key,
     required super.config,
   }) : super(title: 'Fotogalerie',);
 
   @override
-  DefaultScreenState createState() => _FotogalerieScreenState();
+  DefaultScreenState createState() => _GalleryScreenState();
 }
 
-class _FotogalerieScreenState extends DefaultScreenState<FotogalerieScreen> {
+class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   List<Map<String, dynamic>> photos = [];
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
