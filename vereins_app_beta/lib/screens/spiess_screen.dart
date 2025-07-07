@@ -84,7 +84,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
     }
   }
 
-  Future<void> addFine(String memberId, String reason, double amount) async {
+  Future<void> addFine(String memberId, String reason, double amount, BuildContext dialogContext) async {
     try {
       // Float types are not supported. Use Decimal types instead
       final decimalAmount = Decimal.parse(amount.toString());
@@ -103,7 +103,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
       if (response.statusCode == 200) {
         await fetchFines(memberId);
-        Navigator.of(context).pop();
+        Navigator.of(dialogContext).pop(); // <- nur den Dialog schließen
       } else {
         print(response.body);
         print(response.headers);
@@ -114,7 +114,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       }
     } catch (e) {
       print('Fehler beim Speichern der Strafe: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
         SnackBar(content: Text('Fehler beim Speichern der Strafe')),
       );
     }
@@ -161,7 +161,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(
+      builder: (dialogContext) => StatefulBuilder(
         builder: (context, setStateDialog) => AlertDialog(
           title: Text('Neue Strafe für $selectedMemberName'),
           content: Column(
@@ -206,7 +206,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(), // <- Wichtig!
               child: Text('Abbrechen'),
             ),
             ElevatedButton(
@@ -214,7 +214,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                 final reason = selectedReason ?? '';
                 final amount = selectedAmount?.toDouble();
                 if (reason.isNotEmpty && amount != null && amount > 0) {
-                  addFine(selectedMemberId!, reason, amount);
+                  addFine(selectedMemberId!, reason, amount, dialogContext); // <-- neu
                 }
               },
               child: Text('Hinzufügen'),
