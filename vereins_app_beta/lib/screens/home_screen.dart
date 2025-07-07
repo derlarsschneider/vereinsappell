@@ -1,9 +1,6 @@
-// lib/screens/home_screen.dart
-import 'dart:convert';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:vereins_app_beta/screens/spiess_screen.dart';
 import 'package:vereins_app_beta/screens/strafen_screen.dart';
 
@@ -13,63 +10,19 @@ import 'default_screen.dart';
 import 'galerie_screen.dart';
 import 'mitglieder_screen.dart';
 
-class MainMenu extends StatefulWidget {
+class MainMenu extends StatelessWidget {
   final AppConfig config;
   final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
 
-  const MainMenu({required this.config});
-
-  @override
-  _MainMenuState createState() => _MainMenuState();
-}
-
-class _MainMenuState extends State<MainMenu> {
-  Map<String, dynamic>? member;
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMember();
-  }
-
-  Future<Map<String, dynamic>> fetchMember(String apiBaseUrl, String memberId) async {
-    final response = await http.get(Uri.parse('$apiBaseUrl/members/$memberId'));
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Fehler beim Laden');
-    }
-  }
-
-  Future<void> _loadMember() async {
-    try {
-      // Beispiel: API-Aufruf, du kannst auch SharedPreferences oder anderes nehmen
-      final response = await fetchMember(widget.config.apiBaseUrl, widget.config.memberId);
-      setState(() {
-        member = response;
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Fehler beim Laden des Mitglieds: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+  const MainMenu({required this.config, super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Lade...')),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    final member = Provider.of<Member>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.config.appName),
+        title: Text(config.appName),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
@@ -80,16 +33,26 @@ class _MainMenuState extends State<MainMenu> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildGridMenu(context),
+            _buildGridMenu(context, member),
             const SizedBox(height: 16),
-            _buildMemberInfoCard(),
+            _buildMemberInfoCard(context, member),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildGridMenu(BuildContext context) {
+  Widget _buildGridMenu(BuildContext context, Member member) {
+    final tiles = <Widget>[
+      _buildMenuTile(context, '📅 Termine', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()))),
+      _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "📢 Marschbefehl", config: config)))),
+      _buildMenuTile(context, '💰 Strafen', () => Navigator.push(context, MaterialPageRoute(builder: (_) => StrafenScreen(config: config)))),
+      if (member.isSpiess) _buildMenuTile(context, '🛡️ Spieß', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpiessScreen(config: config)))),
+      _buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => FotogalerieScreen(config: config)))),
+      _buildMenuTile(context, '🎲 Knobeln', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "🎲 Knobeln", config: config)))),
+      if (member.isAdmin) _buildMenuTile(context, '👥 Mitglieder', () => Navigator.push(context, MaterialPageRoute(builder: (_) => MitgliederScreen(config: config)))),
+    ];
+
     return GridView.count(
       crossAxisCount: 2,
       childAspectRatio: 3,
@@ -97,16 +60,8 @@ class _MainMenuState extends State<MainMenu> {
       mainAxisSpacing: 8,
       padding: const EdgeInsets.all(12),
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // wichtig!
-      children: [
-        _buildMenuTile(context, '📅 Termine', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()))),
-        _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "📢 Marschbefehl", config: widget.config)))),
-        _buildMenuTile(context, '💰 Strafen', () => Navigator.push(context, MaterialPageRoute(builder: (_) => StrafenScreen(config: widget.config)))),
-        _buildMenuTile(context, '🛡️ Spieß', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpiessScreen(config: widget.config)))),
-        _buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => FotogalerieScreen(config: widget.config)))),
-        _buildMenuTile(context, '🎲 Knobeln', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "🎲 Knobeln", config: widget.config)))),
-        _buildMenuTile(context, '👥 Mitglieder', () => Navigator.push(context, MaterialPageRoute(builder: (_) => MitgliederScreen(config: widget.config)))),
-      ],
+      physics: const NeverScrollableScrollPhysics(),
+      children: tiles,
     );
   }
 
@@ -122,7 +77,7 @@ class _MainMenuState extends State<MainMenu> {
             child: AutoSizeText(
               title,
               maxLines: 2,
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
           ),
@@ -131,15 +86,12 @@ class _MainMenuState extends State<MainMenu> {
     );
   }
 
-  Widget _buildMemberInfoCard() {
-    if (member == null) return const SizedBox();
-
+  Widget _buildMemberInfoCard(BuildContext context, Member member) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: GestureDetector(
         onLongPress: () async {
-          setState(() => isLoading = true);
-          await _loadMember();
+          await member.fetchMember();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Mitgliedsdaten aktualisiert')),
           );
@@ -152,11 +104,13 @@ class _MainMenuState extends State<MainMenu> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('👤 Mitglied: ${member!['name'] ?? 'Unbekannt'}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(
+                  '👤 Mitglied: ${member.name.isNotEmpty ? member.name : "Unbekannt"}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 4),
-                Text('🛡️ Spieß: ${member!['isSpiess'] == true ? 'Ja' : 'Nein'}'),
-                Text('🛠️ Admin: ${member!['isAdmin'] == true ? 'Ja' : 'Nein'}'),
+                Text('🛡️ Spieß: ${member.isSpiess ? "Ja" : "Nein"}'),
+                Text('🛠️ Admin: ${member.isAdmin ? "Ja" : "Nein"}'),
                 const SizedBox(height: 4),
                 const Text(
                   '🔄 Lange drücken zum Aktualisieren',

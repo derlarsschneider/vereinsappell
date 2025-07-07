@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vereins_app_beta/screens/config_missing_screen.dart';
 import 'package:vereins_app_beta/screens/home_screen.dart';
 import 'config_loader.dart';
@@ -13,26 +14,29 @@ void main() async {
 
   final config = await loadConfigFile();
 
-  runApp(MaterialApp(
-    home: config == null
-        ? ConfigMissingScreen()
+  runApp(
+    config == null
+        ? MaterialApp(home: ConfigMissingScreen())
         : MainApp(config: config),
-  ));
+  );
 }
 
 class MainApp extends StatelessWidget {
   final AppConfig config;
-  const MainApp({required this.config});
+  const MainApp({super.key, required this.config});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: config.appName,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return ChangeNotifierProvider<Member>.value(
+      value: config.member,
+      child: MaterialApp(
+        title: config.appName,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: MainMenu(config: config),
       ),
-      home: MainMenu(config: config),
     );
   }
 }
-
