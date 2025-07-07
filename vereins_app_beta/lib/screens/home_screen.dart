@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import '../config_loader.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'galerie_screen.dart';
+import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
 
 class MainMenu extends StatelessWidget {
@@ -45,7 +47,7 @@ class MainMenu extends StatelessWidget {
   Widget _buildGridMenu(BuildContext context, Member member) {
     final tiles = <Widget>[
       _buildMenuTile(context, '📅 Termine', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()))),
-      _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "📢 Marschbefehl", config: config)))),
+      _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => MarschbefehlScreen(config: config)))),
       _buildMenuTile(context, '💰 Strafen', () => Navigator.push(context, MaterialPageRoute(builder: (_) => StrafenScreen(config: config)))),
       if (member.isSpiess) _buildMenuTile(context, '🛡️ Spieß', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpiessScreen(config: config)))),
       _buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => FotogalerieScreen(config: config)))),

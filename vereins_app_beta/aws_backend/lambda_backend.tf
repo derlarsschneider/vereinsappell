@@ -9,6 +9,7 @@ resource "aws_lambda_function" "lambda_backend" {
         variables = {
             FINES_TABLE_NAME = aws_dynamodb_table.fines_table.name,
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
+            MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
         }
     }
 }

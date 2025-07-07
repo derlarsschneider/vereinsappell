@@ -3,13 +3,16 @@ import os
 import boto3
 import uuid
 from boto3.dynamodb.conditions import Key
+from datetime import datetime
+
 
 dynamodb = boto3.resource('dynamodb')
 members_table_name = os.environ.get('MEMBERS_TABLE_NAME')
 fines_table_name = os.environ.get('FINES_TABLE_NAME')
+marschbefehl_table_name = os.environ.get('MARSCHBEFEHL_TABLE_NAME')
 members_table = dynamodb.Table(members_table_name)
 fines_table = dynamodb.Table(fines_table_name)
-
+marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
 
 def lambda_handler(event, context):
     try:
@@ -30,6 +33,8 @@ def lambda_handler(event, context):
             return add_fine(event)
         elif method == 'DELETE' and path.startswith('/fines/'):
             return delete_fine(event)
+        elif method == 'GET' and path == '/marschbefehl':
+            return get_marschbefehl(event)
         else:
             return {
                 'statusCode': 404,
@@ -208,3 +213,29 @@ def delete_fine(event):
         return {'statusCode': 200, 'body': json.dumps({'message': 'Strafe gelöscht'})}
     except Exception as e:
         return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+
+
+def get_marschbefehl(event):
+    now = datetime.now()
+    datetimestamp = now.strftime("%Y-%m-%d %H:%M")
+
+    items = []
+    query_filter = Key('type').eq('marschbefehl') & Key('datetime').gte(datetimestamp)
+    response = marschbefehl_table.query(
+        KeyConditionExpression=query_filter,
+    )
+
+    items.extend(response['Items'])
+
+    # Falls es mehr als 1MB Daten sind, wird die Scan-Operation paginiert
+    while 'LastEvaluatedKey' in response:
+        response = marschbefehl_table.query(
+            KeyConditionExpression=query_filter,
+            ExclusiveStartKey=response['LastEvaluatedKey'],
+        )
+        items.extend(response['Items'])
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps(items)
+    }
