@@ -1,11 +1,11 @@
 #!/bin/bash -e
 
-device="192.168.0.195:37789"
-
-# if command line arguments are given, use them
+PORT="$1" ; shift
 if [ "$#" -gt 0 ]; then
   STEP="$1"
 fi
+
+device="192.168.0.195:${PORT}"
 
 #~/tools/android/platform-tools/adb pair 192.168.0.195:39763
 echo CONNECT
