@@ -9,9 +9,9 @@ import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
 
-// final String apiBaseUrl = 'http://localhost:5000';
-final String apiBaseUrl = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
-final String applicationId = 'lknfar-lkjfd';
+// // final String apiBaseUrl = 'http://localhost:5000';
+// final String apiBaseUrl = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+// final String applicationId = 'lknfar-lkjfd';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

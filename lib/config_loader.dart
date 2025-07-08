@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
-import 'package:vereins_app_beta/main.dart';
 
 class AppConfig {
   final String apiBaseUrl;
@@ -50,7 +49,7 @@ Future<AppConfig?> loadConfigFile() async {
 
 class Member extends ChangeNotifier {
   final AppConfig config;
-  String name = '';
+  String _name = '';
   bool _isSpiess = false;
   bool _isAdmin = false;
 
@@ -58,6 +57,7 @@ class Member extends ChangeNotifier {
     fetchMember();
   }
 
+  String get name => _name;
   bool get isSpiess => _isSpiess;
   bool get isAdmin => _isAdmin;
 
@@ -66,25 +66,10 @@ class Member extends ChangeNotifier {
       final response = await http.get(Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'));
       if (response.statusCode == 200) {
         final Map<String, dynamic>? member = jsonDecode(response.body);
-        name = member?['name'] ?? '';
-        final bool newIsSpiess = member?['isSpiess'] ?? false;
-        final bool newIsAdmin = member?['isAdmin'] ?? false;
-
-        bool changed = false;
-
-        if (newIsSpiess != _isSpiess) {
-          _isSpiess = newIsSpiess;
-          changed = true;
-        }
-
-        if (newIsAdmin != _isAdmin) {
-          _isAdmin = newIsAdmin;
-          changed = true;
-        }
-
-        if (changed) {
-          notifyListeners(); // UI benachrichtigen
-        }
+        _name = member?['name'] ?? '';
+        _isSpiess = member?['isSpiess'] ?? false;
+        _isAdmin = member?['isAdmin'] ?? false;
+        notifyListeners(); // UI benachrichtigen
       } else {
         print('Fehler beim Laden des Mitglieds im Config Loader: ${response.statusCode}');
       }
