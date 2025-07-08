@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:vereins_app_beta/main.dart';
 
 class AppConfig {
   final String apiBaseUrl;

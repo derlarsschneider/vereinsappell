@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(
       MainApp(config: AppConfig(
         apiBaseUrl: 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com',
-          applicationId: applicationId,
+          applicationId: 'test',
           memberId: 'm5',
           ),
       )

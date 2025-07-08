@@ -118,7 +118,7 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
 
   Future<void> createMember(String name) async {
     if (name.trim().isEmpty) return;
-    final memberId = applicationId + DateTime.now().millisecondsSinceEpoch.toString();
+    final memberId = widget.config.applicationId + DateTime.now().millisecondsSinceEpoch.toString();
     final url = Uri.parse('${widget.config.apiBaseUrl}/members');
 
     final newMember = {

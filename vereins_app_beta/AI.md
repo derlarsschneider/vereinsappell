@@ -16,7 +16,7 @@ Alle Updates außer Strafgelder sollen an alle anderen User per Push Notificatio
 
 Strafgelder kann nur ein speziell ausgezeichneter User (Spieß) vergeben. Bei der Vergabe eines Strafgeldes tauch dieses beim Empfänger auf und dieser wird per Push Notification benachrichtigt.
 
-Knobeln kann durch jeden Spieler gestartet werden. Jeder hat die Möglichkeit der Runde beizutreten. Wenn das Spiel startet, wählt jeder Spieler 0-3 Hölzer aus. Nach einem Timeout von 30 Sekunden werden automatisch 3 Hölzer gewählt. Wenn alle gewählt haben oder ein Timeout von 30 Sekunden vergangen ist, schätzt jeder der Reihe nach die Gesamtanzahl an Hölzern. Es beginnt immer der Spieler links von denjenigem der in der letzten Runde begonnen hat. Wer richtig schätzt scheidet aus. Wer zuletzt übrig bleibt hat verloren. Es dürfen nicht alle verbleibenden die gleiche Anzahl schätzen.
+Ein Spiel Knobeln kann durch jeden Spieler gestartet werden. Es kann immer nur ein Spiel gleichzeitig stattfinden. Das Spiel findet auf den mobilen Endgeräten aller Mitspieler statt. Wenn schon ein Spiel gestartet ist, kann man teilnehmen. Jeder hat die Möglichkeit der Runde beizutreten. Wenn das Spiel startet, wählt jeder Spieler 0-3 Hölzer aus. Nach einem Timeout von 30 Sekunden werden automatisch 3 Hölzer gewählt. Wenn alle gewählt haben oder ein Timeout von 30 Sekunden vergangen ist, schätzt jeder der Reihe nach die Gesamtanzahl an Hölzern. Es beginnt immer der Spieler links von denjenigem der in der letzten Runde begonnen hat. Wer richtig schätzt scheidet aus. Wer zuletzt übrig bleibt hat verloren. Es dürfen nicht alle verbleibenden die gleiche Anzahl schätzen.
 
 
 

@@ -24,7 +24,15 @@ class MainMenu extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(config.appName),
+        title: Text(
+            config.appName,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          softWrap: true,
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
