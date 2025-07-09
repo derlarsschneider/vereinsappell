@@ -54,7 +54,8 @@ jobs:
     - name: 🚀 Distribute iOS IPA
       run: ./build-scripts/release-ios.sh $BUILD_NAME $BUILD_NUMBER $IOS_APP_ID $TESTER_GROUP
 
-    - uses: FirebaseExtended/action-hosting-deploy@v0
+    - name: 🚀 Distribute Web App
+      uses: FirebaseExtended/action-hosting-deploy@v0
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
