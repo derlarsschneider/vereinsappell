@@ -1,4 +1,4 @@
-# vereins_app_beta
+# Vereins Appell
 
 A new Flutter project.
 

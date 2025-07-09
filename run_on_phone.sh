@@ -23,11 +23,10 @@ fi
 if [ -z "$STEP" ] || [ "$STEP" == "INSTALL" ]; then
   echo INSTALL
   ~/tools/android/platform-tools/adb -s ${device} install -r build/app/outputs/flutter-apk/app-release.apk
-  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p com.example.vereins_app_beta -c android.intent.category.LAUNCHER 1
+  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p de.derlarsschneider.vereinsappell -c android.intent.category.LAUNCHER 1
 fi
 
 if [ -z "$STEP" ] || [ "$STEP" == "RUN" ]; then
   echo RUN
-  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p com.example.vereins_app_beta -c android.intent.category.LAUNCHER 1
+  ~/tools/android/platform-tools/adb -s ${device} shell monkey -p de.derlarsschneider.vereinsappell -c android.intent.category.LAUNCHER 1
 fi
-#~/tools/android/platform-tools/adb shell am start -n com.example.vereins_app_beta/com.example.vereins_app_beta.MainActivity

@@ -1,4 +1,4 @@
-package com.example.vereins_app_beta
+package de.derlarsschneider.vereinsappell
 
 import io.flutter.embedding.android.FlutterActivity
 

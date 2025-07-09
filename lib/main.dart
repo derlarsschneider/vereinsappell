@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vereins_app_beta/screens/config_missing_screen.dart';
-import 'package:vereins_app_beta/screens/home_screen.dart';
+import 'package:vereinsappell/screens/config_missing_screen.dart';
+import 'package:vereinsappell/screens/home_screen.dart';
 import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
@@ -17,7 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('Schützenlust App');
+    setWindowTitle('Vereins Appell');
     setWindowMinSize(const Size(400, 800));
     setWindowMaxSize(const Size(400, 800));
   }

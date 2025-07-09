@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:vereins_app_beta/main.dart';
-import 'package:vereins_app_beta/screens/default_screen.dart';
+import 'package:vereinsappell/screens/default_screen.dart';
 
 class MitgliederScreen extends DefaultScreen {
   const MitgliederScreen({

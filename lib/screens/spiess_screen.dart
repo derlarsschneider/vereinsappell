@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:vereins_app_beta/screens/default_screen.dart';
+import 'package:vereinsappell/screens/default_screen.dart';
 
 class SpiessScreen extends DefaultScreen {
 

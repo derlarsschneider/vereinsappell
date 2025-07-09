@@ -3,8 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:vereins_app_beta/screens/default_screen.dart';
-import '../config_loader.dart';
+import 'package:vereinsappell/screens/default_screen.dart';
 
 class MarschbefehlScreen extends DefaultScreen {
 

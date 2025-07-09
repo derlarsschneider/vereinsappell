@@ -7,9 +7,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vereins_app_beta/config_loader.dart';
+import 'package:vereinsappell/config_loader.dart';
 
-import 'package:vereins_app_beta/main.dart';
+import 'package:vereinsappell/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

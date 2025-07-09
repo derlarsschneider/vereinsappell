@@ -2,8 +2,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vereins_app_beta/screens/spiess_screen.dart';
-import 'package:vereins_app_beta/screens/strafen_screen.dart';
+import 'package:vereinsappell/screens/spiess_screen.dart';
+import 'package:vereinsappell/screens/strafen_screen.dart';
 
 import '../config_loader.dart';
 import 'calendar_screen.dart';

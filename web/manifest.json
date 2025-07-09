@@ -1,6 +1,6 @@
 {
-    "name": "vereins_app_beta",
-    "short_name": "vereins_app_beta",
+    "name": "vereinsappell",
+    "short_name": "vereinsappell",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
