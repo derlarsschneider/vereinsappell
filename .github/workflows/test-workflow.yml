@@ -33,7 +33,7 @@ jobs:
     - name: 🔐 Authenticate Firebase CLI
       run: |
         cat <<EOF | jq > ${{ runner.temp }}/firebase-key.json
-        ${{ secrets.FIREBASE_CI }}
+        ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
         EOF
         firebase projects:list
       env:
