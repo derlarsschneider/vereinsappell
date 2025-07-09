@@ -12,12 +12,16 @@ import 'galerie_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
 
-class MainMenu extends StatelessWidget {
-  final AppConfig config;
-  final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
+class HomeScreen extends DefaultScreen {
+  const HomeScreen({
+    super.key,
+    required super.config,
+  }) : super(title: "Home");
+  @override
+  DefaultScreenState createState() => _HomeScreenState();
+}
 
-  const MainMenu({required this.config, super.key});
-
+class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final member = Provider.of<Member>(context);
@@ -25,12 +29,12 @@ class MainMenu extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            config.appName,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          widget.config.appName,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
           softWrap: true,
         ),
         actions: [
@@ -54,13 +58,59 @@ class MainMenu extends StatelessWidget {
 
   Widget _buildGridMenu(BuildContext context, Member member) {
     final tiles = <Widget>[
-      _buildMenuTile(context, '📅 Termine', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()))),
-      _buildMenuTile(context, '📢 Marschbefehl', () => Navigator.push(context, MaterialPageRoute(builder: (_) => MarschbefehlScreen(config: config)))),
-      _buildMenuTile(context, '💰 Strafen', () => Navigator.push(context, MaterialPageRoute(builder: (_) => StrafenScreen(config: config)))),
-      if (member.isSpiess) _buildMenuTile(context, '🛡️ Spieß', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpiessScreen(config: config)))),
-      //_buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => GalleryScreen(config: config)))),
-      _buildMenuTile(context, '🎲 Knobeln', () => Navigator.push(context, MaterialPageRoute(builder: (_) => DefaultScreen(title: "🎲 Knobeln", config: config)))),
-      if (member.isAdmin) _buildMenuTile(context, '👥 Mitglieder', () => Navigator.push(context, MaterialPageRoute(builder: (_) => MitgliederScreen(config: config)))),
+      _buildMenuTile(
+        context,
+        '📅 Termine',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CalendarScreen()),
+        ),
+      ),
+      _buildMenuTile(
+        context,
+        '📢 Marschbefehl',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => MarschbefehlScreen(config: widget.config)),
+        ),
+      ),
+      _buildMenuTile(
+        context,
+        '💰 Strafen',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => StrafenScreen(config: widget.config)),
+        ),
+      ),
+      if (member.isSpiess)
+        _buildMenuTile(
+          context,
+          '🛡️ Spieß',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => SpiessScreen(config: widget.config)),
+          ),
+        ),
+      //_buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => GalleryScreen(config: widget.config)))),
+      _buildMenuTile(
+        context,
+        '🎲 Knobeln',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DefaultScreen(title: "🎲 Knobeln", config: widget.config),
+          ),
+        ),
+      ),
+      if (member.isAdmin)
+        _buildMenuTile(
+          context,
+          '👥 Mitglieder',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => MitgliederScreen(config: widget.config)),
+          ),
+        ),
     ];
 
     return GridView.count(
@@ -75,7 +125,11 @@ class MainMenu extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuTile(BuildContext context, String title, VoidCallback onTap) {
+  Widget _buildMenuTile(
+    BuildContext context,
+    String title,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Card(
@@ -102,13 +156,13 @@ class MainMenu extends StatelessWidget {
       child: GestureDetector(
         onLongPress: () async {
           await member.fetchMember();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Mitgliedsdaten aktualisiert')),
-          );
+          showInfo('Mitgliedsdaten aktualisiert');
         },
         child: Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -116,7 +170,10 @@ class MainMenu extends StatelessWidget {
               children: [
                 Text(
                   '👤 Mitglied: ${member.name.isNotEmpty ? member.name : "Unbekannt"}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text('🛡️ Spieß: ${member.isSpiess ? "Ja" : "Nein"}'),
@@ -124,7 +181,11 @@ class MainMenu extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Text(
                   '🔄 Lange drücken zum Aktualisieren',
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),

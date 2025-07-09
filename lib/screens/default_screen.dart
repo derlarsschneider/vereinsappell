@@ -7,16 +7,16 @@ class DefaultScreen extends StatefulWidget {
   final AppConfig config;
 
   const DefaultScreen({
-    Key? key,
-    required this.title,
+    super.key,
     required this.config,
-  }) : super(key: key);
+    required this.title,
+  });
 
   @override
   DefaultScreenState createState() => DefaultScreenState();
 }
 
-class DefaultScreenState<S extends DefaultScreen> extends State<S> {
+class DefaultScreenState<T extends DefaultScreen> extends State<T> {
   bool isLoading = false;
 
   @override
@@ -24,15 +24,43 @@ class DefaultScreenState<S extends DefaultScreen> extends State<S> {
     super.initState();
   }
 
-  void _showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+      ),
+    );
+  }
+
+  void showInfo(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red,
       ),
     );
   }

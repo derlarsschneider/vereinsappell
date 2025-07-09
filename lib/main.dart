@@ -58,7 +58,7 @@ class MainApp extends StatelessWidget {
           primarySwatch: Colors.green,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: MainMenu(config: config),
+        home: HomeScreen(config: config),
       ),
     );
   }

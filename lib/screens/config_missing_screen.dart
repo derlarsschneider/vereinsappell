@@ -56,7 +56,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
             MaterialPageRoute(
               builder: (_) => ChangeNotifierProvider<Member>.value(
                 value: loadedConfig.member,
-                child: MainMenu(config: loadedConfig),
+                child: HomeScreen(config: loadedConfig),
               ),
             ),
           );

@@ -46,7 +46,7 @@ class _CreateVereinScreenState extends State<CreateVereinScreen> {
     final loadedConfig = await loadConfigFile();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => MainMenu(config: loadedConfig!)),
+      MaterialPageRoute(builder: (_) => HomeScreen(config: loadedConfig!)),
     );
   }
 

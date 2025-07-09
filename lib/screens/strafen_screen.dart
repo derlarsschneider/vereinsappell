@@ -48,10 +48,10 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
           memberName = name;
         });
       } else {
-        print('Fehler beim Laden: ${finesResponse.statusCode}');
+        showError('Fehler beim Laden: ${finesResponse.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Abrufen: $e');
+      showError('Fehler beim Abrufen: $e');
     } finally {
       setState(() {
         isLoading = false;

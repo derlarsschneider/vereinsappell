@@ -39,10 +39,10 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
           photos = data.cast<Map<String, dynamic>>();
         });
       } else {
-        _showMessage('Fehler beim Laden der Fotos: ${response.statusCode}');
+        showError('Fehler beim Laden der Fotos: ${response.statusCode}');
       }
     } catch (e) {
-      _showMessage('Fehler: $e');
+      showError('Fehler: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -66,13 +66,13 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
       );
 
       if (response.statusCode == 200) {
-        _showMessage('Foto hochgeladen');
+        showInfo('Foto hochgeladen');
         fetchPhotos();
       } else {
-        _showMessage('Fehler beim Hochladen: ${response.statusCode}');
+        showError('Fehler beim Hochladen: ${response.statusCode}');
       }
     } catch (e) {
-      _showMessage('Fehler: $e');
+      showError('Fehler: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -85,20 +85,16 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
       await http.delete(Uri.parse('${widget.config.apiBaseUrl}/photos/$photoId'));
 
       if (response.statusCode == 200) {
-        _showMessage('Foto gelöscht');
+        showInfo('Foto gelöscht');
         fetchPhotos();
       } else {
-        _showMessage('Fehler beim Löschen: ${response.statusCode}');
+        showError('Fehler beim Löschen: ${response.statusCode}');
       }
     } catch (e) {
-      _showMessage('Fehler: $e');
+      showError('Fehler: $e');
     } finally {
       setState(() => isLoading = false);
     }
-  }
-
-  void _showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override

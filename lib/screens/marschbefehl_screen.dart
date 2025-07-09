@@ -25,10 +25,8 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
   }
 
   Future<void> _fetchMarschbefehl() async {
-    print('fetchMarschbefehl ${widget.config.apiBaseUrl}/marschbefehl');
     try {
       final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/marschbefehl'));
-      print(response);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {

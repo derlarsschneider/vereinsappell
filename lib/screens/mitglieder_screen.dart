@@ -44,10 +44,10 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
           mitglieder = json.decode(response.body);
         });
       } else {
-        print('Fehler beim Laden der Mitglieder: ${response.statusCode}');
+        showError('Fehler beim Laden der Mitglieder: ${response.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Abrufen: $e');
+      showError('Fehler beim Abrufen: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -70,19 +70,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     try {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mitglied erfolgreich gespeichert')),
-        );
+        showInfo('Mitglied erfolgreich gespeichert');
       } else {
-        print(body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Speichern: ${response.body}')),
-        );
+        showError('Fehler beim Speichern: ${response.body}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Netzwerkfehler beim Speichern')),
-      );
+      showError('Netzwerkfehler beim Speichern');
     }
   }
 
@@ -95,23 +88,17 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     try {
       final response = await http.delete(url);
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mitglied gelöscht')),
-        );
+        showInfo('Mitglied gelöscht');
         setState(() {
           mitglieder.removeWhere((m) => m['memberId'] == memberId);
           selectedMember = null;
         });
       } else {
         print(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Löschen: ${response.statusCode}')),
-        );
+        showError('Fehler beim Löschen: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Netzwerkfehler beim Löschen')),
-      );
+      showError('Netzwerkfehler beim Löschen');
     }
   }
 
@@ -141,14 +128,10 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
         });
         _selectMember(newMember);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Erstellen: ${response.statusCode}')),
-        );
+        showError('Fehler beim Erstellen: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Netzwerkfehler beim Erstellen')),
-      );
+      showError('Netzwerkfehler beim Erstellen');
     }
   }
 

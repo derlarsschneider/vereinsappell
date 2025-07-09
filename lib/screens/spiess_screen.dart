@@ -47,10 +47,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
           members = data;
         });
       } else {
-        print('Fehler beim Laden der Mitglieder: ${response.statusCode}');
+        showError('Fehler beim Laden der Mitglieder: ${response.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Abrufen der Mitglieder: $e');
+      showError('Fehler beim Abrufen der Mitglieder: $e');
     } finally {
       setState(() {
         isLoadingMembers = false;
@@ -73,10 +73,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
           selectedMemberFines = data;
         });
       } else {
-        print('Fehler beim Laden der Strafen: ${finesResponse.statusCode}');
+        showError('Fehler beim Laden der Strafen: ${finesResponse.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Abrufen der Strafen: $e');
+      showError('Fehler beim Abrufen der Strafen: $e');
     } finally {
       setState(() {
         isLoadingFines = false;
@@ -107,16 +107,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       } else {
         print(response.body);
         print(response.headers);
-        print('Fehler beim Speichern der Strafe: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Speichern der Strafe')),
-        );
+        showError('Fehler beim Speichern der Strafe: ${response.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Speichern der Strafe: $e');
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(content: Text('Fehler beim Speichern der Strafe')),
-      );
+      showError('Fehler beim Speichern der Strafe: $e');
     }
   }
 
@@ -128,20 +122,12 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
         if (selectedMemberId != null) {
           await fetchFines(selectedMemberId!);
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Strafe gelöscht')),
-        );
+        showInfo('Strafe gelöscht');
       } else {
-        print('Fehler beim Löschen der Strafe: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Löschen')),
-        );
+        showError('Fehler beim Löschen der Strafe: ${response.statusCode}');
       }
     } catch (e) {
-      print('Fehler beim Löschen: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fehler beim Löschen')),
-      );
+      showError('Fehler beim Löschen: $e');
     }
   }
 
