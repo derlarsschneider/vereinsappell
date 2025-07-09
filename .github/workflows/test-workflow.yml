@@ -32,7 +32,9 @@ jobs:
 
     - name: 🔐 Authenticate Firebase CLI
       run: |
-        echo "${{ secrets.FIREBASE_CI }}" > ${{ runner.temp }}/firebase-key.json
+        cat <<EOF | jq > ${{ runner.temp }}/firebase-key.json
+        ${{ secrets.FIREBASE_CI }}
+        EOF
         firebase projects:list
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
