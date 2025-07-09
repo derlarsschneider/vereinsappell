@@ -36,6 +36,9 @@ jobs:
         echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
         echo "📦 Version ist ${BUILD_NAME}+${BUILD_NUMBER}"
 
+    - name: 🧱 Build Web App
+      run: ./build-scripts/build-web.sh $BUILD_NAME $BUILD_NUMBER
+
     - name: 📱 Build Android APK
       run: ./build-scripts/build-apk.sh $BUILD_NAME $BUILD_NUMBER
 
@@ -54,6 +57,11 @@ jobs:
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
 
+    - name: 🚀 Distribute Web App
+      run: ./build-scripts/release-web.sh $BUILD_NAME $BUILD_NUMBER $ANDROID_APP_ID $TESTER_GROUP
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+
     - name: 🚀 Distribute Android APK
       run: ./build-scripts/release-apk.sh $BUILD_NAME $BUILD_NUMBER $ANDROID_APP_ID $TESTER_GROUP
       env:
@@ -63,11 +71,3 @@ jobs:
       run: ./build-scripts/release-ios.sh $BUILD_NAME $BUILD_NUMBER $IOS_APP_ID $TESTER_GROUP
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
-
-    - name: 🚀 Distribute Web App
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: ${{ secrets.GITHUB_TOKEN }}
-        firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
-        channelId: live
-        projectId: vereinsappell
