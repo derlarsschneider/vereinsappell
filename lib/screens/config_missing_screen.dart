@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../config_loader.dart';
 import 'create_verein_screen.dart';
@@ -43,23 +44,32 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
           'apiBaseUrl': apiBaseUrl,
           'applicationId': applicationId,
           'memberId': memberId,
-          'isAdmin': false,
-          'appName': 'Mein Schützenverein'
         };
 
         await file.writeAsString(jsonEncode(config));
-
         final loadedConfig = await loadConfigFile();
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => MainMenu(config: loadedConfig!)),
-        );
+
+        if (loadedConfig != null) {
+          await loadedConfig.member.fetchMember(); // <--- WICHTIG!
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider<Member>.value(
+                value: loadedConfig.member,
+                child: MainMenu(config: loadedConfig),
+              ),
+            ),
+          );
+        } else {
+          showError("Konfiguration konnte nicht geladen werden.");
+        }
       } else {
         showError("QR-Code unvollständig.");
       }
     } catch (e) {
       showError("Ungültiger QR-Code.");
     }
+    sleep(Duration(seconds: 5));
   }
 
   void showError(String message) {
