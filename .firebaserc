@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "vereinsappell"
-  }
+    "default": "vereinsappell",
+    "staging": "vereinsappell"
+  },
+  "targets": {},
+  "etags": {}
 }
