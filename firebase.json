@@ -1,0 +1,49 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "vereinsappell",
+          "appId": "1:336568095877:android:2f2d20d03e846e45e8c5ec",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "vereinsappell",
+          "configurations": {
+            "android": "1:336568095877:android:2f2d20d03e846e45e8c5ec",
+            "ios": "1:336568095877:ios:6486e04bcd030db7e8c5ec",
+            "macos": "1:336568095877:ios:6486e04bcd030db7e8c5ec",
+            "web": "1:336568095877:web:a76414047b84f71de8c5ec"
+          }
+        }
+      }
+    }
+  },
+  "apphosting": {
+    "backendId": "vereins-appell",
+    "rootDir": "/",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "functions"
+    ]
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

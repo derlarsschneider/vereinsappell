@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "336568095877",
+    "project_id": "vereinsappell",
+    "storage_bucket": "vereinsappell.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:336568095877:android:2f2d20d03e846e45e8c5ec",
+        "android_client_info": {
+          "package_name": "de.derlarsschneider.vereinsappell"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWd1STlPwmn-4mTws3gfMLUgTTPybPcPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
