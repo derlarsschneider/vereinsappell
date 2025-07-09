@@ -22,6 +22,19 @@ void main() async {
     setWindowMaxSize(const Size(400, 800));
   }
 
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: Colors.red,
+      child: Center(
+        child: Text(
+          details.exceptionAsString(),
+          style: const TextStyle(color: Colors.white, fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  };
+
   final config = await loadConfigFile();
 
   runApp(
