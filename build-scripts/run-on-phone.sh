@@ -12,7 +12,7 @@ echo CONNECT
 ~/tools/android/platform-tools/adb connect ${device}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+# cd "$SCRIPT_DIR"
 
 # if STEP is BUILD or empty:
 if [ -z "$STEP" ] || [ "$STEP" == "BUILD" ]; then
