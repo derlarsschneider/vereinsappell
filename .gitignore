@@ -52,3 +52,4 @@ app.*.map.json
 /aws_backend/remote_state/.terraform/environment
 /aws_backend/.terraform.lock.hcl
 /aws_backend/.terraform/
+/.github/secrets/
