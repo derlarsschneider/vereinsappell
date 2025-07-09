@@ -13,10 +13,10 @@ else
   BUILD_NUMBER=$(date +"%H%M")
 fi
 if [ "$#" -gt 0 ]; then
-  ANDROID_APP_ID="$1"
+  IOS_APP_ID="$1"
   shift
 else
-  ANDROID_APP_ID="1:336568095877:android:f757f959bbe6c96be8c5ec"
+  IOS_APP_ID="1:336568095877:ios:5b61a9b5162f57d1e8c5ec"
 fi
 if [ "$#" -gt 0 ]; then
   TESTER_GROUP="$1"
@@ -25,7 +25,7 @@ else
   TESTER_GROUP="Schuetzenlust"
 fi
 
-firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
-  --app "${ANDROID_APP_ID}" \
+firebase appdistribution:distribute build/ios/ipa/*.ipa \
+  --app "${IOS_APP_ID}" \
   --groups "${TESTER_GROUP}" \
   --release-notes "Version ${BUILD_NAME}+${BUILD_NUMBER}"
