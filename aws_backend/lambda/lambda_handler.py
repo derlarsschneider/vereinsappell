@@ -1,13 +1,14 @@
+import base64
 import json
 import os
-import boto3
 import uuid
-import base64
-from boto3.dynamodb.conditions import Key
 from datetime import datetime
 
+import boto3
+from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
+
 members_table_name = os.environ.get('MEMBERS_TABLE_NAME')
 fines_table_name = os.environ.get('FINES_TABLE_NAME')
 marschbefehl_table_name = os.environ.get('MARSCHBEFEHL_TABLE_NAME')
@@ -52,12 +53,14 @@ def lambda_handler(event, context):
             return {**headers, **get_photos(event)}
         elif method == 'POST' and path == '/photos':
             return {**headers, **post_photo(event)}
+        elif method == 'GET' and path.startswith('/docs/'):
+            return {**headers, **get_doc(event)}
         elif method == 'GET' and path == '/docs':
             return {**headers, **get_docs()}
         elif method == 'POST' and path.startswith('/docs'):
-            return {**headers, **add_doc(event, path)}
+            return {**headers, **add_doc(event)}
         if method == 'DELETE' and path.startswith('/docs'):
-            return {**headers, **delete_doc(path)}
+            return {**headers, **delete_doc(event)}
         else:
             return {
                 'statusCode': 404,
@@ -69,33 +72,84 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e), 'event': event})
         }
 
-def delete_doc(path):
-    key = path.replace('/docs/', '').lstrip('/')
+def message_response(status_code: int, message: str):
+    return {
+        "statusCode": status_code,
+        "body": json.dumps({"message": message})
+    }
+
+def delete_doc(event):
+    file_name = event['pathParameters']['fileName']
+    file_name = urllib.parse.unquote(file_name)
+    key = f'docs/{file_name}'
     s3 = boto3.client('s3')
     s3.delete_object(Bucket=s3_bucket_name, Key=key)
-    return {"statusCode": 200, "body": "Datei gelöscht"}
+    return {"statusCode": 200, "body": f"Datei ${key} gelöscht"}
 
-def add_doc(event, path):
-    key = path.replace('/docs/', '').lstrip('/')
-    try:
-        s3 = boto3.client('s3')
-        s3.head_object(Bucket=s3_bucket_name, Key=key)
-        return {"statusCode": 409, "body": "Datei existiert bereits"}
-    except s3.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != '404':
-            raise
 
+def add_doc(event):
     body = base64.b64decode(event['body']) if event.get('isBase64Encoded') else event['body'].encode('utf-8')
+    data = json.loads(body)
+    name = data['name']
+    file_base64 = data['file']
+    key = f'docs/{name}'
+    s3 = boto3.client('s3')
+    # try:
+    #     s3.head_object(Bucket=s3_bucket_name, Key=key)
+    #     return message_response(409, "Datei existiert bereits")
+    # except s3.exceptions.ClientError as e:
+    #     if e.response['Error']['Code'] != '404':
+    #         raise
+
+    body = base64.b64decode(file_base64)
     s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
-    return {"statusCode": 200, "body": "Upload erfolgreich"}
+    return message_response(200, str(body))
 
 
 def get_docs():
     s3 = boto3.client('s3')
     response = s3.list_objects_v2(Bucket=s3_bucket_name)
     files = [obj['Key'] for obj in response.get('Contents', [])]
-    body = json.dumps([{"title": k} for k in files])
+    body = json.dumps([{"name": k.removeprefix('docs/')} for k in files])
     return {"statusCode": 200, "body": body}
+
+
+import urllib.parse
+
+def get_doc(event):
+    s3 = boto3.client('s3')
+    try:
+        file_name = event['pathParameters']['fileName']
+        file_name = urllib.parse.unquote(file_name)
+        key = f'docs/{file_name}'
+
+        response = s3.get_object(Bucket=s3_bucket_name, Key=key)
+        file_bytes = response['Body'].read()
+
+        # Optional: Content-Type erkennen (hier: aus den S3-Metadaten oder per Dateiendung schätzen)
+        content_type = response.get('ContentType', 'application/octet-stream')
+
+        return {
+            'statusCode': 200,
+            'isBase64Encoded': True,
+            'headers': {
+                'Content-Type': content_type,
+                'Content-Disposition': f'inline; filename="{file_name}"',
+                'Access-Control-Allow-Origin': '*',
+            },
+            'body': base64.b64encode(file_bytes).decode('utf-8'),
+        }
+
+    except s3.exceptions.NoSuchKey:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'error': 'Datei nicht gefunden'})
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
 
 
 def get_member_by_id(event):
@@ -183,7 +237,6 @@ def delete_member(event):
         return {'statusCode': 500, 'body': json.dumps({'error': str(event)})}
 
 
-
 def get_fines(event):
     params = event.get('queryStringParameters') or {}
     member_id = params.get('memberId')
@@ -200,7 +253,6 @@ def get_fines(event):
     if member:
         member = member[0]
         name = member.get('name', member_id)
-
 
     fines_response = fines_table.query(
         KeyConditionExpression=Key('memberId').eq(member_id)
@@ -350,6 +402,7 @@ def post_photo(event):
 
     except Exception as e:
         return _response(500, f'Fehler beim Hochladen: {str(e)}')
+
 
 def _response(status_code, body):
     return {

@@ -46,7 +46,7 @@ resource "aws_iam_policy" "s3_policy" {
                     "s3:DeleteObject",
                     "s3:HeadObject"
                 ],
-                Resource = "${aws_s3_bucket.s3_bucket.arn}/photos/*"
+                Resource = "${aws_s3_bucket.s3_bucket.arn}/*"
             }
         ]
     })

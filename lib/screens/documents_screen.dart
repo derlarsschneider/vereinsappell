@@ -1,13 +1,16 @@
 // lib/screens/documents_screen.dart
 import 'dart:convert';
-import 'dart:io' as io;
+import 'dart:io' as io; // Nur für Mobile
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../config_loader.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:typed_data';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' as universal_html; // für Web-Download
 
+import '../config_loader.dart';
 
 class DocumentScreen extends StatefulWidget {
   final AppConfig config;
@@ -50,30 +53,35 @@ class _DocumentScreenState extends State<DocumentScreen> {
   }
 
   Future<void> deleteDocument(String fileName) async {
-    final url = Uri.parse('${widget.config.apiBaseUrl}/docs/$fileName');
-    final response = await http.delete(url);
-    if (response.statusCode == 200) {
-      setState(() {
-        documents.removeWhere((doc) => doc['title'] == fileName);
-      });
-    } else {
-      showError('Fehler beim Löschen der Datei');
+    if (widget.config.member.isAdmin) {
+      final url = Uri.parse('${widget.config.apiBaseUrl}/docs/$fileName');
+      final response = await http.delete(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          documents.removeWhere((doc) => doc['name'] == fileName);
+        });
+      } else {
+        showError('Fehler beim Löschen der Datei');
+      }
     }
   }
 
   void showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> uploadDocument() async {
-    final fileResult = await FilePicker.platform.pickFiles();
+    final fileResult = await FilePicker.platform.pickFiles(withData: true);
     if (fileResult == null || fileResult.files.isEmpty) return;
 
-    final fileBytes = fileResult.files.single.bytes;
-    final originalName = fileResult.files.single.name;
+    final file = fileResult.files.single;
+    final fileBytes = file.bytes;
+    final originalName = file.name;
 
     if (fileBytes == null) {
-      showError('Fehler beim Lesen der Datei.');
+      showError('Fehler beim Lesen der Datei (null Bytes).');
       return;
     }
 
@@ -89,8 +97,14 @@ class _DocumentScreenState extends State<DocumentScreen> {
           decoration: InputDecoration(hintText: "z.B. Protokoll2025.pdf"),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Abbrechen")),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text("Hochladen")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text("Hochladen"),
+          ),
         ],
       ),
     );
@@ -104,18 +118,24 @@ class _DocumentScreenState extends State<DocumentScreen> {
     }
 
     // Prüfen auf Namenskonflikt
-    if (documents.any((doc) => doc['title'] == newName)) {
+    if (documents.any((doc) => doc['name'] == newName)) {
       showError("Es existiert bereits ein Dokument mit diesem Namen.");
       return;
     }
 
-    final uploadUrl = Uri.parse('${widget.config.apiBaseUrl}/docs/$newName');
+    final uploadUrl = Uri.parse('${widget.config.apiBaseUrl}/docs');
+    print(uploadUrl);
+
+    final body = jsonEncode({
+      'name': newName,
+      'file': base64Encode(fileBytes), // <-- explizit codieren
+    });
 
     try {
       final response = await http.post(
         uploadUrl,
         headers: {'Content-Type': 'application/octet-stream'},
-        body: fileBytes,
+        body: body,
       );
 
       if (response.statusCode == 200) {
@@ -128,6 +148,41 @@ class _DocumentScreenState extends State<DocumentScreen> {
     }
   }
 
+  void downloadFile({required String url}) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) {
+        showError("Fehler beim Herunterladen: ${response.statusCode}");
+        return;
+      }
+
+      final bytes = response.bodyBytes;
+      final fileName = Uri.parse(url).pathSegments.last;
+
+      if (kIsWeb) {
+        // 🔄 Web: HTML download trigger
+        final base64Data = base64Encode(bytes);
+        final blobUrl = 'data:application/octet-stream;base64,$base64Data';
+
+        final anchor = universal_html.AnchorElement(href: blobUrl)
+          ..setAttribute('download', fileName)
+          ..click();
+      } else {
+        // 📱 Mobile: Datei speichern und öffnen
+        final dir = await getTemporaryDirectory();
+        final file = io.File('${dir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+
+        final result = await OpenFile.open(file.path);
+        if (result.type != ResultType.done) {
+          showError("Konnte Datei nicht öffnen: ${result.message}");
+        }
+      }
+    } catch (e) {
+      showError("Download fehlgeschlagen: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,57 +190,29 @@ class _DocumentScreenState extends State<DocumentScreen> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : ListView.builder(
-        itemCount: documents.length,
-        itemBuilder: (context, index) {
-          final doc = documents[index];
-          final title = doc['title'] ?? 'Unbenannt';
-          final url = '${widget.config.apiBaseUrl}/docs/$title';
-          return ListTile(
-            leading: Icon(Icons.picture_as_pdf),
-            title: Text(title),
-            trailing: IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: () => deleteDocument(title),
-            ),
-            onTap: () {
-              if (kIsWeb) {
-                // Im neuen Tab öffnen
-                // ignore: undefined_prefixed_name
-                // web.window.open(url, '_blank');
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PDFViewerScreen(url: url, title: title),
-                  ),
+              itemCount: documents.length,
+              itemBuilder: (context, index) {
+                final doc = documents[index];
+                final name = doc['name'] ?? 'Unbenannt';
+                final url = '${widget.config.apiBaseUrl}/docs/$name';
+                return ListTile(
+                  leading: Icon(Icons.file_download),
+                  title: Text(name),
+                  trailing: widget.config.member.isAdmin
+                      ? IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => deleteDocument(name),
+                        )
+                      : null,
+                  onTap: () {
+                    downloadFile(url: url);
+                  },
                 );
-              }
-            },
-          );
-        },
-      ),
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: uploadDocument,
         child: Icon(Icons.upload_file),
-      ),
-    );
-  }
-}
-
-class PDFViewerScreen extends StatelessWidget {
-  final String url;
-  final String title;
-
-  const PDFViewerScreen({Key? key, required this.url, required this.title}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: kIsWeb
-            ? SelectableText('📄 PDF wird im neuen Tab geöffnet: $url')
-            : Text('📄 PDF Viewer für Mobile hier einbinden.'),
       ),
     );
   }
