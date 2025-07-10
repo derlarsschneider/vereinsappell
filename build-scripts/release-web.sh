@@ -25,7 +25,4 @@ else
   TESTER_GROUP="Schuetzenlust"
 fi
 
-firebase deploy --only hosting \
-  --app "${ANDROID_APP_ID}" \
-  --groups "${TESTER_GROUP}" \
-  --release-notes "Version ${BUILD_NAME}+${BUILD_NUMBER}"
+firebase deploy --only hosting

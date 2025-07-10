@@ -16,10 +16,14 @@ import 'config_loader.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('Vereins Appell');
-    setWindowMinSize(const Size(400, 800));
-    setWindowMaxSize(const Size(400, 800));
+  try {
+    if (Platform.isLinux || Platform.isMacOS) {
+      setWindowTitle('Vereins Appell');
+      setWindowMinSize(const Size(400, 800));
+      setWindowMaxSize(const Size(400, 800));
+    }
+  } catch (e) {
+    print(e);
   }
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
