@@ -36,15 +36,6 @@ jobs:
         echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
         echo "📦 Version ist ${BUILD_NAME}+${BUILD_NUMBER}"
 
-    - name: 🧱 Build Web App
-      run: ./build-scripts/build-web.sh $BUILD_NAME $BUILD_NUMBER
-
-    - name: 📱 Build Android APK
-      run: ./build-scripts/build-apk.sh $BUILD_NAME $BUILD_NUMBER
-
-    - name: 🍏 Build iOS App (no signing)
-      run: ./build-scripts/build-ios.sh $BUILD_NAME $BUILD_NUMBER
-
     - name: 🔥 Setup Firebase CLI
       run: npm install -g firebase-tools
 
@@ -57,15 +48,24 @@ jobs:
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
 
+    - name: 🧱 Build Web App
+      run: ./build-scripts/build-web.sh $BUILD_NAME $BUILD_NUMBER
+
     - name: 🚀 Distribute Web App
       run: ./build-scripts/release-web.sh $BUILD_NAME $BUILD_NUMBER $ANDROID_APP_ID $TESTER_GROUP
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
 
+    - name: 📱 Build Android APK
+      run: ./build-scripts/build-apk.sh $BUILD_NAME $BUILD_NUMBER
+
     - name: 🚀 Distribute Android APK
       run: ./build-scripts/release-apk.sh $BUILD_NAME $BUILD_NUMBER $ANDROID_APP_ID $TESTER_GROUP
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+
+    - name: 🍏 Build iOS App (no signing)
+      run: ./build-scripts/build-ios.sh $BUILD_NAME $BUILD_NUMBER
 
     - name: 🚀 Distribute iOS IPA
       run: ./build-scripts/release-ios.sh $BUILD_NAME $BUILD_NUMBER $IOS_APP_ID $TESTER_GROUP
