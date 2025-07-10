@@ -21,4 +21,4 @@ echo "📦 Baue Web App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
 flutter build web --build-name="${BUILD_NAME}" --build-number="${BUILD_NUMBER}" --release
 
-echo "✅ Android Build abgeschlossen: Version ${BUILD_NAME}+${BUILD_NUMBER}"
+echo "✅ Web Build abgeschlossen: Version ${BUILD_NAME}+${BUILD_NUMBER}"
