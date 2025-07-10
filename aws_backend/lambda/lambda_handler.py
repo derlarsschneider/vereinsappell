@@ -49,16 +49,16 @@ def lambda_handler(event, context):
             return {**headers, **delete_fine(event)}
         elif method == 'GET' and path == '/marschbefehl':
             return {**headers, **get_marschbefehl(event)}
-        elif method == 'GET' and path == '/photos':
-            return {**headers, **get_photos(event)}
-        elif method == 'POST' and path == '/photos':
-            return {**headers, **post_photo(event)}
+        elif method == 'GET' and path.startswith('/photos'):
+            return {**headers, **get_docs(event, f'photos')}
+        elif method == 'POST' and path.startswith('/photos'):
+            return {**headers, **add_docs(event, 'photos')}
         elif method == 'GET' and path.startswith('/docs/'):
             return {**headers, **get_doc(event)}
         elif method == 'GET' and path == '/docs':
-            return {**headers, **get_docs()}
+            return {**headers, **get_docs(event)}
         elif method == 'POST' and path.startswith('/docs'):
-            return {**headers, **add_doc(event)}
+            return {**headers, **add_docs(event)}
         if method == 'DELETE' and path.startswith('/docs'):
             return {**headers, **delete_doc(event)}
         else:
@@ -78,50 +78,89 @@ def message_response(status_code: int, message: str):
         "body": json.dumps({"message": message})
     }
 
-def delete_doc(event):
+def delete_doc(event, prefix: str = 'docs'):
     file_name = event['pathParameters']['fileName']
     file_name = urllib.parse.unquote(file_name)
-    key = f'docs/{file_name}'
+    key = f'{prefix}/{file_name}'
     s3 = boto3.client('s3')
     s3.delete_object(Bucket=s3_bucket_name, Key=key)
     return {"statusCode": 200, "body": f"Datei ${key} gelöscht"}
 
 
-def add_doc(event):
+def add_docs(event, prefix: str = 'docs'):
     body = base64.b64decode(event['body']) if event.get('isBase64Encoded') else event['body'].encode('utf-8')
-    data = json.loads(body)
-    name = data['name']
-    file_base64 = data['file']
-    key = f'docs/{name}'
-    s3 = boto3.client('s3')
-    # try:
-    #     s3.head_object(Bucket=s3_bucket_name, Key=key)
-    #     return message_response(409, "Datei existiert bereits")
-    # except s3.exceptions.ClientError as e:
-    #     if e.response['Error']['Code'] != '404':
-    #         raise
 
-    body = base64.b64decode(file_base64)
-    s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
+    for data in json.loads(body):
+        name = data['name']
+        file_base64 = data['file']
+        key = f'{prefix}/{name}'
+        s3 = boto3.client('s3')
+        try:
+            s3.head_object(Bucket=s3_bucket_name, Key=key)
+            return message_response(409, "Datei existiert bereits")
+        except s3.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != '404':
+                raise
+
+        body = base64.b64decode(file_base64)
+        s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
     return message_response(200, str(body))
 
 
-def get_docs():
+def get_docs(event, prefix: str = 'docs'):
+    proxy = event.get('pathParameters', {}).get('proxy')
+    if proxy is not None:
+        prefix = f'{prefix}/{proxy}'
     s3 = boto3.client('s3')
-    response = s3.list_objects_v2(Bucket=s3_bucket_name)
-    files = [obj['Key'] for obj in response.get('Contents', [])]
-    body = json.dumps([{"name": k.removeprefix('docs/')} for k in files])
-    return {"statusCode": 200, "body": body}
+    try:
+        s3.head_object(Bucket=s3_bucket_name, Key=f'{prefix}')
+        response = s3.get_object(Bucket=s3_bucket_name, Key=f'{prefix}')
+        file_bytes = response['Body'].read()
 
+        # Optional: Content-Type erkennen (hier: aus den S3-Metadaten oder per Dateiendung schätzen)
+        content_type = response.get('ContentType', 'application/octet-stream')
+
+        return {
+            'statusCode': 200,
+            'isBase64Encoded': True,
+            'headers': {
+                'Content-Type': content_type,
+                'Content-Disposition': f'inline; filename="{proxy}"',
+                'Access-Control-Allow-Origin': '*',
+            },
+            'body': base64.b64encode(file_bytes).decode('utf-8'),
+        }
+    except s3.exceptions.ClientError as e:
+        files = list_s3_files(prefix)
+        body = json.dumps(files)
+        return {"statusCode": 200, "body": body}
+
+
+def list_s3_files(prefix):
+    s3 = boto3.client('s3')
+    response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=f'{prefix}/', )
+    files = [{
+        "name": obj['Key'].removeprefix(f'{prefix}/'),
+        "file": get_s3_content(obj['Key']) if prefix.endswith('thumbnails') else ''
+    } for obj in response.get('Contents', [])]
+
+    return files
+
+
+def get_s3_content(key):
+    s3 = boto3.client('s3')
+    response = s3.get_object(Bucket=s3_bucket_name, Key=key)
+    file_bytes = response['Body'].read()
+    return base64.b64encode(file_bytes).decode('utf-8')
 
 import urllib.parse
 
-def get_doc(event):
+def get_doc(event, prefix: str = 'docs'):
     s3 = boto3.client('s3')
     try:
         file_name = event['pathParameters']['fileName']
         file_name = urllib.parse.unquote(file_name)
-        key = f'docs/{file_name}'
+        key = f'{prefix}/{file_name}'
 
         response = s3.get_object(Bucket=s3_bucket_name, Key=key)
         file_bytes = response['Body'].read()

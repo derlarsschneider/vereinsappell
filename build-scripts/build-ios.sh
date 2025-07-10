@@ -15,10 +15,6 @@ fi
 
 echo "📦 Baue iOS App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
-# Flutter vorbereiten
-flutter clean
-flutter pub get
-
 # iOS-Build (für reale Geräte)
 flutter build ipa --release \
   --no-codesign \

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
 
@@ -25,14 +26,37 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   @override
   void initState() {
     super.initState();
-    fetchPhotos();
+    fetchThumbnails();
   }
 
-  Future<void> fetchPhotos() async {
+  Future<void> fetchPhoto(String name) async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos'));
-      print("Response: " + response.body);
+      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos/img/$name'));
+      if (response.statusCode == 200) {
+
+        final imageBytes = response.bodyBytes;
+
+        showDialog(
+          context: context,
+          builder: (_) => Dialog(
+            child: Image.memory(imageBytes, fit: BoxFit.contain),
+          ),
+        );
+      } else {
+        showError('Fehler beim Laden des Fotos: ${response.statusCode}');
+      }
+    } catch (e) {
+      showError('Fehler: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> fetchThumbnails() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos/thumbnails'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -54,22 +78,34 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
 
     if (pickedFile == null) return;
 
-    final bytes = await pickedFile.readAsBytes();
-    final base64Image = base64Encode(bytes);
+    final originalBytes = await pickedFile.readAsBytes();
+    final originalImage = img.decodeImage(originalBytes);
+    if (originalImage == null) return;
+
+    final jpegBytes = img.encodeJpg(originalImage, quality: 90);
+
+    final resized = img.copyResize(originalImage, width: 200); // z. B. 800px Breite
+    final resizedBytes = img.encodeJpg(resized, quality: 70); // oder encodePng()
 
     setState(() => isLoading = true);
+    final String filename = pickedFile.name.replaceAll(RegExp(r"\.\w+$"), ".jpg");
     try {
-      final response = await http.post(
+      final responseImg = await http.post(
         Uri.parse('${widget.config.apiBaseUrl}/photos'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'imageBase64': base64Image}),
+        body: json.encode([{'file': base64Encode(jpegBytes), 'name': 'img/${filename}'}]),
+      );
+      final responseThumb = await http.post(
+        Uri.parse('${widget.config.apiBaseUrl}/photos'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode([{'file': base64Encode(resizedBytes), 'name': 'thumbnails/${filename}'}]),
       );
 
-      if (response.statusCode == 200) {
+      if (responseImg.statusCode == 200 && responseThumb.statusCode == 200) {
         showInfo('Foto hochgeladen');
-        fetchPhotos();
+        fetchThumbnails();
       } else {
-        showError('Fehler beim Hochladen: ${response.statusCode}');
+        showError('Fehler beim Hochladen: ${responseImg.statusCode}');
       }
     } catch (e) {
       showError('Fehler: $e');
@@ -86,7 +122,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
 
       if (response.statusCode == 200) {
         showInfo('Foto gelöscht');
-        fetchPhotos();
+        fetchThumbnails();
       } else {
         showError('Fehler beim Löschen: ${response.statusCode}');
       }
@@ -121,13 +157,19 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
         itemCount: photos.length,
         itemBuilder: (context, index) {
           final photo = photos[index];
-          final photoUrl = photo['url'] as String? ?? '';
-          final photoId = photo['id'] as String? ?? '';
+          final thumbnail = photo['file'] as String? ?? '';
+          final name = photo['name'] as String? ?? '';
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(photoUrl, fit: BoxFit.cover),
+              GestureDetector(
+                onTap: () => fetchPhoto(name.replaceFirst('thumbnails/', 'img/')),
+                child: Image(
+                  image: MemoryImage(base64Decode(thumbnail)),
+                  fit: BoxFit.cover,
+                ),
+              ),
               if (widget.config.member.isAdmin)
                 Positioned(
                   top: 4,
@@ -146,7 +188,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(context);
-                                deletePhoto(photoId);
+                                deletePhoto(name);
                               },
                               child: Text(
                                 'Löschen',
