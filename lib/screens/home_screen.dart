@@ -8,15 +8,14 @@ import 'package:vereinsappell/screens/strafen_screen.dart';
 import '../config_loader.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
+import 'documents_screen.dart';
 import 'galerie_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
 
 class HomeScreen extends DefaultScreen {
-  const HomeScreen({
-    super.key,
-    required super.config,
-  }) : super(title: "Home");
+  const HomeScreen({super.key, required super.config}) : super(title: "Home");
+
   @override
   DefaultScreenState createState() => _HomeScreenState();
 }
@@ -71,7 +70,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         '📢 Marschbefehl',
         () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => MarschbefehlScreen(config: widget.config)),
+          MaterialPageRoute(
+            builder: (_) => MarschbefehlScreen(config: widget.config),
+          ),
         ),
       ),
       _buildMenuTile(
@@ -79,7 +80,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         '💰 Strafen',
         () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => StrafenScreen(config: widget.config)),
+          MaterialPageRoute(
+            builder: (_) => StrafenScreen(config: widget.config),
+          ),
         ),
       ),
       if (member.isSpiess)
@@ -88,17 +91,39 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           '🛡️ Spieß',
           () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => SpiessScreen(config: widget.config)),
+            MaterialPageRoute(
+              builder: (_) => SpiessScreen(config: widget.config),
+            ),
           ),
         ),
-      //_buildMenuTile(context, '📸 Fotogalerie', () => Navigator.push(context, MaterialPageRoute(builder: (_) => GalleryScreen(config: widget.config)))),
+      _buildMenuTile(
+        context,
+        '📄 Dokumente',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DocumentScreen(config: widget.config),
+          ),
+        ),
+      ),
+      _buildMenuTile(
+        context,
+        '📸 Fotogalerie',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GalleryScreen(config: widget.config),
+          ),
+        ),
+      ),
       _buildMenuTile(
         context,
         '🎲 Knobeln',
         () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DefaultScreen(title: "🎲 Knobeln", config: widget.config),
+            builder: (_) =>
+                DefaultScreen(title: "🎲 Knobeln", config: widget.config),
           ),
         ),
       ),
@@ -108,7 +133,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           '👥 Mitglieder',
           () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => MitgliederScreen(config: widget.config)),
+            MaterialPageRoute(
+              builder: (_) => MitgliederScreen(config: widget.config),
+            ),
           ),
         ),
     ];
