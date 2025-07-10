@@ -16,8 +16,8 @@ fi
 echo "📦 Baue Web App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
 # Flutter vorbereiten
-flutter clean
-flutter pub get
+#flutter clean
+#flutter pub get
 
 flutter build web --build-name="${BUILD_NAME}" --build-number="${BUILD_NUMBER}" --release
 

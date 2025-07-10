@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../config_loader.dart';
@@ -20,9 +19,27 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   bool qrHandled = false;
   final MobileScannerController cameraController = MobileScannerController();
 
+  final _apiBaseUrlController = TextEditingController();
+  final _applicationIdController = TextEditingController();
+  final _memberIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      final url = Uri.base;
+      _apiBaseUrlController.text = url.queryParameters['apiBaseUrl'] ?? '';
+      _applicationIdController.text = url.queryParameters['applicationId'] ?? '';
+      _memberIdController.text = url.queryParameters['memberId'] ?? '';
+    }
+  }
+
   @override
   void dispose() {
     cameraController.dispose();
+    _apiBaseUrlController.dispose();
+    _applicationIdController.dispose();
+    _memberIdController.dispose();
     super.dispose();
   }
 
@@ -37,20 +54,17 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       final memberId = jsonData['memberId'];
 
       if (apiBaseUrl != null && applicationId != null && memberId != null) {
-        final dir = await getApplicationDocumentsDirectory();
-        final file = File('${dir.path}/config.json');
+        final config = AppConfig(
+          apiBaseUrl: apiBaseUrl,
+          applicationId: applicationId,
+          memberId: memberId,
+        );
 
-        final config = {
-          'apiBaseUrl': apiBaseUrl,
-          'applicationId': applicationId,
-          'memberId': memberId,
-        };
-
-        await file.writeAsString(jsonEncode(config));
-        final loadedConfig = await loadConfigFile();
+        await saveConfig(config);
+        final loadedConfig = await loadConfig();
 
         if (loadedConfig != null) {
-          await loadedConfig.member.fetchMember(); // <--- WICHTIG!
+          await loadedConfig.member.fetchMember();
           if (!mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -69,7 +83,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     } catch (e) {
       showError("Ungültiger QR-Code.");
     }
-    sleep(Duration(seconds: 5));
   }
 
   void showError(String message) {
@@ -88,8 +101,77 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     });
   }
 
+  void handleLogin() async {
+    final apiBaseUrl = _apiBaseUrlController.text.trim();
+    final applicationId = _applicationIdController.text.trim();
+    final memberId = _memberIdController.text.trim();
+
+    if (apiBaseUrl.isEmpty || applicationId.isEmpty || memberId.isEmpty) {
+      showError("Alle Felder müssen ausgefüllt sein.");
+      return;
+    }
+
+    final config = AppConfig(
+      apiBaseUrl: apiBaseUrl,
+      applicationId: applicationId,
+      memberId: memberId,
+    );
+
+    try {
+      await saveConfig(config);
+      await config.member.fetchMember();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider<Member>.value(
+            value: config.member,
+            child: HomeScreen(config: config),
+          ),
+        ),
+      );
+    } catch (e) {
+      showError("Fehler beim Anmelden: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(title: Text("Web-Anmeldung")),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _apiBaseUrlController,
+                decoration: InputDecoration(labelText: 'API Base URL'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _applicationIdController,
+                decoration: InputDecoration(labelText: 'Application ID'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _memberIdController,
+                decoration: InputDecoration(labelText: 'Member ID'),
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: handleLogin,
+                child: Text('🔐 Anmelden', style: TextStyle(fontSize: 18)),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 60),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (scanning) {
       return Scaffold(
         appBar: AppBar(title: Text('QR-Code scannen')),

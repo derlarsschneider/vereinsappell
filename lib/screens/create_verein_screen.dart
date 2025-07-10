@@ -43,7 +43,7 @@ class _CreateVereinScreenState extends State<CreateVereinScreen> {
     final file = File('${dir.path}/config.json');
     await file.writeAsString(jsonEncode(config));
 
-    final loadedConfig = await loadConfigFile();
+    final loadedConfig = await loadConfig();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => HomeScreen(config: loadedConfig!)),

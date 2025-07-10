@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vereinsappell/screens/config_missing_screen.dart';
@@ -8,10 +9,6 @@ import 'package:vereinsappell/screens/home_screen.dart';
 import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
-
-// // final String apiBaseUrl = 'http://localhost:5000';
-// final String apiBaseUrl = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
-// final String applicationId = 'lknfar-lkjfd';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +36,31 @@ void main() async {
     );
   };
 
-  final config = await loadConfigFile();
+  AppConfig? config = await loadConfig();
+
+  if (kIsWeb) {
+    final url = Uri.base;
+    String? apiBaseUrlGetParam = url.queryParameters['apiBaseUrl'];
+    String? applicationIdGetParam = url.queryParameters['applicationId'];
+    String? memberIdGetParam = url.queryParameters['memberId'];
+
+    String? apiBaseUrlConfigParam = config?.apiBaseUrl;
+    String? applicationIdConfigParam = config?.applicationId;
+    String? memberIdConfigParam = config?.memberId;
+
+    String? apiBaseUrl = apiBaseUrlGetParam ?? apiBaseUrlConfigParam;
+    String? applicationId = applicationIdGetParam ?? applicationIdConfigParam;
+    String? memberId = memberIdGetParam ?? memberIdConfigParam;
+
+    if (apiBaseUrl != null && applicationId != null && memberId != null) {
+      config = AppConfig(
+        apiBaseUrl: apiBaseUrl,
+        applicationId: applicationId,
+        memberId: memberId,
+      );
+      saveConfig(config);
+    }
+  }
 
   runApp(
     config == null
