@@ -14,9 +14,8 @@ marschbefehl_table_name = os.environ.get('MARSCHBEFEHL_TABLE_NAME')
 members_table = dynamodb.Table(members_table_name)
 fines_table = dynamodb.Table(fines_table_name)
 marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
+s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
-s3 = boto3.client('s3')
-s3_bucket_name = os.environ.get('PHOTOS_BUCKET_NAME')
 
 def lambda_handler(event, context):
     try:
@@ -53,6 +52,12 @@ def lambda_handler(event, context):
             return {**headers, **get_photos(event)}
         elif method == 'POST' and path == '/photos':
             return {**headers, **post_photo(event)}
+        elif method == 'GET' and path == '/docs':
+            return {**headers, **get_docs()}
+        elif method == 'POST' and path.startswith('/docs'):
+            return {**headers, **add_doc(event, path)}
+        if method == 'DELETE' and path.startswith('/docs'):
+            return {**headers, **delete_doc(path)}
         else:
             return {
                 'statusCode': 404,
@@ -63,6 +68,35 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(e), 'event': event})
         }
+
+def delete_doc(path):
+    key = path.replace('/docs/', '').lstrip('/')
+    s3 = boto3.client('s3')
+    s3.delete_object(Bucket=s3_bucket_name, Key=key)
+    return {"statusCode": 200, "body": "Datei gelöscht"}
+
+def add_doc(event, path):
+    key = path.replace('/docs/', '').lstrip('/')
+    try:
+        s3 = boto3.client('s3')
+        s3.head_object(Bucket=s3_bucket_name, Key=key)
+        return {"statusCode": 409, "body": "Datei existiert bereits"}
+    except s3.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != '404':
+            raise
+
+    body = base64.b64decode(event['body']) if event.get('isBase64Encoded') else event['body'].encode('utf-8')
+    s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
+    return {"statusCode": 200, "body": "Upload erfolgreich"}
+
+
+def get_docs():
+    s3 = boto3.client('s3')
+    response = s3.list_objects_v2(Bucket=s3_bucket_name)
+    files = [obj['Key'] for obj in response.get('Contents', [])]
+    body = json.dumps([{"title": k} for k in files])
+    return {"statusCode": 200, "body": body}
+
 
 def get_member_by_id(event):
     try:
@@ -261,6 +295,7 @@ def get_marschbefehl(event):
 def get_photos(event):
     try:
         prefix = 'photos/'
+        s3 = boto3.client('s3')
         response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=prefix)
         items = response.get('Contents', [])
 
@@ -299,6 +334,7 @@ def post_photo(event):
         image_id = str(uuid.uuid4())
         s3_key = f'photos/{image_id}.jpg'
 
+        s3 = boto3.client('s3')
         s3.put_object(
             Bucket=s3_bucket_name,
             Key=s3_key,

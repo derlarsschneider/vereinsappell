@@ -15,3 +15,5 @@ locals {
     name_prefix = terraform.workspace
 
 }
+
+data "aws_caller_identity" "current" {}

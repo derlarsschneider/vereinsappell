@@ -26,7 +26,7 @@ resource "aws_iam_role_policy_attachment" "dynamodb_full_access_policy_attachmen
 }
 
 resource "aws_iam_policy" "s3_policy" {
-    name = "AllowLambdaPhotoUpload"
+    name = "AllowLambdaS3Upload"
 
     policy = jsonencode({
         Version = "2012-10-17",
@@ -36,15 +36,17 @@ resource "aws_iam_policy" "s3_policy" {
                 Action = [
                     "s3:ListBucket"
                 ],
-                Resource = aws_s3_bucket.photos.arn
+                Resource = aws_s3_bucket.s3_bucket.arn
             },
             {
                 Effect = "Allow",
                 Action = [
                     "s3:PutObject",
-                    "s3:GetObject"
+                    "s3:GetObject",
+                    "s3:DeleteObject",
+                    "s3:HeadObject"
                 ],
-                Resource = "${aws_s3_bucket.photos.arn}/photos/*"
+                Resource = "${aws_s3_bucket.s3_bucket.arn}/photos/*"
             }
         ]
     })

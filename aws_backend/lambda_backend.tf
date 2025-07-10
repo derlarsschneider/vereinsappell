@@ -10,7 +10,7 @@ resource "aws_lambda_function" "lambda_backend" {
             FINES_TABLE_NAME = aws_dynamodb_table.fines_table.name,
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
-            PHOTOS_BUCKET_NAME = aws_s3_bucket.photos.bucket,
+            S3_BUCKET_NAME = aws_s3_bucket.s3_bucket.bucket,
         }
     }
 }
