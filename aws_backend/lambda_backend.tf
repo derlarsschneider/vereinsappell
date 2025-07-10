@@ -26,6 +26,18 @@ resource "aws_lambda_permission" "api_gateway" {
 resource "aws_apigatewayv2_api" "http_api" {
     name          = "${local.name_prefix}-api"
     protocol_type = "HTTP"
+
+    cors_configuration {
+        allow_origins     = [
+            "https://vereinsappell.web.app",
+            "http://127.0.0.1:8080",
+            "http://localhost:8080"
+        ]
+        allow_methods     = ["GET", "POST", "DELETE", "OPTIONS"]
+        allow_headers     = ["content-type"]
+        allow_credentials = false
+        max_age           = 3600
+    }
 }
 
 resource "aws_apigatewayv2_integration" "lambda_integration" {
@@ -39,21 +51,4 @@ resource "aws_apigatewayv2_stage" "default" {
     api_id      = aws_apigatewayv2_api.http_api.id
     name        = "$default"
     auto_deploy = true
-}
-
-resource "aws_iam_role" "lambda_role" {
-    name = "${local.name_prefix}-lambda_role"
-
-    assume_role_policy = jsonencode({
-        Version = "2012-10-17"
-        Statement = [
-            {
-                Action = "sts:AssumeRole"
-                Effect = "Allow"
-                Principal = {
-                    Service = "lambda.amazonaws.com"
-                }
-            },
-        ]
-    })
 }

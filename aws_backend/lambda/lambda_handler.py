@@ -22,27 +22,37 @@ def lambda_handler(event, context):
     try:
         method = event.get('requestContext', {}).get('http', {}).get('method')
         path = event.get('requestContext', {}).get('http', {}).get('path')
+        headers = {
+            "Access-Control-Allow-Origin": "https://vereinsappell.web.app",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Methods": "OPTIONS,GET,POST,DELETE",
+        }
 
+        if method == 'OPTIONS':
+            return {
+                "statusCode": 204,
+                "headers": headers,
+            }
         if method == 'GET' and path == '/members':
             return get_members(event)
         elif method == 'GET' and path.startswith('/members/'):
-            return get_member_by_id(event)
+            return {**headers, **get_member_by_id(event)}
         elif method == 'POST' and path == '/members':
-            return add_member(event)
+            return {**headers, **add_member(event)}
         elif method == 'DELETE' and path.startswith('/members/'):
-            return delete_member(event)
+            return {**headers, **delete_member(event)}
         elif method == 'GET' and path == '/fines':
-            return get_fines(event)
+            return {**headers, **get_fines(event)}
         elif method == 'POST' and path == '/fines':
-            return add_fine(event)
+            return {**headers, **add_fine(event)}
         elif method == 'DELETE' and path.startswith('/fines/'):
-            return delete_fine(event)
+            return {**headers, **delete_fine(event)}
         elif method == 'GET' and path == '/marschbefehl':
-            return get_marschbefehl(event)
+            return {**headers, **get_marschbefehl(event)}
         elif method == 'GET' and path == '/photos':
-            return get_photos(event)
+            return {**headers, **get_photos(event)}
         elif method == 'POST' and path == '/photos':
-            return post_photo(event)
+            return {**headers, **post_photo(event)}
         else:
             return {
                 'statusCode': 404,
