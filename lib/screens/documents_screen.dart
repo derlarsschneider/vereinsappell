@@ -5,11 +5,11 @@ import 'dart:io' as io; // Nur für Mobile
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as universal_html; // für Web-Download
 
+import '../api/documents_api.dart';
 import '../config_loader.dart';
 
 class DocumentScreen extends StatefulWidget {
@@ -22,46 +22,41 @@ class DocumentScreen extends StatefulWidget {
 }
 
 class _DocumentScreenState extends State<DocumentScreen> {
+  late final DocumentApi api;
   List<Map<String, dynamic>> documents = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    loadDocuments();
+    api = DocumentApi(widget.config);
+    fetchDocuments();
   }
 
-  Future<void> loadDocuments() async {
-    final url = Uri.parse('${widget.config.apiBaseUrl}/docs');
+  Future<void> fetchDocuments() async {
+    setState(() => isLoading = true);
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          documents = data.map((e) => Map<String, dynamic>.from(e)).toList();
-        });
-      } else {
-        throw Exception('Fehler beim Laden der Dokumente');
-      }
+      final result = await api.fetchDocuments();
+      setState(() => documents = result);
     } catch (e) {
-      showError(e.toString());
+      showError("Fehler: $e");
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> deleteDocument(String fileName) async {
+    setState(() => isLoading = true);
     if (widget.config.member.isAdmin) {
-      final url = Uri.parse('${widget.config.apiBaseUrl}/docs/$fileName');
-      final response = await http.delete(url);
-      if (response.statusCode == 200) {
+      try {
+        api.deleteDocument(fileName);
         setState(() {
           documents.removeWhere((doc) => doc['name'] == fileName);
         });
-      } else {
-        showError('Fehler beim Löschen der Datei');
+      } catch (e) {
+        showError('Fehler beim Löschen der Datei. ${e}');
+      } finally {
+        setState(() => isLoading = false);
       }
     }
   }
@@ -126,39 +121,17 @@ class _DocumentScreenState extends State<DocumentScreen> {
     final uploadUrl = Uri.parse('${widget.config.apiBaseUrl}/docs');
     print(uploadUrl);
 
-    final body = jsonEncode({
-      'name': newName,
-      'file': base64Encode(fileBytes), // <-- explizit codieren
-    });
-
     try {
-      final response = await http.post(
-        uploadUrl,
-        headers: {'Content-Type': 'application/octet-stream'},
-        body: body,
-      );
-
-      if (response.statusCode == 200) {
-        await loadDocuments();
-      } else {
-        showError("Fehler beim Hochladen: ${response.statusCode}");
-      }
+      api.uploadDocument(name: newName, fileBytes: fileBytes);
+      await fetchDocuments();
     } catch (e) {
       showError("Upload fehlgeschlagen: $e");
     }
   }
 
-  void downloadFile({required String url}) async {
+  void downloadFile({required String fileName}) async {
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode != 200) {
-        showError("Fehler beim Herunterladen: ${response.statusCode}");
-        return;
-      }
-
-      final bytes = response.bodyBytes;
-      final fileName = Uri.parse(url).pathSegments.last;
-
+      final bytes = await api.downloadDocument(fileName);
       if (kIsWeb) {
         // 🔄 Web: HTML download trigger
         final base64Data = base64Encode(bytes);
@@ -194,7 +167,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
               itemBuilder: (context, index) {
                 final doc = documents[index];
                 final name = doc['name'] ?? 'Unbenannt';
-                final url = '${widget.config.apiBaseUrl}/docs/$name';
                 return ListTile(
                   leading: Icon(Icons.file_download),
                   title: Text(name),
@@ -205,7 +177,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         )
                       : null,
                   onTap: () {
-                    downloadFile(url: url);
+                    downloadFile(fileName: name);
                   },
                 );
               },
