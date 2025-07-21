@@ -53,3 +53,4 @@ app.*.map.json
 /aws_backend/.terraform.lock.hcl
 /aws_backend/.terraform/
 /.github/secrets/vereinsappell-f194b1963d27.json
+/aws_backend/authorizer/lambda.zip
