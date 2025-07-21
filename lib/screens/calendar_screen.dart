@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:icalendar_parser/icalendar_parser.dart';
 import 'package:intl/intl.dart';
 
-void main() {
-  runApp(MaterialApp(home: CalendarScreen()));
-}
+import '../api/calendar_api.dart';
+import 'default_screen.dart';
 
-class CalendarScreen extends StatefulWidget {
+class CalendarScreen extends DefaultScreen {
+  const CalendarScreen({
+    super.key,
+    required super.config,
+  }) : super(title: 'Kalender',);
+
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  DefaultScreenState createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends DefaultScreenState<CalendarScreen> {
+  late final CalendarApi api;
   List<Map<String, dynamic>> events = [];
   bool isLoading = false;
   String? error;
@@ -20,6 +24,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    api = CalendarApi(widget.config);
     fetchIcs();
   }
 
@@ -28,29 +33,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
       isLoading = true;
       error = null;
     });
-
     try {
-      final url = Uri.parse(
-          'https://www.schuetzenlust-gnadental.de/index.php/termine/eventslist/?format=raw&layout=ics');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final rawIcs = response.body;
-        final calendar = ICalendar.fromString(rawIcs);
-
-        setState(() {
-          events = calendar.data;
-          events.sort((a, b) {
-            final aDate = a['dtstart']?.toDateTime() ?? DateTime(2100);
-            final bDate = b['dtstart']?.toDateTime() ?? DateTime(2100);
-            return aDate.compareTo(bDate);
-          });
+      final calendar = await api.fetchIcs();
+      setState(() {
+        events = calendar.data;
+        events.sort((a, b) {
+          final aDate = a['dtstart']?.toDateTime() ?? DateTime(2100);
+          final bDate = b['dtstart']?.toDateTime() ?? DateTime(2100);
+          return aDate.compareTo(bDate);
         });
-      } else {
-        setState(() {
-          error = 'Fehler beim Laden der ICS Datei: HTTP ${response.statusCode}';
-        });
-      }
+      });
     } catch (e) {
       setState(() {
         error = 'Fehler: $e';

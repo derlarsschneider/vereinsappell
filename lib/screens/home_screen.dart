@@ -62,7 +62,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         '📅 Termine',
         () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => CalendarScreen()),
+          MaterialPageRoute(
+            builder: (_) => CalendarScreen(config: widget.config,)
+          ),
         ),
       ),
       _buildMenuTile(
