@@ -2,8 +2,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:vereinsappell/screens/default_screen.dart';
+
+import '../api/marschbefehl_api.dart';
 
 class MarschbefehlScreen extends DefaultScreen {
 
@@ -14,21 +15,20 @@ class MarschbefehlScreen extends DefaultScreen {
 }
 
 class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
+  late final MarschbefehlApi api;
   List<MarschbefehlEintrag> _items = [];
   bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
+    api = MarschbefehlApi(widget.config);
     _fetchMarschbefehl();
   }
 
   Future<void> _fetchMarschbefehl() async {
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/marschbefehl'));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = await api.fetchMarschbefehl();
         setState(() {
           _items = data
               .map((e) => MarschbefehlEintrag.fromJson(e))
@@ -36,13 +36,11 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
             ..sort((a, b) => a.datetime.compareTo(b.datetime)); // 🔧 Sortieren nach Datum
           _isLoading = false;
         });
-      } else {
-        throw Exception('Fehler beim Laden der Daten: ${response.statusCode}');
-      }
     } catch (e) {
+      showError(e.toString());
+    } finally {
       setState(() {
         _isLoading = false;
-        _error = e.toString();
       });
     }
   }
@@ -53,8 +51,6 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
       appBar: AppBar(title: const Text('📢 Marschbefehl')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text('Fehler: $_error'))
           : ListView.builder(
         itemCount: _items.length,
         padding: const EdgeInsets.all(12),
