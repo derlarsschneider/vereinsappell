@@ -1,7 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:vereinsappell/api/fines_api.dart';
 import 'dart:convert';
 
 import 'package:vereinsappell/screens/default_screen.dart';
@@ -18,6 +18,7 @@ class StrafenScreen extends DefaultScreen {
 }
 
 class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
+  late final FinesApi api;
   String memberName = '';
   List<dynamic> strafen = [];
   bool isLoading = false;
@@ -25,6 +26,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
   @override
   void initState() {
     super.initState();
+    api = FinesApi(widget.config);
     fetchStrafen();
   }
 
@@ -34,24 +36,15 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
     });
 
     try {
-      final finesResponse = await http.get(
-        Uri.parse('${widget.config.apiBaseUrl}/fines?memberId=${widget.config.memberId}'),
-      );
-
-      if (finesResponse.statusCode == 200) {
-        // Response is {"name": "<NAME>, "fines": [...]}
-        final Map<String, dynamic> response = json.decode(finesResponse.body);
-        final String name = response['name'];
-        final List<dynamic> data = response['fines'];
+      final Map<String, dynamic> response = await api.fetchFines(widget.config.memberId);
+      final String name = response['name'];
+      final List<dynamic> fines = response['fines'];
         setState(() {
-          strafen = data;
+          strafen = fines;
           memberName = name;
         });
-      } else {
-        showError('Fehler beim Laden: ${finesResponse.statusCode}');
-      }
     } catch (e) {
-      showError('Fehler beim Abrufen: $e');
+      showError('$e');
     } finally {
       setState(() {
         isLoading = false;

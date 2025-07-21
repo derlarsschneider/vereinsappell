@@ -1,10 +1,12 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:vereinsappell/screens/default_screen.dart';
+
+import '../api/fines_api.dart';
+import '../api/members_api.dart';
 
 class SpiessScreen extends DefaultScreen {
 
@@ -18,6 +20,8 @@ class SpiessScreen extends DefaultScreen {
 }
 
 class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
+  late final MembersApi membersApi;
+  late final FinesApi finesApi;
   List<dynamic> members = [];
   List<dynamic> selectedMemberFines = [];
   String? selectedMemberId;
@@ -32,6 +36,8 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
   @override
   void initState() {
     super.initState();
+    membersApi = MembersApi(widget.config);
+    finesApi = FinesApi(widget.config);
     fetchMembers();
   }
 
@@ -40,15 +46,10 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       isLoadingMembers = true;
     });
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/members'));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          members = data;
-        });
-      } else {
-        showError('Fehler beim Laden der Mitglieder: ${response.statusCode}');
-      }
+      final List<dynamic> data = await membersApi.fetchMembers();
+      setState(() {
+        members = data;
+      });
     } catch (e) {
       showError('Fehler beim Abrufen der Mitglieder: $e');
     } finally {
@@ -64,17 +65,12 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
       selectedMemberFines.clear();
     });
     try {
-      final finesResponse = await http.get(Uri.parse('${widget.config.apiBaseUrl}/fines?memberId=$memberId'));
-      if (finesResponse.statusCode == 200) {
-        final Map<String, dynamic> response = json.decode(finesResponse.body);
-        final String name = response['name'];
-        final List<dynamic> data = response['fines'];
-        setState(() {
-          selectedMemberFines = data;
-        });
-      } else {
-        showError('Fehler beim Laden der Strafen: ${finesResponse.statusCode}');
-      }
+      final Map<String, dynamic> response = await finesApi.fetchFines(memberId);
+      final String name = response['name'];
+      final List<dynamic> fines = response['fines'];
+      setState(() {
+        selectedMemberFines = fines;
+      });
     } catch (e) {
       showError('Fehler beim Abrufen der Strafen: $e');
     } finally {
@@ -86,46 +82,22 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
   Future<void> addFine(String memberId, String reason, double amount, BuildContext dialogContext) async {
     try {
-      // Float types are not supported. Use Decimal types instead
-      final decimalAmount = Decimal.parse(amount.toString());
-      // Generate a unique ID for the fine
-      final fineId = DateTime.now().millisecondsSinceEpoch.toString();
-      final response = await http.post(
-        Uri.parse('${widget.config.apiBaseUrl}/fines'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'fineId': fineId,
-          'memberId': memberId,
-          'reason': reason,
-          'amount': decimalAmount,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        await fetchFines(memberId);
-        Navigator.of(dialogContext).pop(); // <- nur den Dialog schließen
-      } else {
-        print(response.body);
-        print(response.headers);
-        showError('Fehler beim Speichern der Strafe: ${response.statusCode}');
-      }
+      await finesApi.addFine(memberId, reason, amount);
+      Navigator.of(dialogContext).pop(); // <- nur den Dialog schließen
     } catch (e) {
       showError('Fehler beim Speichern der Strafe: $e');
+    } finally {
+      await fetchFines(memberId);
     }
   }
 
   Future<void> deleteFine(String fineId) async {
     try {
-      final response = await http.delete(Uri.parse('${widget.config.apiBaseUrl}/fines/$fineId'));
-
-      if (response.statusCode == 200) {
-        if (selectedMemberId != null) {
-          await fetchFines(selectedMemberId!);
-        }
-        showInfo('Strafe gelöscht');
-      } else {
-        showError('Fehler beim Löschen der Strafe: ${response.statusCode}');
+      finesApi.deleteFine(fineId);
+      if (selectedMemberId != null) {
+        await fetchFines(selectedMemberId!);
       }
+      showInfo('Strafe gelöscht');
     } catch (e) {
       showError('Fehler beim Löschen: $e');
     }
