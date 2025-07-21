@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
+
+import '../api/gallery_api.dart';
 
 class GalleryScreen extends DefaultScreen {
 
@@ -19,6 +21,7 @@ class GalleryScreen extends DefaultScreen {
 }
 
 class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
+  late final GalleryApi api;
   List<Map<String, dynamic>> photos = [];
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
@@ -26,26 +29,20 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   @override
   void initState() {
     super.initState();
+    api = GalleryApi(widget.config);
     fetchThumbnails();
   }
 
   Future<void> fetchPhoto(String name) async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos/img/$name'));
-      if (response.statusCode == 200) {
-
-        final imageBytes = response.bodyBytes;
-
+        final Uint8List imageBytes = await api.fetchPhoto(name);
         showDialog(
           context: context,
           builder: (_) => Dialog(
             child: Image.memory(imageBytes, fit: BoxFit.contain),
           ),
         );
-      } else {
-        showError('Fehler beim Laden des Fotos: ${response.statusCode}');
-      }
     } catch (e) {
       showError('Fehler: $e');
     } finally {
@@ -56,17 +53,12 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   Future<void> fetchThumbnails() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/photos/thumbnails'));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          photos = data.cast<Map<String, dynamic>>();
-        });
-      } else {
-        showError('Fehler beim Laden der Fotos: ${response.statusCode}');
-      }
+      final List<dynamic> data = await api.fetchThumbnails();
+      setState(() {
+        photos = data.cast<Map<String, dynamic>>();
+      });
     } catch (e) {
-      showError('Fehler: $e');
+      showError('Fehler Thumbnails: $e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -84,29 +76,19 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
 
     final jpegBytes = img.encodeJpg(originalImage, quality: 90);
 
-    final resized = img.copyResize(originalImage, width: 200); // z. B. 800px Breite
+    final resized = img.copyResize(originalImage, width: 200); // z.B. 800px Breite
     final resizedBytes = img.encodeJpg(resized, quality: 70); // oder encodePng()
 
     setState(() => isLoading = true);
     final String filename = pickedFile.name.replaceAll(RegExp(r"\.\w+$"), ".jpg");
     try {
-      final responseImg = await http.post(
-        Uri.parse('${widget.config.apiBaseUrl}/photos'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode([{'file': base64Encode(jpegBytes), 'name': 'img/${filename}'}]),
+      await api.uploadPhoto(
+        original: jpegBytes,
+        thumbnail: resizedBytes,
+        filename: filename,
       );
-      final responseThumb = await http.post(
-        Uri.parse('${widget.config.apiBaseUrl}/photos'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode([{'file': base64Encode(resizedBytes), 'name': 'thumbnails/${filename}'}]),
-      );
-
-      if (responseImg.statusCode == 200 && responseThumb.statusCode == 200) {
-        showInfo('Foto hochgeladen');
-        fetchThumbnails();
-      } else {
-        showError('Fehler beim Hochladen: ${responseImg.statusCode}');
-      }
+      showInfo('Foto hochgeladen');
+      api.fetchThumbnails();
     } catch (e) {
       showError('Fehler: $e');
     } finally {
@@ -117,15 +99,9 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   Future<void> deletePhoto(String photoId) async {
     setState(() => isLoading = true);
     try {
-      final response =
-      await http.delete(Uri.parse('${widget.config.apiBaseUrl}/photos/$photoId'));
-
-      if (response.statusCode == 200) {
-        showInfo('Foto gelöscht');
-        fetchThumbnails();
-      } else {
-        showError('Fehler beim Löschen: ${response.statusCode}');
-      }
+      api.deletePhoto(photoId);
+      showInfo('Foto gelöscht');
+      fetchThumbnails();
     } catch (e) {
       showError('Fehler: $e');
     } finally {

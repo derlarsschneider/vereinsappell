@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'api/headers.dart';
 import 'storage.dart';
 
 // Mobile/Desktop-Support
@@ -112,8 +113,12 @@ class Member extends ChangeNotifier {
   bool get isAdmin => _isAdmin;
 
   Future<void> fetchMember() async {
-    try {
-      final response = await http.get(Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'));
+    // try {
+      final response = await http.get(
+        Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
+        headers: headers(config),
+      );
+      print('${config.apiBaseUrl}/members/${config.memberId}');
       if (response.statusCode == 200) {
         final Map<String, dynamic>? member = jsonDecode(response.body);
         _name = member?['name'] ?? '';
@@ -122,9 +127,10 @@ class Member extends ChangeNotifier {
         notifyListeners();
       } else {
         print('Fehler beim Laden des Mitglieds: ${response.statusCode}');
+        throw Exception('Fehler beim Laden des Mitglieds: ${response.statusCode}');
       }
-    } catch (e) {
-      print('Fehler beim Parsen des Mitglieds: $e');
-    }
+    // } catch (e) {
+    //   print('Fehler beim Parsen des Mitglieds: $e');
+    // }
   }
 }

@@ -182,8 +182,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: GestureDetector(
         onLongPress: () async {
-          await member.fetchMember();
-          showInfo('Mitgliedsdaten aktualisiert');
+          try {
+            await member.fetchMember();
+            showInfo('Mitgliedsdaten aktualisiert');
+          } catch (e) {
+            showError('Fehler beim Aktualisieren der Mitgliedsdaten: ${e}');
+          }
         },
         child: Card(
           elevation: 2,
@@ -196,7 +200,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '👤 Mitglied: ${member.name.isNotEmpty ? member.name : "Unbekannt"}',
+                  '👤 Mitglied: ${member.name.isNotEmpty ? member.name : widget.config.memberId}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

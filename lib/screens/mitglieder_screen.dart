@@ -1,8 +1,9 @@
+// lib/screens/mitglieder_screen.dart
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
+import 'package:vereinsappell/api/members_api.dart';
 
 class MitgliederScreen extends DefaultScreen {
   const MitgliederScreen({
@@ -15,6 +16,7 @@ class MitgliederScreen extends DefaultScreen {
 }
 
 class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
+  late final MembersApi api;
   List<dynamic> mitglieder = [];
   Map<String, dynamic>? selectedMember;
   bool isLoading = false;
@@ -24,6 +26,7 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   @override
   void initState() {
     super.initState();
+    api = MembersApi(widget.config);
     fetchMitglieder();
   }
 
@@ -36,16 +39,9 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   Future<void> fetchMitglieder() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('${widget.config.apiBaseUrl}/members'));
-      if (response.statusCode == 200) {
-        setState(() {
-          mitglieder = json.decode(response.body);
-        });
-      } else {
-        showError('Fehler beim Laden der Mitglieder: ${response.statusCode}');
-      }
+      mitglieder = await api.fetchMembers();
     } catch (e) {
-      showError('Fehler beim Abrufen: $e');
+      showError('$e');
     } finally {
       setState(() => isLoading = false);
     }
@@ -60,76 +56,37 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
 
   Future<void> saveMember() async {
     if (selectedMember == null) return;
-
-    final url = Uri.parse('${widget.config.apiBaseUrl}/members');
-    final headers = {'Content-Type': 'application/json'};
-    final body = json.encode(selectedMember);
-
     try {
-      final response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        showInfo('Mitglied erfolgreich gespeichert');
-      } else {
-        showError('Fehler beim Speichern: ${response.body}');
-      }
+      await api.saveMember(selectedMember!);
+      showInfo('Mitglied erfolgreich gespeichert');
     } catch (e) {
-      showError('Netzwerkfehler beim Speichern');
+      showError('$e');
     }
   }
 
   Future<void> deleteMember() async {
     if (selectedMember == null) return;
-
-    final memberId = selectedMember!['memberId'];
-    final url = Uri.parse('${widget.config.apiBaseUrl}/members/$memberId');
-
     try {
-      final response = await http.delete(url);
-      if (response.statusCode == 200) {
-        showInfo('Mitglied gelöscht');
-        setState(() {
-          mitglieder.removeWhere((m) => m['memberId'] == memberId);
-          selectedMember = null;
-        });
-      } else {
-        print(response.body);
-        showError('Fehler beim Löschen: ${response.statusCode}');
-      }
+      await api.deleteMember(selectedMember!['memberId']);
+      setState(() {
+        mitglieder.removeWhere((m) => m['memberId'] == selectedMember!['memberId']);
+        selectedMember = null;
+      });
+      showInfo('Mitglied gelöscht');
     } catch (e) {
-      showError('Netzwerkfehler beim Löschen');
+      showError('$e');
     }
   }
 
   Future<void> createMember(String name) async {
-    if (name.trim().isEmpty) return;
-    final memberId = widget.config.applicationId + DateTime.now().millisecondsSinceEpoch.toString();
-    final url = Uri.parse('${widget.config.apiBaseUrl}/members');
-
-    final newMember = {
-      'name': name,
-      'memberId': memberId,
-      'isAdmin': false,
-      'isSpiess': false,
-    };
-
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(newMember),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final newMember = json.decode(response.body);
-        setState(() {
-          mitglieder.add(newMember);
-        });
-        _selectMember(newMember);
-      } else {
-        showError('Fehler beim Erstellen: ${response.statusCode}');
-      }
+      final newMember = await api.createMember(name, widget.config.applicationId);
+      setState(() {
+        mitglieder.add(newMember);
+      });
+      _selectMember(newMember);
     } catch (e) {
-      showError('Netzwerkfehler beim Erstellen');
+      showError('$e');
     }
   }
 
