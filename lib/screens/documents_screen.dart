@@ -8,20 +8,19 @@ import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as universal_html; // für Web-Download
+import 'package:vereinsappell/screens/default_screen.dart';
 
 import '../api/documents_api.dart';
 import '../config_loader.dart';
 
-class DocumentScreen extends StatefulWidget {
-  final AppConfig config;
-
-  const DocumentScreen({Key? key, required this.config}) : super(key: key);
+class DocumentScreen extends DefaultScreen {
+  const DocumentScreen({super.key, required super.config}) : super(title: 'Dokumente');
 
   @override
-  State<DocumentScreen> createState() => _DocumentScreenState();
+  DefaultScreenState<DocumentScreen> createState() => _DocumentScreenState();
 }
 
-class _DocumentScreenState extends State<DocumentScreen> {
+class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
   late final DocumentApi api;
   List<Map<String, dynamic>> documents = [];
   bool isLoading = true;
@@ -59,12 +58,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
         setState(() => isLoading = false);
       }
     }
-  }
-
-  void showError(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> uploadDocument() async {
