@@ -18,22 +18,6 @@ marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
 
-def lambda_authorizer(event, context):
-    token = event["headers"].get("authorization")
-    # check DynamoDB for registered clients
-    if token == "Bearer geheimtoken123":
-        return {
-            "isAuthorized": True,
-            "context": {
-                "user": "trusted-client"
-            }
-        }
-    else:
-        return {
-            "isAuthorized": False
-        }
-
-
 def lambda_handler(event, context):
     try:
         method = event.get('requestContext', {}).get('http', {}).get('method')
