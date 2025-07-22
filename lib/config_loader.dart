@@ -13,13 +13,14 @@ class AppConfig {
   final String apiBaseUrl;
   final String applicationId;
   final String memberId;
-  final String appName = 'Schützenlust-Korps Neuss-Gnadental gegr. 1998';
+  final String applicationName;
   late final Member member;
 
   AppConfig({
     required this.apiBaseUrl,
     required this.applicationId,
     required this.memberId,
+    required this.applicationName,
   }) {
     member = Member(config: this);
   }
@@ -29,6 +30,7 @@ class AppConfig {
       apiBaseUrl: json['apiBaseUrl'],
       applicationId: json['applicationId'],
       memberId: json['memberId'],
+      applicationName: json['applicationName'],
     );
   }
 
@@ -37,6 +39,7 @@ class AppConfig {
       'apiBaseUrl': apiBaseUrl,
       'applicationId': applicationId,
       'memberId': memberId,
+      'applicationName': applicationName,
     };
   }
 }
@@ -118,7 +121,6 @@ class Member extends ChangeNotifier {
         Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
         headers: headers(config),
       );
-      print('${config.apiBaseUrl}/members/${config.memberId}');
       if (response.statusCode == 200) {
         final Map<String, dynamic>? member = jsonDecode(response.body);
         _name = member?['name'] ?? '';

@@ -28,7 +28,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.config.appName,
+          widget.config.applicationName,
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,

@@ -135,6 +135,7 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
       "apiBaseUrl": widget.config.apiBaseUrl,
       "applicationId": widget.config.applicationId,
       "memberId": selectedMember!['memberId'],
+      "applicationName": widget.config.applicationName,
     });
 
     return Padding(

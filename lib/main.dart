@@ -43,20 +43,24 @@ void main() async {
     String? apiBaseUrlGetParam = url.queryParameters['apiBaseUrl'];
     String? applicationIdGetParam = url.queryParameters['applicationId'];
     String? memberIdGetParam = url.queryParameters['memberId'];
+    String? applicationNameGetParam = url.queryParameters['applicationName'];
 
     String? apiBaseUrlConfigParam = config?.apiBaseUrl;
     String? applicationIdConfigParam = config?.applicationId;
     String? memberIdConfigParam = config?.memberId;
+    String? applicationNameConfigParam = config?.memberId;
 
     String? apiBaseUrl = apiBaseUrlGetParam ?? apiBaseUrlConfigParam;
     String? applicationId = applicationIdGetParam ?? applicationIdConfigParam;
     String? memberId = memberIdGetParam ?? memberIdConfigParam;
+    String? applicationName = applicationNameGetParam ?? applicationNameConfigParam;
 
-    if (apiBaseUrl != null && applicationId != null && memberId != null) {
+    if (apiBaseUrl != null && applicationId != null && memberId != null && applicationName != null) {
       config = AppConfig(
         apiBaseUrl: apiBaseUrl,
         applicationId: applicationId,
         memberId: memberId,
+        applicationName: applicationName,
       );
       saveConfig(config);
     }
@@ -78,7 +82,7 @@ class MainApp extends StatelessWidget {
     return ChangeNotifierProvider<Member>.value(
       value: config.member,
       child: MaterialApp(
-        title: config.appName,
+        title: config.applicationName,
         theme: ThemeData(
           primarySwatch: Colors.green,
           visualDensity: VisualDensity.adaptivePlatformDensity,

@@ -17,10 +17,10 @@ void main() {
     await tester.pumpWidget(
       MainApp(config: AppConfig(
         apiBaseUrl: 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com',
-          applicationId: 'test',
-          memberId: 'm5',
-          ),
-      )
+        applicationId: 'test',
+        memberId: 'm5',
+        applicationName: 'test',
+      ))
     );
 
     // Verify that our counter starts at 0.
