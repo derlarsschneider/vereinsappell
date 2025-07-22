@@ -5,7 +5,7 @@ if [ "$#" -gt 0 ]; then
   STEP="$1"
 fi
 
-device="192.168.0.195:${PORT}"
+device="192.168.0.194:${PORT}"
 
 #~/tools/android/platform-tools/adb pair 192.168.0.195:39763
 echo CONNECT
@@ -22,7 +22,8 @@ fi
 
 if [ -z "$STEP" ] || [ "$STEP" == "INSTALL" ]; then
   echo INSTALL
-  ~/tools/android/platform-tools/adb -s ${device} install -r build/app/outputs/flutter-apk/app-release.apk
+  ~/tools/android/platform-tools/adb -s ${device} uninstall de.derlarsschneider.vereinsappell
+  ~/tools/android/platform-tools/adb -s ${device} install -d -r build/app/outputs/flutter-apk/app-release.apk
   ~/tools/android/platform-tools/adb -s ${device} shell monkey -p de.derlarsschneider.vereinsappell -c android.intent.category.LAUNCHER 1
 fi
 
