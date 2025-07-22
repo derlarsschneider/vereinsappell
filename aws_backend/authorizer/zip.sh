@@ -2,4 +2,4 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZIP="lambda.zip"
 cd "$SCRIPT_DIR"
-zip -r "$ZIP" .
+zip --filesync -r "$ZIP" .

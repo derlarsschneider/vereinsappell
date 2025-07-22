@@ -69,8 +69,8 @@ add_marschbefehl "2026-05-30 18:00" "Kirmesplatzeröffnung an der Frankenheim-Bu
 Anschl. Kirmeseröffnungsparty im Festzelt (freiwillig)"
 add_marschbefehl "2026-05-31 12:00" "Eröffnung des Schützenfestes"
 add_marschbefehl "2026-05-31 12:15" "Schießwettbewerbe des Regiments"
+echo "✅ Marschbefehl wurde erstellt."
 
-exit
 add_member "m1" "André Muller"          "false" "false"
 add_member "m6" "Theo Schneider"        "false" "false"
 add_member "m3" "Thomas Becker"         "false" "false"
@@ -95,4 +95,4 @@ add_fine "f3" "m3" "Unangebrachtes Verhalten" "3.00"
 add_fine "f4" "m4" "Nicht erscheinen" "4.00"
 add_fine "f5" "m5" "Verletzung der Regeln" "5.00"
 add_fine "f6" "m6" "Sonstiges" "6.00"
-echo "✅ Alle Fines wurden eingefügt."
+echo "✅ Alle Strafen wurden eingefügt."
