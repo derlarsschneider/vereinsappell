@@ -17,12 +17,12 @@ resource "aws_lambda_permission" "auth_api_permission" {
 
 # Lambda Authorizer
 resource "aws_apigatewayv2_authorizer" "lambda_authorizer" {
-    name                       = "${local.name_prefix}-lambda_authorizer"
-    api_id                     = aws_apigatewayv2_api.http_api.id
-    authorizer_type            = "REQUEST"
-    authorizer_uri             = aws_lambda_function.lambda_authorizer.invoke_arn
-    identity_sources           = ["$request.header.applicationId"]
+    name                              = "${local.name_prefix}-lambda_authorizer"
+    api_id                            = aws_apigatewayv2_api.http_api.id
+    authorizer_type                   = "REQUEST"
+    authorizer_uri                    = aws_lambda_function.lambda_authorizer.invoke_arn
+    identity_sources                  = ["$request.header.applicationId"]
     authorizer_payload_format_version = "2.0"
-    enable_simple_responses    = true
-    authorizer_result_ttl_in_seconds = 300
+    enable_simple_responses           = false
+    authorizer_result_ttl_in_seconds  = 300
 }
