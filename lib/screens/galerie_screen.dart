@@ -113,7 +113,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fotogalerie'),
+        title: Text('📸 Fotogalerie'),
         actions: [
           IconButton(
             icon: Icon(Icons.add_a_photo),
