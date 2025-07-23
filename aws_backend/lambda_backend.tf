@@ -34,7 +34,7 @@ resource "aws_apigatewayv2_api" "http_api" {
             "http://localhost:8080"
         ]
         allow_methods     = ["GET", "POST", "DELETE", "OPTIONS"]
-        allow_headers     = ["content-type"]
+        allow_headers     = ["content-type", "applicationId"]
         allow_credentials = false
         max_age           = 3600
     }

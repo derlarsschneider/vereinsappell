@@ -20,6 +20,7 @@ s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
 def lambda_handler(event, context):
     try:
+        print("Received event:", event)
         method = event.get('requestContext', {}).get('http', {}).get('method')
         path = event.get('requestContext', {}).get('http', {}).get('path')
         headers = {
