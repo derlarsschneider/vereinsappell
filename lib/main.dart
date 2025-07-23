@@ -12,12 +12,14 @@ import 'config_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  bool debugging = false;
   try {
-    if (Platform.isLinux || Platform.isMacOS) {
-      setWindowTitle('Vereins Appell');
-      setWindowMinSize(const Size(400, 800));
-      setWindowMaxSize(const Size(400, 800));
+    if (debugging) {
+      if (Platform.isLinux || Platform.isMacOS) {
+        setWindowTitle('Vereins Appell');
+        setWindowMinSize(const Size(400, 800));
+        setWindowMaxSize(const Size(400, 800));
+      }
     }
   } catch (e) {
     print(e);
