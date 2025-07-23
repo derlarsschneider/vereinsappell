@@ -15,6 +15,7 @@ fi
 
 echo "📦 Baue iOS App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
+flutter pub run flutter_launcher_icons
 # iOS-Build (für reale Geräte)
 flutter build ipa --release \
   --no-codesign \

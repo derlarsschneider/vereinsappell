@@ -15,6 +15,7 @@ fi
 
 echo "📦 Baue Android App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
+flutter pub run flutter_launcher_icons
 flutter build apk --build-name="${BUILD_NAME}" --build-number="${BUILD_NUMBER}" --release
 
 echo "✅ Android Build abgeschlossen: Version ${BUILD_NAME}+${BUILD_NUMBER}"
