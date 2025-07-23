@@ -1,12 +1,11 @@
 {
-    "name": "vereinsappell",
-    "short_name": "vereinsappell",
+    "name": "Vereins Appell: App mit Anschiss",
+    "short_name": "Vereins Appell",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "description": "Vereins Appell: App mit Anschiss",
     "prefer_related_applications": false,
     "icons": [
         {
