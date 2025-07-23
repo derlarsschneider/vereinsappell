@@ -93,11 +93,11 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
 
   Future<void> deleteFine(String fineId) async {
     try {
-      finesApi.deleteFine(fineId);
       if (selectedMemberId != null) {
+        await finesApi.deleteFine(fineId, selectedMemberId!);
         await fetchFines(selectedMemberId!);
+        showInfo('Strafe gelöscht');
       }
-      showInfo('Strafe gelöscht');
     } catch (e) {
       showError('Fehler beim Löschen: $e');
     }
@@ -225,7 +225,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        deleteFine(fine['id']);
+                        deleteFine(fine['fineId']);
                       },
                       child: Text('Löschen'),
                     ),

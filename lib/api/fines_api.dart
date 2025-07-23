@@ -51,8 +51,11 @@ class FinesApi {
     }
   }
 
-  Future<void> deleteFine(String fineId) async {
-    final response = await http.delete(Uri.parse('${config.apiBaseUrl}/fines/$fineId'));
+  Future<void> deleteFine(String fineId, String memberId) async {
+    final response = await http.delete(
+      Uri.parse('${config.apiBaseUrl}/fines/$fineId?memberId=$memberId'),
+      headers: headers(config),
+    );
     if (response.statusCode == 200) {
       return;
     } else {
