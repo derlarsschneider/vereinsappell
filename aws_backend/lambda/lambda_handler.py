@@ -60,14 +60,19 @@ def lambda_handler(event, context):
             return {**headers, **get_docs(event)}
         elif method == 'POST' and path.startswith('/docs'):
             return {**headers, **add_docs(event)}
-        if method == 'DELETE' and path.startswith('/docs'):
+        elif method == 'DELETE' and path.startswith('/docs'):
             return {**headers, **delete_doc(event)}
+        elif method == 'GET' and path.startswith('/customers/'):
+            import api_customers
+            return {**headers, **api_customers.get_customer_by_id(event, context)}
         else:
+            print(json.dumps({'error': 'Nicht gefunden', 'event': event}))
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Nicht gefunden', 'event': event})
             }
     except Exception as e:
+        print(json.dumps({'error': str(e), 'event': event}))
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e), 'event': event})

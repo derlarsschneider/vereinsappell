@@ -1,10 +1,13 @@
 // lib/screens/home_screen.dart
+import 'dart:convert';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
+import '../api/customers_api.dart';
 import '../config_loader.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
@@ -21,6 +24,37 @@ class HomeScreen extends DefaultScreen {
 }
 
 class _HomeScreenState extends DefaultScreenState<HomeScreen> {
+  String _applicationName = "Vereins Appell";
+  String _applicationLogoBase64 = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _updateApplication();
+  }
+
+  void _updateApplication() {
+    CustomersApi customersApi = CustomersApi(widget.config);
+    customersApi.getCustomer(widget.config.applicationId).then((customer) {
+      setState(() {
+        _applicationName = customer['application_name'];
+      });
+    }).catchError((error) {
+      // Optional: Fehlerbehandlung
+      showError("Fehler beim Laden des Vereins: $error");
+    });
+  }
+
+  Uint8List _decodeBase64(String base64String) {
+    // Padding korrigieren, falls notwendig
+    int remainder = base64String.length % 4;
+    if (remainder != 0) {
+      base64String += '=' * (4 - remainder);
+    }
+    return base64Decode(base64String);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final member = Provider.of<Member>(context);
@@ -28,7 +62,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.config.applicationName,
+          _applicationName,
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -39,7 +73,15 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
-            child: Image.asset('assets/images/logo.png', height: 32),
+            child: _applicationLogoBase64.isNotEmpty
+                ? Image.memory(
+              _decodeBase64(_applicationLogoBase64),
+              height: 32,
+            )
+                : Image.asset(
+              'assets/images/logo.png',
+              height: 32,
+            ),
           ),
         ],
       ),
@@ -63,7 +105,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => CalendarScreen(config: widget.config,)
+            builder: (_) => CalendarScreen(config: widget.config),
           ),
         ),
       ),
@@ -185,6 +227,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       child: GestureDetector(
         onLongPress: () async {
           try {
+            _updateApplication();
             await member.fetchMember();
             showInfo('Mitgliedsdaten aktualisiert');
           } catch (e) {

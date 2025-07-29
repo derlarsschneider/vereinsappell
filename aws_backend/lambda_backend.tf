@@ -7,6 +7,7 @@ resource "aws_lambda_function" "lambda_backend" {
 
     environment {
         variables = {
+            CUSTOMERS_TABLE_NAME = aws_dynamodb_table.customer_config_table.name,
             FINES_TABLE_NAME = aws_dynamodb_table.fines_table.name,
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
