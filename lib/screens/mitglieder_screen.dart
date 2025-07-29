@@ -1,6 +1,5 @@
 // lib/screens/mitglieder_screen.dart
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
 import 'package:vereinsappell/api/members_api.dart';
@@ -135,7 +134,6 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     //   "apiBaseUrl": widget.config.apiBaseUrl,
     //   "applicationId": widget.config.applicationId,
     //   "memberId": selectedMember!['memberId'],
-    //   "applicationName": widget.config.applicationName,
     // });
 
     final uri = Uri(
@@ -145,7 +143,6 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
         'apiBaseUrl': widget.config.apiBaseUrl,
         'applicationId': widget.config.applicationId,
         'memberId': selectedMember!['memberId'],
-        'applicationName': widget.config.applicationName,
       },
     );
 
