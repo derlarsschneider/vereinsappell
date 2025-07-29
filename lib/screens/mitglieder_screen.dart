@@ -131,12 +131,25 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
       return Center(child: Text('Mitglied auswählen'));
     }
 
-    final qrData = json.encode({
-      "apiBaseUrl": widget.config.apiBaseUrl,
-      "applicationId": widget.config.applicationId,
-      "memberId": selectedMember!['memberId'],
-      "applicationName": widget.config.applicationName,
-    });
+    // final qrData = json.encode({
+    //   "apiBaseUrl": widget.config.apiBaseUrl,
+    //   "applicationId": widget.config.applicationId,
+    //   "memberId": selectedMember!['memberId'],
+    //   "applicationName": widget.config.applicationName,
+    // });
+
+    final uri = Uri(
+      scheme: 'https',
+      host: 'vereinsappell.web.app',
+      queryParameters: {
+        'apiBaseUrl': widget.config.apiBaseUrl,
+        'applicationId': widget.config.applicationId,
+        'memberId': selectedMember!['memberId'],
+        'applicationName': widget.config.applicationName,
+      },
+    );
+
+    final qrData = uri.toString();
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
