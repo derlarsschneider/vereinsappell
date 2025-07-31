@@ -67,12 +67,14 @@ def lambda_handler(event, context):
             import api_customers
             return {**headers, **api_customers.get_customer_by_id(event, context)}
         else:
+            print(f'❌ Unknown API route: {method} {path}')
             print(json.dumps({'error': 'Nicht gefunden', 'event': event}))
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Nicht gefunden', 'event': event})
             }
     except Exception as e:
+        print(f'❌ Exception in lambda_handler')
         print(json.dumps({'error': str(e), 'event': event}))
         return {
             'statusCode': 500,
