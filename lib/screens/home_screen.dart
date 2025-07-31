@@ -37,10 +37,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
     try {
       if (kIsWeb) {
-        widget.config.member.fetchMember();
-        widget.config.member.registerPushSubscriptionWeb();
-        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-          showInfo('${message.notification?.title}: ${message.notification?.body}');
+        Future<void> futureResponse = widget.config.member.fetchMember();
+        futureResponse.whenComplete(() {
+          widget.config.member.registerPushSubscriptionWeb();
+          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+            showInfo('${message.notification?.title}: ${message.notification?.body}');
+          });
         });
       }
     } catch (e) {
