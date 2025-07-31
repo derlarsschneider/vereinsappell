@@ -13,14 +13,12 @@ class AppConfig {
   final String apiBaseUrl;
   final String applicationId;
   final String memberId;
-  final String applicationName;
   late final Member member;
 
   AppConfig({
     required this.apiBaseUrl,
     required this.applicationId,
     required this.memberId,
-    required this.applicationName,
   }) {
     member = Member(config: this);
   }
@@ -30,7 +28,6 @@ class AppConfig {
       apiBaseUrl: json['apiBaseUrl'],
       applicationId: json['applicationId'],
       memberId: json['memberId'],
-      applicationName: json['applicationName'],
     );
   }
 
@@ -39,7 +36,6 @@ class AppConfig {
       'apiBaseUrl': apiBaseUrl,
       'applicationId': applicationId,
       'memberId': memberId,
-      'applicationName': applicationName,
     };
   }
 }

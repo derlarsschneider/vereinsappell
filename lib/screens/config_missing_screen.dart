@@ -22,7 +22,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   final _apiBaseUrlController = TextEditingController();
   final _applicationIdController = TextEditingController();
   final _memberIdController = TextEditingController();
-  final _applicationNameController = TextEditingController();
 
   @override
   void initState() {
@@ -32,7 +31,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       _apiBaseUrlController.text = url.queryParameters['apiBaseUrl'] ?? '';
       _applicationIdController.text = url.queryParameters['applicationId'] ?? '';
       _memberIdController.text = url.queryParameters['memberId'] ?? '';
-      _applicationNameController.text = url.queryParameters['applicationName'] ?? '';
     }
   }
 
@@ -42,7 +40,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     _apiBaseUrlController.dispose();
     _applicationIdController.dispose();
     _memberIdController.dispose();
-    _applicationNameController.dispose();
     super.dispose();
   }
 
@@ -55,14 +52,12 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       final apiBaseUrl = jsonData['apiBaseUrl'];
       final applicationId = jsonData['applicationId'];
       final memberId = jsonData['memberId'];
-      final applicationName = jsonData['applicationName'];
 
-      if (apiBaseUrl != null && applicationId != null && memberId != null && applicationName != null) {
+      if (apiBaseUrl != null && applicationId != null && memberId != null) {
         final config = AppConfig(
           apiBaseUrl: apiBaseUrl,
           applicationId: applicationId,
           memberId: memberId,
-          applicationName: applicationName,
         );
 
         await saveConfig(config);
@@ -110,7 +105,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     final apiBaseUrl = _apiBaseUrlController.text.trim();
     final applicationId = _applicationIdController.text.trim();
     final memberId = _memberIdController.text.trim();
-    final applicationName = _applicationNameController.text.trim();
 
     if (apiBaseUrl.isEmpty || applicationId.isEmpty || memberId.isEmpty) {
       showError("Alle Felder müssen ausgefüllt sein.");
@@ -121,7 +115,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       apiBaseUrl: apiBaseUrl,
       applicationId: applicationId,
       memberId: memberId,
-      applicationName: applicationName,
     );
 
     try {
@@ -164,11 +157,6 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
               TextField(
                 controller: _memberIdController,
                 decoration: InputDecoration(labelText: 'Member ID'),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _applicationNameController,
-                decoration: InputDecoration(labelText: 'Application Name'),
               ),
               SizedBox(height: 24),
               ElevatedButton(
