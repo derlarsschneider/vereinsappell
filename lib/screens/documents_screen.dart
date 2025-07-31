@@ -152,7 +152,16 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('📄 Dokumente')),
+      appBar: AppBar(
+        title: Text('📄 Dokumente'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.upload_file),
+            onPressed: uploadDocument,
+            tooltip: 'Dokument hochladen',
+          ),
+        ],
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : ListView.builder(
@@ -175,10 +184,6 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: uploadDocument,
-        child: Icon(Icons.upload_file),
-      ),
     );
   }
 }

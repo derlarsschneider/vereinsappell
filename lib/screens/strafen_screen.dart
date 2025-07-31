@@ -56,7 +56,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
     return ListTile(
       // leading: Icon(Icons.warning, color: Colors.red),
       title: Text(strafe['reason'] ?? 'Unbekannter Grund'),
-      subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €uro'),
+      subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €'),
     );
   }
 
@@ -70,7 +70,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
     return Scaffold(
       appBar: AppBar(
         title: AutoSizeText(
-          '💰 Strafen von ${memberName}:     ${getTotalAmount().toStringAsFixed(2)} €',
+          '💰 Strafen',
           style: TextStyle(fontSize: 20),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -78,6 +78,13 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Gesamtbetrag: ${getTotalAmount().toStringAsFixed(2)} €',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ),
           Expanded(
             child: isLoading
             ? Center(child: CircularProgressIndicator())
@@ -89,11 +96,6 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
                 return _buildStrafeItem(strafen[index]);
               },
             ),
-          ),
-          FloatingActionButton(
-            child: Icon(Icons.refresh),
-            onPressed: fetchStrafen,
-            tooltip: 'Aktualisieren',
           ),
         ],
       ),

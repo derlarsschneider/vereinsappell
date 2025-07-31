@@ -270,6 +270,14 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.add),
+                    label: Text('Neue Strafe vergeben'),
+                    onPressed: openAddFineDialog,
+                  ),
+                ),
                 Expanded(
                   child: isLoadingFines
                       ? Center(child: CircularProgressIndicator())
@@ -279,14 +287,6 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                     itemCount: selectedMemberFines.length,
                     itemBuilder: (context, index) =>
                         _buildFineItem(selectedMemberFines[index]),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.add),
-                    label: Text('Neue Strafe vergeben'),
-                    onPressed: openAddFineDialog,
                   ),
                 ),
               ],
