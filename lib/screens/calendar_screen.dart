@@ -34,9 +34,11 @@ class _CalendarScreenState extends DefaultScreenState<CalendarScreen> {
       error = null;
     });
     try {
-      final calendar = await api.fetchIcs();
+      final CalendarApi calendarApi = CalendarApi(widget.config);
+      final Map<String, dynamic> calendar = await calendarApi.getCalendar();
+      final ICalendar ical = ICalendar.fromString(calendar['ics_content']);
       setState(() {
-        events = calendar.data;
+        events = ical.data;
         events.sort((a, b) {
           final aDate = a['dtstart']?.toDateTime() ?? DateTime(2100);
           final bDate = b['dtstart']?.toDateTime() ?? DateTime(2100);

@@ -66,6 +66,9 @@ def lambda_handler(event, context):
         elif method == 'GET' and path.startswith('/customers/'):
             import api_customers
             return {**headers, **api_customers.get_customer_by_id(event, context)}
+        elif method == 'GET' and path.startswith('/calendar'):
+            import api_calendar
+            return {**headers, **api_calendar.get_calendar(event, context)}
         else:
             print(f'❌ Unknown API route: {method} {path}')
             print(json.dumps({'error': 'Nicht gefunden', 'event': event}))
