@@ -47,7 +47,7 @@ def send_push_notification(token: str, notification: dict, secret_name: str) -> 
     message = {
         "message": {
             "token": token,
-            "notification": notification,
+            "data": notification,
         }
     }
 

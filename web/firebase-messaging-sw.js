@@ -13,12 +13,12 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-//messaging.onBackgroundMessage(function(payload) {
-//  const notificationTitle = payload.notification.title;
-//  const notificationOptions = {
-//    body: payload.notification.body,
-//    icon: 'icons/Icon-192.png',
-//  };
-//
-//  self.registration.showNotification(notificationTitle, notificationOptions);
-//});
+messaging.onBackgroundMessage(function(payload) {
+  const notificationTitle = payload.data.title;
+  const notificationOptions = {
+    body: payload.data.body,
+    icon: 'icons/Icon-192.png',
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
