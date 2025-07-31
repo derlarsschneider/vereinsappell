@@ -355,7 +355,8 @@ def add_fine(event):
                 token=token,
                 notification={
                     'title': f'Neue Strafe für {name}',
-                    'body': f'{reason} ({amount} €)'
+                    'body': f'{reason} ({amount} €)',
+                    'url': '/strafen'
                 },
                 secret_name='firebase-credentials'  # Name im Secrets Manager
             )

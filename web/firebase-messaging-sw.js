@@ -18,7 +18,24 @@ messaging.onBackgroundMessage(function(payload) {
   const notificationOptions = {
     body: payload.data.body,
     icon: 'icons/Icon-192.png',
+    data: {
+      url: payload.data.url || '/',
+    },
   };
-
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener('notificationclick', function(event) {
+  const url = event.notification.data?.url || "/";
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      for (let client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });

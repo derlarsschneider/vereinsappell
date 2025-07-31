@@ -4,8 +4,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:vereinsappell/screens/calendar_screen.dart';
 import 'package:vereinsappell/screens/config_missing_screen.dart';
+import 'package:vereinsappell/screens/documents_screen.dart';
+import 'package:vereinsappell/screens/galerie_screen.dart';
 import 'package:vereinsappell/screens/home_screen.dart';
+import 'package:vereinsappell/screens/marschbefehl_screen.dart';
+import 'package:vereinsappell/screens/mitglieder_screen.dart';
+import 'package:vereinsappell/screens/strafen_screen.dart';
 import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
@@ -85,7 +91,27 @@ class MainApp extends StatelessWidget {
           primarySwatch: Colors.green,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: HomeScreen(config: config),
+        initialRoute: Uri.base.path == "/" ? "/" : Uri.base.path,
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case '/':
+              return MaterialPageRoute(builder: (_) => HomeScreen(config: config));
+            case '/strafen':
+              return MaterialPageRoute(builder: (_) => StrafenScreen(config: config));
+            case '/marschbefehl':
+              return MaterialPageRoute(builder: (_) => MarschbefehlScreen(config: config));
+            case '/termine':
+              return MaterialPageRoute(builder: (_) => CalendarScreen(config: config));
+            case '/dokumente':
+              return MaterialPageRoute(builder: (_) => DocumentScreen(config: config));
+            case '/galerie':
+              return MaterialPageRoute(builder: (_) => GalleryScreen(config: config));
+            case '/mitglieder':
+              return MaterialPageRoute(builder: (_) => MitgliederScreen(config: config));
+            default:
+              return MaterialPageRoute(builder: (_) => HomeScreen(config: config));
+          }
+        },
       ),
     );
   }
