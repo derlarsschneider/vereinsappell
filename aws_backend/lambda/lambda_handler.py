@@ -6,6 +6,7 @@ from datetime import datetime
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from push_notifications import send_push_notification
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -38,7 +39,7 @@ def lambda_handler(event, context):
             return get_members(event)
         elif method == 'GET' and path.startswith('/members/'):
             return {**headers, **get_member_by_id(event)}
-        elif method == 'POST' and path == '/members':
+        elif method == 'POST' and path.startswith('/members/') or path == '/members':
             return {**headers, **add_member(event)}
         elif method == 'DELETE' and path.startswith('/members/'):
             return {**headers, **delete_member(event)}
@@ -248,12 +249,14 @@ def add_member(event):
         name = data['name']
         is_admin = data.get('isAdmin', False)
         is_spiess = data.get('isSpiess', False)
+        token = data['token']
 
         item = {
             'memberId': member_id,
             'name': name,
             'isAdmin': is_admin,
-            'isSpiess': is_spiess
+            'isSpiess': is_spiess,
+            'token': token
         }
 
         members_table.put_item(Item=item)
@@ -337,12 +340,29 @@ def add_fine(event):
 
         # Beispielhafte Push-Nachricht
         print(f'Push: Neue Strafe für {member_id}: {reason} ({amount} €)')
+        # 📲 Token aus DynamoDB holen
+        response = members_table.get_item(Key={'memberId': member_id})
+        token = response.get("Item", {}).get("token")
+
+        if token:
+            push_response = send_push_notification(
+                token=token,
+                notification={
+                    'title': 'Neue Strafe',
+                    'body': f'{reason} ({amount} €)'
+                },
+                secret_name='firebase-credentials'  # Name im Secrets Manager
+            )
+            item['pushResponse'] = push_response
 
         return {
             'statusCode': 200,
             'body': json.dumps(item)
         }
     except Exception as e:
+        print(f'❌ Exception in add_fine')
+        print(json.dumps({'error': str(e)}))
+        print(json.dumps({'event': event}))
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})

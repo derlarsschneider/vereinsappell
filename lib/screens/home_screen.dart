@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
@@ -32,6 +34,18 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   void initState() {
     super.initState();
     _updateApplication();
+
+    try {
+      if (kIsWeb) {
+        widget.config.member.fetchMember();
+        widget.config.member.registerPushSubscriptionWeb();
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          showInfo('${message.notification?.title}: ${message.notification?.body}');
+        });
+      }
+    } catch (e) {
+      showError('Fehler beim Registrieren der Push-Subscriptions: $e');
+    }
   }
 
   void _updateApplication() {
