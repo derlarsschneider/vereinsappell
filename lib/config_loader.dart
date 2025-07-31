@@ -189,7 +189,6 @@ class Member extends ChangeNotifier {
         measurementId: "G-JBREPFQ05W",
       ),
     );
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     NotificationSettings settings = await messaging.requestPermission();
@@ -207,14 +206,5 @@ class Member extends ChangeNotifier {
         await saveMember(); // Token im Backend speichern
       }
     }
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('${message.notification?.title}: ${message.notification?.body}');
-    });
-  }
-
-  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    await Firebase.initializeApp();
-    print('🔙 Hintergrundnachricht: ${message.messageId}');
   }
 }
