@@ -9,6 +9,6 @@ lambda/zip.sh
 terraform apply -auto-approve
 
 authorizer/update.sh
-lambda/update.sh
+lambda/build.sh && lambda/update.sh
 
 echo "✅ Backend wurde aktualisiert."
