@@ -222,6 +222,9 @@ def get_member_by_id(event):
         }
 
     except Exception as e:
+        print(f'❌ Exception in get_member_by_id')
+        print(json.dumps({'error': str(e)}))
+        print(json.dumps({'event': event}))
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e), 'event': event})
@@ -344,13 +347,14 @@ def add_fine(event):
         print(f'Push: Neue Strafe für {member_id}: {reason} ({amount} €)')
         # 📲 Token aus DynamoDB holen
         response = members_table.get_item(Key={'memberId': member_id})
+        name = response.get("Item", {}).get("name")
         token = response.get("Item", {}).get("token")
 
         if token:
             push_response = send_push_notification(
                 token=token,
                 notification={
-                    'title': 'Neue Strafe',
+                    'title': f'Neue Strafe für {name}',
                     'body': f'{reason} ({amount} €)'
                 },
                 secret_name='firebase-credentials'  # Name im Secrets Manager

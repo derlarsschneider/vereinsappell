@@ -163,8 +163,6 @@ class Member extends ChangeNotifier {
         'token': _token,
       }),
     );
-    print('✅ Mitgliedsdaten gespeichert');
-
     if (response.statusCode == 200) {
       print('✅ Mitgliedsdaten gespeichert');
     } else {
