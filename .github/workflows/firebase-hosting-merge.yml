@@ -60,11 +60,13 @@ jobs:
 
     - name: 📱 Build Android APK
       run: ./build-scripts/build-apk.sh $BUILD_NAME $BUILD_NUMBER
+      if: false
 
     - name: 🚀 Distribute Android APK
       run: ./build-scripts/release-apk.sh $BUILD_NAME $BUILD_NUMBER $ANDROID_APP_ID $TESTER_GROUP
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+      if: false
 
     - name: 🍏 Build iOS App (no signing)
       run: ./build-scripts/build-ios.sh $BUILD_NAME $BUILD_NUMBER
