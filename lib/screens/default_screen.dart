@@ -33,6 +33,30 @@ class DefaultScreenState<T extends DefaultScreen> extends State<T> {
     );
   }
 
+  void showNotification(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 60),
+        showCloseIcon: true,
+        closeIconColor: Colors.black,
+        content: Row(
+          children: [
+            Icon(Icons.bolt, color: Colors.black),
+            SizedBox(width: 8),
+            Expanded(
+                child: Text(
+                    message,
+                    style: TextStyle(color: Colors.black)
+                )
+            ),
+          ],
+        ),
+        backgroundColor: Colors.lightBlueAccent,
+      ),
+    );
+  }
+
   void showInfo(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
