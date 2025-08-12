@@ -172,69 +172,48 @@ import urllib.parse
 
 def get_doc(event, prefix: str = 'docs'):
     s3 = boto3.client('s3')
-    try:
-        file_name = event['pathParameters']['fileName']
-        file_name = urllib.parse.unquote(file_name)
-        key = f'{prefix}/{file_name}'
+    file_name = event['pathParameters']['fileName']
+    file_name = urllib.parse.unquote(file_name)
+    key = f'{prefix}/{file_name}'
 
-        response = s3.get_object(Bucket=s3_bucket_name, Key=key)
-        file_bytes = response['Body'].read()
+    response = s3.get_object(Bucket=s3_bucket_name, Key=key)
+    file_bytes = response['Body'].read()
 
-        # Optional: Content-Type erkennen (hier: aus den S3-Metadaten oder per Dateiendung schätzen)
-        content_type = response.get('ContentType', 'application/octet-stream')
+    # Optional: Content-Type erkennen (hier: aus den S3-Metadaten oder per Dateiendung schätzen)
+    content_type = response.get('ContentType', 'application/octet-stream')
 
-        return {
-            'statusCode': 200,
-            'isBase64Encoded': True,
-            'headers': {
-                'Content-Type': content_type,
-                'Content-Disposition': f'inline; filename="{file_name}"',
-                'Access-Control-Allow-Origin': '*',
-            },
-            'body': base64.b64encode(file_bytes).decode('utf-8'),
-        }
-
-    except s3.exceptions.NoSuchKey:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'error': 'Datei nicht gefunden'})
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+    return {
+        'statusCode': 200,
+        'isBase64Encoded': True,
+        'headers': {
+            'Content-Type': content_type,
+            'Content-Disposition': f'inline; filename="{file_name}"',
+            'Access-Control-Allow-Origin': '*',
+        },
+        'body': base64.b64encode(file_bytes).decode('utf-8'),
+    }
 
 
 def get_member_by_id(event):
-    try:
-        member_id = event['pathParameters']['memberId']
+    member_id = event['pathParameters']['memberId']
 
-        response = members_table.get_item(
-            Key={'memberId': member_id}
-        )
+    response = members_table.get_item(
+        Key={'memberId': member_id}
+    )
 
-        item = response.get('Item')
+    item = response.get('Item')
 
-        if not item:
-            return {
-                'statusCode': 404,
-                'body': json.dumps({'error': 'Mitglied nicht gefunden'})
-            }
-
+    if not item:
         return {
-            'statusCode': 200,
-            'body': json.dumps(item)
+            'statusCode': 404,
+            'body': json.dumps({'error': 'Mitglied nicht gefunden'})
         }
 
-    except Exception as e:
-        print(f'❌ Exception in get_member_by_id')
-        print(json.dumps({'error': str(e)}))
-        print(json.dumps({'event': event}))
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e), 'event': event})
-        }
+    return {
+        'statusCode': 200,
+        'body': json.dumps(item)
+    }
+
 
 def get_members(event):
     items = []
@@ -278,16 +257,13 @@ def add_member(event):
 
 
 def delete_member(event):
-    try:
-        member_id = event['pathParameters']['memberId']
+    member_id = event['pathParameters']['memberId']
 
-        members_table.delete_item(
-            Key={'memberId': member_id}
-        )
+    members_table.delete_item(
+        Key={'memberId': member_id}
+    )
 
-        return {'statusCode': 200, 'body': json.dumps({'message': 'Mitglied gelöscht'})}
-    except Exception as e:
-        return {'statusCode': 500, 'body': json.dumps({'error': str(event)})}
+    return {'statusCode': 200, 'body': json.dumps({'message': 'Mitglied gelöscht'})}
 
 
 def get_fines(event):
@@ -325,69 +301,57 @@ def get_fines(event):
 
 
 def add_fine(event):
-    try:
-        data = json.loads(event['body'])
-        member_id = data['memberId']
-        reason = data['reason']
-        amount = data['amount']
+    data = json.loads(event['body'])
+    member_id = data['memberId']
+    reason = data['reason']
+    amount = data['amount']
 
-        fine_id = str(uuid.uuid4())
+    fine_id = str(uuid.uuid4())
 
-        item = {
-            'app-memberId-fineId': member_id,
-            'memberId': member_id,
-            'fineId': fine_id,
-            'reason': reason,
-            'amount': amount,
-        }
+    item = {
+        'app-memberId-fineId': member_id,
+        'memberId': member_id,
+        'fineId': fine_id,
+        'reason': reason,
+        'amount': amount,
+    }
 
-        fines_table.put_item(Item=item)
+    fines_table.put_item(Item=item)
 
-        # Beispielhafte Push-Nachricht
-        print(f'Push: Neue Strafe für {member_id}: {reason} ({amount} €)')
-        # 📲 Token aus DynamoDB holen
-        response = members_table.get_item(Key={'memberId': member_id})
-        name = response.get("Item", {}).get("name")
-        token = response.get("Item", {}).get("token")
+    # Beispielhafte Push-Nachricht
+    print(f'Push: Neue Strafe für {member_id}: {reason} ({amount} €)')
+    # 📲 Token aus DynamoDB holen
+    response = members_table.get_item(Key={'memberId': member_id})
+    name = response.get("Item", {}).get("name")
+    token = response.get("Item", {}).get("token")
 
-        if token:
-            push_response = send_push_notification(
-                token=token,
-                notification={
-                    'title': f'Neue Strafe für {name}',
-                    'body': f'{reason} ({amount} €)',
-                    'url': '/strafen'
-                },
-                secret_name='firebase-credentials'  # Name im Secrets Manager
-            )
-            item['pushResponse'] = push_response
+    if token:
+        push_response = send_push_notification(
+            token=token,
+            notification={
+                'title': f'Neue Strafe für {name}',
+                'body': f'{reason} ({amount} €)',
+                'url': '/strafen'
+            },
+            secret_name='firebase-credentials'  # Name im Secrets Manager
+        )
+        item['pushResponse'] = push_response
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps(item)
-        }
-    except Exception as e:
-        print(f'❌ Exception in add_fine')
-        print(json.dumps({'error': str(e)}))
-        print(json.dumps({'event': event}))
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+    return {
+        'statusCode': 200,
+        'body': json.dumps(item)
+    }
 
 
 def delete_fine(event):
-    try:
-        fine_id = event['pathParameters']['fineId']
-        member_id = event['queryStringParameters']['memberId']
+    fine_id = event['pathParameters']['fineId']
+    member_id = event['queryStringParameters']['memberId']
 
-        fines_table.delete_item(
-            Key={'memberId': member_id, 'fineId': fine_id}
-        )
+    fines_table.delete_item(
+        Key={'memberId': member_id, 'fineId': fine_id}
+    )
 
-        return {'statusCode': 200, 'body': json.dumps({'message': 'Strafe gelöscht'})}
-    except Exception as e:
-        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+    return {'statusCode': 200, 'body': json.dumps({'message': 'Strafe gelöscht'})}
 
 
 def get_marschbefehl(event):
@@ -417,63 +381,56 @@ def get_marschbefehl(event):
 
 
 def get_photos(event):
-    try:
-        prefix = 'photos/'
-        s3 = boto3.client('s3')
-        response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=prefix)
-        items = response.get('Contents', [])
+    prefix = 'photos/'
+    s3 = boto3.client('s3')
+    response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=prefix)
+    items = response.get('Contents', [])
 
-        photo_urls = []
-        for item in items:
-            key = item['Key']
-            if key.endswith('.jpg') or key.endswith('.jpeg') or key.endswith('.png'):
-                url = s3.generate_presigned_url(
-                    ClientMethod='get_object',
-                    Params={'Bucket': s3_bucket_name, 'Key': key},
-                    ExpiresIn=900  # URL 15 Minuten gültig
-                )
-                photo_urls.append({
-                    'key': key,
-                    'url': url
-                })
+    photo_urls = []
+    for item in items:
+        key = item['Key']
+        if key.endswith('.jpg') or key.endswith('.jpeg') or key.endswith('.png'):
+            url = s3.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={'Bucket': s3_bucket_name, 'Key': key},
+                ExpiresIn=900  # URL 15 Minuten gültig
+            )
+            photo_urls.append({
+                'key': key,
+                'url': url
+            })
 
-        return _response(200, photo_urls)
-    except Exception as e:
-        return _response(500, f'Fehler beim Abrufen der Fotos: {str(e)}')
+    return _response(200, photo_urls)
 
 
 def post_photo(event):
-    try:
-        body = event.get('body')
-        if not body:
-            return _response(400, 'Kein Inhalt')
+    body = event.get('body')
+    if not body:
+        return _response(400, 'Kein Inhalt')
 
-        data = json.loads(body)
-        image_base64 = data.get('imageBase64')
+    data = json.loads(body)
+    image_base64 = data.get('imageBase64')
 
-        if not image_base64:
-            return _response(400, 'Kein Bild enthalten')
+    if not image_base64:
+        return _response(400, 'Kein Bild enthalten')
 
-        image_bytes = base64.b64decode(image_base64)
-        image_id = str(uuid.uuid4())
-        s3_key = f'photos/{image_id}.jpg'
+    image_bytes = base64.b64decode(image_base64)
+    image_id = str(uuid.uuid4())
+    s3_key = f'photos/{image_id}.jpg'
 
-        s3 = boto3.client('s3')
-        s3.put_object(
-            Bucket=s3_bucket_name,
-            Key=s3_key,
-            Body=image_bytes,
-            ContentType='image/jpeg',
-        )
+    s3 = boto3.client('s3')
+    s3.put_object(
+        Bucket=s3_bucket_name,
+        Key=s3_key,
+        Body=image_bytes,
+        ContentType='image/jpeg',
+    )
 
-        image_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{s3_key}'
-        return _response(200, {
-            'id': image_id,
-            'url': image_url
-        })
-
-    except Exception as e:
-        return _response(500, f'Fehler beim Hochladen: {str(e)}')
+    image_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{s3_key}'
+    return _response(200, {
+        'id': image_id,
+        'url': image_url
+    })
 
 
 def _response(status_code, body):
