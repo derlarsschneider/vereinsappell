@@ -104,21 +104,20 @@ def delete_doc(event, prefix: str = 'docs'):
 
 def add_docs(event, prefix: str = 'docs'):
     body = base64.b64decode(event['body']) if event.get('isBase64Encoded') else event['body'].encode('utf-8')
+    data = json.loads(body)
+    name = data['name']
+    file_base64 = data['file']
+    key = f'{prefix}/{name}'
+    s3 = boto3.client('s3')
+    try:
+        s3.head_object(Bucket=s3_bucket_name, Key=key)
+        return message_response(409, "Datei existiert bereits")
+    except s3.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != '404':
+            raise
 
-    for data in json.loads(body):
-        name = data['name']
-        file_base64 = data['file']
-        key = f'{prefix}/{name}'
-        s3 = boto3.client('s3')
-        try:
-            s3.head_object(Bucket=s3_bucket_name, Key=key)
-            return message_response(409, "Datei existiert bereits")
-        except s3.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != '404':
-                raise
-
-        body = base64.b64decode(file_base64)
-        s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
+    body = base64.b64decode(file_base64)
+    s3.put_object(Bucket=s3_bucket_name, Key=key, Body=body)
     return message_response(200, str(body))
 
 
