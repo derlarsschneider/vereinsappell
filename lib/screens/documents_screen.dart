@@ -111,11 +111,8 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
       return;
     }
 
-    final uploadUrl = Uri.parse('${widget.config.apiBaseUrl}/docs');
-    print(uploadUrl);
-
     try {
-      api.uploadDocument(name: newName, fileBytes: fileBytes);
+      await api.uploadDocument(name: newName, fileBytes: fileBytes);
       await fetchDocuments();
     } catch (e) {
       showError("Upload fehlgeschlagen: $e");
