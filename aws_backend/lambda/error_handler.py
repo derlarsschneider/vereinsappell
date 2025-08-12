@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import uuid
@@ -46,6 +47,7 @@ def handle_error(event, context, error=None):
             error_table.put_item(
                 Item={
                     'id': str(uuid.uuid4()),
+                    'time': datetime.datetime.now().isoformat(),
                     'error': str(error) if error else '',
                     'stacktrace': full_error,
                     'route_key': route_key,
