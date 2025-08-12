@@ -78,13 +78,13 @@ def lambda_handler(event, context):
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Nicht gefunden'})
             }
-    except Exception as e:
-        error_handler.handle_error(event, context)
+    except Exception as exception:
+        error_handler.handle_error(event, context, exception)
         print(f'❌ Exception in lambda_handler')
-        print(json.dumps({'error': str(e), 'event': event}))
+        print(json.dumps({'error': str(exception), 'event': event}))
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
+            'body': json.dumps({'error': str(exception)})
         }
 
 def message_response(status_code: int, message: str):

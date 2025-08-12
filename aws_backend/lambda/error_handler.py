@@ -1,14 +1,13 @@
 import json
 import os
 import uuid
-
+import traceback
 from botocore.exceptions import ClientError
-
 import boto3
 
-MAX_FIELD_SIZE = 128
+MAX_FIELD_SIZE = 1024  # 1 KB
 
-def handle_error(event, context, error=''):
+def handle_error(event, context, error=None):
     try:
         dynamodb = boto3.resource('dynamodb')
 
@@ -17,9 +16,10 @@ def handle_error(event, context, error=''):
 
         route_key = event.get('routeKey', '')
         headers = event.get('headers', {})
+
+        # Body parsen
         body_fields = {}
         body = event.get('body', {})
-
         if isinstance(body, str):
             try:
                 body = json.loads(body)
@@ -32,11 +32,22 @@ def handle_error(event, context, error=''):
                 val_str = val_str.encode("utf-8")[:MAX_FIELD_SIZE].decode("utf-8", errors="ignore") + "…"
             body_fields[key] = val_str
 
+        # Stacktrace ermitteln
+        full_error = traceback.format_exc()
+
+        # Falls leer (kein aktiver except-Block), direkt aus dem Exception-Objekt holen
+        if (not full_error or full_error.strip() == "NoneType: None") and error:
+            if isinstance(error, BaseException):
+                full_error = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+            else:
+                full_error = str(error)
+
         try:
             error_table.put_item(
                 Item={
                     'id': str(uuid.uuid4()),
-                    'error': error,
+                    'error': str(error) if error else '',
+                    'stacktrace': full_error,
                     'route_key': route_key,
                     'headers': headers,
                     'body': body_fields
@@ -56,4 +67,8 @@ def handle_error(event, context, error=''):
 
     except Exception as e:
         print('❌❌❌ Error in error_handler')
-        print(json.dumps({'error': str(e), 'event': event}))
+        print(json.dumps({
+            'error': str(e),
+            'event': event,
+            'stacktrace': traceback.format_exc()
+        }))
