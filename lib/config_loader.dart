@@ -128,11 +128,7 @@ class Member extends ChangeNotifier {
     );
     if (response.statusCode == 200) {
       final Map<String, dynamic>? member = jsonDecode(response.body);
-      _name = member?['name'] ?? '';
-      _isSpiess = member?['isSpiess'] ?? false;
-      _isAdmin = member?['isAdmin'] ?? false;
-      _token = member?['token'] ?? '';
-      notifyListeners();
+      updateMember(member);
     } else {
       print('Fehler beim Laden des Mitglieds: ${response.statusCode}');
       print('${response.body}');
@@ -155,13 +151,7 @@ class Member extends ChangeNotifier {
     final response = await http.post(
       Uri.parse('${config.apiBaseUrl}/members'),
       headers: headers(config),
-      body: jsonEncode({
-        'memberId': config.memberId,
-        'name': _name,
-        'isSpiess': _isSpiess,
-        'isAdmin': _isAdmin,
-        'token': _token,
-      }),
+      body: encodeMember(),
     );
     if (response.statusCode == 200) {
       print('✅ Mitgliedsdaten gespeichert');
@@ -205,4 +195,23 @@ class Member extends ChangeNotifier {
       }
     }
   }
+
+  void updateMember(Map<String, dynamic>? member) {
+    _name = member?['name'] ?? '';
+    _isSpiess = member?['isSpiess'] ?? false;
+    _isAdmin = member?['isAdmin'] ?? false;
+    _token = member?['token'] ?? '';
+    notifyListeners();
+  }
+
+  String encodeMember() {
+    return jsonEncode({
+      'memberId': config.memberId,
+      'name': _name,
+      'isSpiess': _isSpiess,
+      'isAdmin': _isAdmin,
+      'token': _token,
+    });
+  }
+
 }
