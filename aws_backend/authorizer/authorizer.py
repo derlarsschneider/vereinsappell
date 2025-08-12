@@ -3,6 +3,7 @@ import boto3
 def lambda_authorizer(event, context):
     headers = event.get("headers", {})
     application_id = headers.get("applicationid", "")
+    member_id = headers.get("memberid", "")
     # check DynamoDB for registered clients
     if application_id in get_application_ids():
         return {
