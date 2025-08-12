@@ -1,11 +1,8 @@
 import boto3
 
 def lambda_authorizer(event, context):
-    # import json
-    # print(json.dumps(event))
     headers = event.get("headers", {})
-    application_id = headers.get("applicationId") or headers.get("applicationid", "")
-    print("Received application id:", application_id)
+    application_id = headers.get("applicationid", "")
     # check DynamoDB for registered clients
     if application_id in get_application_ids():
         return {
