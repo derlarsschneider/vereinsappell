@@ -30,6 +30,12 @@ class MembersApi {
       'memberId': memberId,
       'isAdmin': false,
       'isSpiess': false,
+      'street': '',
+      'houseNumber': '',
+      'postalCode': '',
+      'city': '',
+      'phone1': '',
+      'phone2': '',
     };
     final response = await http.post(
       Uri.parse('${config.apiBaseUrl}/members'),

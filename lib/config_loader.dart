@@ -99,29 +99,52 @@ Future<void> deleteConfig() async {
   }
 }
 
-// ✅ Mitglied laden
 class Member extends ChangeNotifier {
   final AppConfig config;
+
   String _name = '';
   bool _isSpiess = false;
   bool _isAdmin = false;
   String _token = '';
 
+  String _street = '';
+  String _houseNumber = '';
+  String _postalCode = '';
+  String _city = '';
+  String _phone1 = '';
+  String _phone2 = '';
+
   Member({required this.config}) {
     fetchMember();
   }
 
+  // Getter
   String get name => _name;
   bool get isSpiess => _isSpiess;
   bool get isAdmin => _isAdmin;
   String get token => _token;
 
-  set token(String value) {
-    _token = value;
-  }
+  String get street => _street;
+  String get houseNumber => _houseNumber;
+  String get postalCode => _postalCode;
+  String get city => _city;
+  String get phone1 => _phone1;
+  String get phone2 => _phone2;
+
+  // Setter
+  set name(String value) => _name = value;
+  set isSpiess(bool value) => _isSpiess = value;
+  set isAdmin(bool value) => _isAdmin = value;
+  set token(String value) => _token = value;
+
+  set street(String value) => _street = value;
+  set houseNumber(String value) => _houseNumber = value;
+  set postalCode(String value) => _postalCode = value;
+  set city(String value) => _city = value;
+  set phone1(String value) => _phone1 = value;
+  set phone2(String value) => _phone2 = value;
 
   Future<void> fetchMember() async {
-    // try {
     final response = await http.get(
       Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
       headers: headers(config),
@@ -132,17 +155,11 @@ class Member extends ChangeNotifier {
     } else {
       print('Fehler beim Laden des Mitglieds: ${response.statusCode}');
       print('${response.body}');
-      throw Exception(
-        'Fehler beim Laden des Mitglieds: ${response.statusCode}',
-      );
+      throw Exception('Fehler beim Laden des Mitglieds: ${response.statusCode}');
     }
-    // } catch (e) {
-    //   print('Fehler beim Parsen des Mitglieds: $e');
-    // }
   }
 
   Future<void> saveMember() async {
-    // try {
     if (_name.isEmpty) {
       print('❌ Name ist leer');
       return;
@@ -159,9 +176,6 @@ class Member extends ChangeNotifier {
       print('❌ Fehler beim Speichern: ${response.statusCode}');
       throw Exception('Fehler beim Speichern des Mitglieds');
     }
-    // } catch (e) {
-    //   print('❌ Ausnahme beim Speichern: $e');
-    // }
   }
 
   Future<void> registerPushSubscriptionWeb() async {
@@ -191,7 +205,7 @@ class Member extends ChangeNotifier {
       if (token != null && token != _token) {
         _token = token;
         print('🎯 Neuer WebPush-Token: $_token');
-        await saveMember(); // Token im Backend speichern
+        await saveMember();
       }
     }
   }
@@ -201,6 +215,14 @@ class Member extends ChangeNotifier {
     _isSpiess = member?['isSpiess'] ?? false;
     _isAdmin = member?['isAdmin'] ?? false;
     _token = member?['token'] ?? '';
+
+    _street = member?['street'] ?? '';
+    _houseNumber = member?['houseNumber'] ?? '';
+    _postalCode = member?['postalCode'] ?? '';
+    _city = member?['city'] ?? '';
+    _phone1 = member?['phone1'] ?? '';
+    _phone2 = member?['phone2'] ?? '';
+
     notifyListeners();
   }
 
@@ -211,7 +233,12 @@ class Member extends ChangeNotifier {
       'isSpiess': _isSpiess,
       'isAdmin': _isAdmin,
       'token': _token,
+      'street': _street,
+      'houseNumber': _houseNumber,
+      'postalCode': _postalCode,
+      'city': _city,
+      'phone1': _phone1,
+      'phone2': _phone2,
     });
   }
-
 }

@@ -238,13 +238,26 @@ def add_member(event):
     is_admin = data.get('isAdmin', False)
     is_spiess = data.get('isSpiess', False)
     token = data.get('token', '')
+    street = data.get('street', '')
+    house_number = data.get('houseNumber', '')
+    postal_code = data.get('postalCode', '')
+    city = data.get('city', '')
+    phone1 = data.get('phone1', '')
+    phone2 = data.get('phone2', '')
+
 
     item = {
         'memberId': member_id,
         'name': name,
         'isAdmin': is_admin,
         'isSpiess': is_spiess,
-        'token': token
+        'token': token,
+        'street': street,
+        'houseNumber': house_number,
+        'postalCode': postal_code,
+        'city': city,
+        'phone1': phone1,
+        'phone2': phone2,
     }
 
     members_table.put_item(Item=item)

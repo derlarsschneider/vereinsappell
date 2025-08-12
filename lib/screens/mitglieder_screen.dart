@@ -21,6 +21,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   bool isLoading = false;
 
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _houseNumberController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _phone1Controller = TextEditingController();
+  final TextEditingController _phone2Controller = TextEditingController();
 
   @override
   void initState() {
@@ -32,6 +38,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _streetController.dispose();
+    _houseNumberController.dispose();
+    _postalCodeController.dispose();
+    _cityController.dispose();
+    _phone1Controller.dispose();
+    _phone2Controller.dispose();
     super.dispose();
   }
 
@@ -50,6 +62,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     setState(() {
       selectedMember = Map<String, dynamic>.from(member);
       _nameController.text = selectedMember!['name'] ?? '';
+      _streetController.text = selectedMember!['street'] ?? '';
+      _houseNumberController.text = selectedMember!['houseNumber'] ?? '';
+      _postalCodeController.text = selectedMember!['postalCode'] ?? '';
+      _cityController.text = selectedMember!['city'] ?? '';
+      _phone1Controller.text = selectedMember!['phone1'] ?? '';
+      _phone2Controller.text = selectedMember!['phone2'] ?? '';
     });
   }
 
@@ -57,6 +75,14 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     if (selectedMember == null) return;
     try {
       await api.saveMember(selectedMember!);
+
+      // Lokale Liste aktualisieren
+      final index = mitglieder.indexWhere((m) => m['memberId'] == selectedMember!['memberId']);
+      if (index != -1) {
+        mitglieder[index] = Map<String, dynamic>.from(selectedMember!);
+      }
+
+      setState(() {}); // UI neu bauen
       showInfo('Mitglied erfolgreich gespeichert');
     } catch (e) {
       showError('$e');
@@ -155,33 +181,69 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Mitglieds-ID: ${selectedMember!['memberId']}', style: TextStyle(fontWeight: FontWeight.bold)),
+
+            // Name
             TextField(
               controller: _nameController,
               decoration: InputDecoration(labelText: 'Name'),
-              onChanged: (value) {
-                setState(() {
-                  selectedMember!['name'] = value;
-                });
-              },
+              onChanged: (value) => selectedMember!['name'] = value,
             ),
+
+            // Adresse Block
+            SizedBox(height: 20),
+            Text('Adresse', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextField(
+              controller: _streetController,
+              decoration: InputDecoration(labelText: 'Straße'),
+              onChanged: (value) => selectedMember!['street'] = value,
+            ),
+            TextField(
+              controller: _houseNumberController,
+              decoration: InputDecoration(labelText: 'Hausnummer'),
+              onChanged: (value) => selectedMember!['houseNumber'] = value,
+            ),
+            TextField(
+              controller: _postalCodeController,
+              decoration: InputDecoration(labelText: 'PLZ'),
+              keyboardType: TextInputType.number,
+              onChanged: (value) => selectedMember!['postalCode'] = value,
+            ),
+            TextField(
+              controller: _cityController,
+              decoration: InputDecoration(labelText: 'Ort'),
+              onChanged: (value) => selectedMember!['city'] = value,
+            ),
+
+            // Telefon Block
+            SizedBox(height: 20),
+            Text('Telefon', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextField(
+              controller: _phone1Controller,
+              decoration: InputDecoration(labelText: 'Telefon 1'),
+              keyboardType: TextInputType.phone,
+              onChanged: (value) => selectedMember!['phone1'] = value,
+            ),
+            TextField(
+              controller: _phone2Controller,
+              decoration: InputDecoration(labelText: 'Telefon 2'),
+              keyboardType: TextInputType.phone,
+              onChanged: (value) => selectedMember!['phone2'] = value,
+            ),
+
+            // Rollen
+            SizedBox(height: 20),
             SwitchListTile(
               title: Text('Admin'),
               value: selectedMember!['isAdmin'] == true,
-              onChanged: (val) {
-                setState(() {
-                  selectedMember!['isAdmin'] = val;
-                });
-              },
+              onChanged: (val) => setState(() => selectedMember!['isAdmin'] = val),
             ),
             SwitchListTile(
               title: Text('Spieß'),
               value: selectedMember!['isSpiess'] == true,
-              onChanged: (val) {
-                setState(() {
-                  selectedMember!['isSpiess'] = val;
-                });
-              },
+              onChanged: (val) => setState(() => selectedMember!['isSpiess'] = val),
             ),
+
+            // QR Code
             SizedBox(height: 20),
             Text('QR Code:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
@@ -192,6 +254,8 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
                 size: 180.0,
               ),
             ),
+
+            // Buttons
             SizedBox(height: 20),
             Center(
               child: Column(
@@ -227,9 +291,7 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
                     },
                     icon: Icon(Icons.delete),
                     label: Text('Löschen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   ),
                 ],
               ),
