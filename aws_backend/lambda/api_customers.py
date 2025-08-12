@@ -10,28 +10,21 @@ def table():
 
 
 def get_customer_by_id(event, context):
-    try:
-        customer_id = event['pathParameters']['customerId']
+    customer_id = event['pathParameters']['customerId']
 
-        response = table().get_item(
-            Key={'application_id': customer_id}
-        )
+    response = table().get_item(
+        Key={'application_id': customer_id}
+    )
 
-        item = response.get('Item')
+    item = response.get('Item')
 
-        if not item:
-            return {
-                'statusCode': 404,
-                'body': json.dumps({'error': 'Verein nicht gefunden'})
-            }
-
+    if not item:
         return {
-            'statusCode': 200,
-            'body': json.dumps(item)
+            'statusCode': 404,
+            'body': json.dumps({'error': 'Verein nicht gefunden'})
         }
 
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e), 'event': event})
-        }
+    return {
+        'statusCode': 200,
+        'body': json.dumps(item)
+    }

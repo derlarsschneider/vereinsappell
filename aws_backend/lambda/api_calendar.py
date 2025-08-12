@@ -58,13 +58,3 @@ def get_calendar(event, context):
                 "error": f"Fehler beim Herunterladen der ICS-Datei: {str(e)}"
             }
         }
-    except Exception as e:
-        print(f'❌ Exception in get_calendar')
-        print(json.dumps({'error': str(e)}))
-        print(json.dumps({'event': event}))
-        return {
-            "statusCode": 500,
-            "body": {
-                "error": f"Allgemeiner Fehler: {str(e)}"
-            }
-        }
