@@ -9,6 +9,8 @@ from boto3.dynamodb.conditions import Key
 from push_notifications import send_push_notification
 import error_handler
 
+from api_members import handle_members
+
 dynamodb = boto3.resource('dynamodb')
 
 members_table_name = os.environ.get('MEMBERS_TABLE_NAME')
@@ -22,7 +24,6 @@ s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
 def lambda_handler(event, context):
     try:
-        print("Received event:", event)
         method = event.get('requestContext', {}).get('http', {}).get('method')
         path = event.get('requestContext', {}).get('http', {}).get('path')
         headers = {
@@ -36,14 +37,8 @@ def lambda_handler(event, context):
                 "statusCode": 204,
                 "headers": headers,
             }
-        if method == 'GET' and path == '/members':
-            return get_members(event)
-        elif method == 'GET' and path.startswith('/members/'):
-            return {**headers, **get_member_by_id(event)}
-        elif method == 'POST' and path.startswith('/members/') or path == '/members':
-            return {**headers, **add_member(event)}
-        elif method == 'DELETE' and path.startswith('/members/'):
-            return {**headers, **delete_member(event)}
+        elif path.startswith('/members'):
+            return handle_members(event, context)
         elif method == 'GET' and path == '/fines':
             return {**headers, **get_fines(event)}
         elif method == 'POST' and path == '/fines':
@@ -191,91 +186,6 @@ def get_doc(event, prefix: str = 'docs'):
         },
         'body': base64.b64encode(file_bytes).decode('utf-8'),
     }
-
-
-def get_member_by_id(event):
-    member_id = event['pathParameters']['memberId']
-
-    response = members_table.get_item(
-        Key={'memberId': member_id}
-    )
-
-    item = response.get('Item')
-
-    if not item:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'error': 'Mitglied nicht gefunden'})
-        }
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(item)
-    }
-
-
-def get_members(event):
-    items = []
-
-    response = members_table.scan()
-    items.extend(response['Items'])
-
-    # Falls es mehr als 1MB Daten sind, wird die Scan-Operation paginiert
-    while 'LastEvaluatedKey' in response:
-        response = members_table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        items.extend(response['Items'])
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(items)
-    }
-
-
-def add_member(event):
-    data = json.loads(event['body'])
-    member_id = data['memberId']
-    name = data['name']
-    is_admin = data.get('isAdmin', False)
-    is_spiess = data.get('isSpiess', False)
-    token = data.get('token', '')
-    street = data.get('street', '')
-    house_number = data.get('houseNumber', '')
-    postal_code = data.get('postalCode', '')
-    city = data.get('city', '')
-    phone1 = data.get('phone1', '')
-    phone2 = data.get('phone2', '')
-
-
-    item = {
-        'memberId': member_id,
-        'name': name,
-        'isAdmin': is_admin,
-        'isSpiess': is_spiess,
-        'token': token,
-        'street': street,
-        'houseNumber': house_number,
-        'postalCode': postal_code,
-        'city': city,
-        'phone1': phone1,
-        'phone2': phone2,
-    }
-
-    members_table.put_item(Item=item)
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(item)
-    }
-
-
-def delete_member(event):
-    member_id = event['pathParameters']['memberId']
-
-    members_table.delete_item(
-        Key={'memberId': member_id}
-    )
-
-    return {'statusCode': 200, 'body': json.dumps({'message': 'Mitglied gelöscht'})}
 
 
 def get_fines(event):
