@@ -7,12 +7,24 @@ resource "aws_lambda_function" "lambda_backend" {
 
     environment {
         variables = {
+            ERROR_TABLE_NAME = aws_dynamodb_table.error_table.name,
             CUSTOMERS_TABLE_NAME = aws_dynamodb_table.customer_config_table.name,
             FINES_TABLE_NAME = aws_dynamodb_table.fines_table.name,
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
             S3_BUCKET_NAME = aws_s3_bucket.s3_bucket.bucket,
         }
+    }
+}
+
+resource "aws_dynamodb_table" "error_table" {
+    name         = "${local.name_prefix}-error"
+    billing_mode = "PAY_PER_REQUEST"
+    hash_key     = "id"
+
+    attribute {
+        name = "id"
+        type = "S"
     }
 }
 

@@ -7,6 +7,7 @@ from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key
 from push_notifications import send_push_notification
+import error_handler
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -70,18 +71,20 @@ def lambda_handler(event, context):
             import api_calendar
             return {**headers, **api_calendar.get_calendar(event, context)}
         else:
+            error_handler.handle_error(event, context)
             print(f'❌ Unknown API route: {method} {path}')
             print(json.dumps({'error': 'Nicht gefunden', 'event': event}))
             return {
                 'statusCode': 404,
-                'body': json.dumps({'error': 'Nicht gefunden', 'event': event})
+                'body': json.dumps({'error': 'Nicht gefunden'})
             }
     except Exception as e:
+        error_handler.handle_error(event, context)
         print(f'❌ Exception in lambda_handler')
         print(json.dumps({'error': str(e), 'event': event}))
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': str(e), 'event': event})
+            'body': json.dumps({'error': str(e)})
         }
 
 def message_response(status_code: int, message: str):
@@ -251,33 +254,27 @@ def get_members(event):
 
 
 def add_member(event):
-    try:
-        data = json.loads(event['body'])
-        member_id = data['memberId']
-        name = data['name']
-        is_admin = data.get('isAdmin', False)
-        is_spiess = data.get('isSpiess', False)
-        token = data['token']
+    data = json.loads(event['body'])
+    member_id = data['memberId']
+    name = data['name']
+    is_admin = data.get('isAdmin', False)
+    is_spiess = data.get('isSpiess', False)
+    token = data.get('token', '')
 
-        item = {
-            'memberId': member_id,
-            'name': name,
-            'isAdmin': is_admin,
-            'isSpiess': is_spiess,
-            'token': token
-        }
+    item = {
+        'memberId': member_id,
+        'name': name,
+        'isAdmin': is_admin,
+        'isSpiess': is_spiess,
+        'token': token
+    }
 
-        members_table.put_item(Item=item)
+    members_table.put_item(Item=item)
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps(item)
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+    return {
+        'statusCode': 200,
+        'body': json.dumps(item)
+    }
 
 
 def delete_member(event):
