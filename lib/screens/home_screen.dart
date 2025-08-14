@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:vereinsappell/screens/knobeln_screen.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
@@ -184,7 +185,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           context,
           MaterialPageRoute(
             builder: (_) =>
-                DefaultScreen(title: "🎲 Knobeln", config: widget.config),
+                KnobelnScreen(),
           ),
         ),
       ),

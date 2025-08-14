@@ -1,0 +1,78 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-ast
+      - id: debug-statements
+      - id: name-tests-test
+      - id: requirements-txt-fixer
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3.9
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile=black]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear==23.3.23]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.3.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-python-dateutil
+          - types-requests
+          - boto3-stubs[essential]
+        args: [--strict, --ignore-missing-imports]
+        exclude: ^tests/
+
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: v0.16.0
+    hooks:
+      - id: terraform-docs-go
+        args: [--config=.terraform-docs.yml]
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.81.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tflint
+      - id: terraform_tfsec
+      - id: terraform_checkov
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.33.0
+    hooks:
+      - id: markdownlint
+        args: [--config=.markdownlint.json]
+
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-toc
+        args: [--wrap=80]
+
+default_language_version:
+  python: python3.9
+
+default_stages: [commit, push]

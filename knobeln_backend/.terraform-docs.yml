@@ -1,0 +1,79 @@
+formatter: markdown table
+
+version: ""
+
+header-from: header.tf
+footer-from: ""
+
+sections:
+  hide-all: true
+  show:
+    - header
+    - inputs
+    - outputs
+    - providers
+    - requirements
+
+sort:
+  enabled: true
+  by: required
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: true
+  html: true
+  indent: 2
+  lockfile: true
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true
+
+sort-by-required:
+  enabled: true
+  default_last: true
+
+sort-by-type:
+  enabled: false
+  default_last: true
+
+content: |-
+  # Terraform Module
+
+  {{ .Content }}
+
+  ## Requirements
+
+  | Name | Version |
+  |------|---------|
+  {{- range .Module.Requirements }}
+  | {{ .Name }} | {{ range $i, $v := .Version }}{{ if $i }}, {{ end }}{{ $v }}{{ end }} | 
+  {{- end }}
+
+  ## Providers
+
+  | Name | Version |
+  |------|---------|
+  {{- range .ProviderConfigs }}
+  | {{ .FullName() }} | {{ if .Version }}{{ .Version }}{{ else }}<>{{ end }} |
+  {{- end }}
+
+  ## Inputs
+
+  | Name | Description | Type | Default | Required |
+  |------|-------------|------|---------|:--------:|
+  {{- range .Inputs }}
+  | {{ .Name }} | {{ .Description }} | {{ .Type }} | {{ .Default }} | {{ if .Required }}yes{{ else }}no{{ end }} |
+  {{- end }}
+
+  ## Outputs
+
+  | Name | Description |
+  |------|-------------|
+  {{- range .Outputs }}
+  | {{ .Name }} | {{ .Description }} |
+  {{- end }}

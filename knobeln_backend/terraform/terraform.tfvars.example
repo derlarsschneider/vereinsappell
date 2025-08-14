@@ -1,0 +1,36 @@
+# AWS Region
+aws_region = "eu-central-1"
+
+# Environment name (dev, staging, prod)
+environment = "dev"
+
+# Project name (used for resource naming)
+project_name = "knobeln"
+
+# Cognito User Pool ID for JWT authentication
+cognito_user_pool_id = "eu-central-1_xxxxxxxxx"
+
+# Cognito User Pool Client ID
+cognito_user_pool_client_id = "xxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Allowed CORS origins (comma-separated list)
+allowed_cors_origins = [
+  "https://vereinsappell.web.app",
+  "https://vereinsappell.derlarsschneider.de"
+]
+
+# Lambda function configuration
+lambda_runtime = "python3.9"
+lambda_timeout = 30
+lambda_memory_size = 128
+
+# Game settings
+game_start_delay = 60  # seconds
+pick_timeout = 30      # seconds
+
+# Tags for all resources
+tags = {
+  Environment = "dev"
+  Project     = "knobeln"
+  ManagedBy   = "terraform"
+}
