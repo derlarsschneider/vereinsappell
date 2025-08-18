@@ -1,0 +1,16 @@
+{
+    "name": "knobeln-lambda-functions",
+    "version": "1.0.0",
+    "description": "Lambda functions for Knobeln game backend",
+    "main": "index.js",
+    "dependencies": {
+        "aws-sdk": "^2.1400.0",
+        "uuid": "^9.0.0"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "MIT"
+}
