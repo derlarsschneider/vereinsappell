@@ -17,11 +17,13 @@ class AppConfig {
   final String applicationId;
   final String memberId;
   late final Member member;
+  String? sessionPassword;
 
   AppConfig({
     required this.apiBaseUrl,
     required this.applicationId,
     required this.memberId,
+    this.sessionPassword,
   }) {
     member = Member(config: this);
   }
