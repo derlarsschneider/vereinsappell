@@ -10,6 +10,7 @@ from push_notifications import send_push_notification
 import error_handler
 
 from api_members import handle_members
+from api_docs import handle_docs
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -39,6 +40,8 @@ def lambda_handler(event, context):
             }
         elif path.startswith('/members'):
             return handle_members(event, context)
+        elif path.startswith('/docs'):
+            return handle_docs(event, context)
         elif method == 'GET' and path == '/fines':
             return {**headers, **get_fines(event)}
         elif method == 'POST' and path == '/fines':
