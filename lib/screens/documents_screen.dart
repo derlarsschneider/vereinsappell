@@ -24,12 +24,52 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
   late final DocumentApi api;
   List<Map<String, dynamic>> documents = [];
   bool isLoading = true;
+  String? accessPassword;
 
+  @override
   @override
   void initState() {
     super.initState();
     api = DocumentApi(widget.config);
-    fetchDocuments();
+
+    // Nach dem ersten Frame den Dialog anzeigen
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _askForPassword();
+      await fetchDocuments();
+    });
+  }
+
+  Future<void> _askForPassword() async {
+    if (widget.config.sessionPassword != null &&
+        widget.config.sessionPassword!.isNotEmpty) return;
+
+    final controller = TextEditingController();
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Passwort eingeben"),
+        content: TextField(
+          controller: controller,
+          obscureText: true,
+          decoration: InputDecoration(hintText: "Passwort"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    if (accepted == true) {
+      widget.config.sessionPassword = controller.text.trim();
+    }
   }
 
   Future<void> fetchDocuments() async {
