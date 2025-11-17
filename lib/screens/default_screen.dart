@@ -74,6 +74,7 @@ class DefaultScreenState<T extends DefaultScreen> extends State<T> {
   }
 
   void showError(String message) {
+    print(message);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
