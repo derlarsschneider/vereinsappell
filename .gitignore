@@ -54,3 +54,19 @@ app.*.map.json
 /aws_backend/.terraform/
 /aws_backend/authorizer/lambda.zip
 /aws_backend/secrets
+
+# Lambda build artifacts and vendored dependencies
+/aws_backend/lambda/*.so
+/aws_backend/lambda/typing_extensions.py
+
+# Editor backup files
+*~
+
+# Flutter DevTools local settings
+devtools_options.yaml
+
+# Local test fixtures
+test.json
+
+# Build system backups
+*.backup
