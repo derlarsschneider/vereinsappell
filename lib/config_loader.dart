@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'dart:io' as io;
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -182,18 +181,6 @@ class Member extends ChangeNotifier {
 
   Future<void> registerPushSubscriptionWeb() async {
     print('Web: Registriere Push-Subscription');
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyARJfC5X_25RTZjHZQhOtFThFrrlXqH_f0",
-        authDomain: "vereinsappell.firebaseapp.com",
-        projectId: "vereinsappell",
-        storageBucket: "vereinsappell.firebasestorage.app",
-        messagingSenderId: "336568095877",
-        appId: "1:336568095877:web:39669b73fb3fd869e8c5ec",
-        measurementId: "G-JBREPFQ05W",
-      ),
-    );
-
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     NotificationSettings settings = await messaging.requestPermission();
     print('🔐 Berechtigungen: ${settings.authorizationStatus}');

@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,9 +16,13 @@ import 'package:vereinsappell/screens/strafen_screen.dart';
 import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
   bool debugging = false;
   try {
     if (debugging) {
