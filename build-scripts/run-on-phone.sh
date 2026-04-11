@@ -21,6 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # if STEP is BUILD or empty:
 if [ -z "$STEP" ] || [ "$STEP" == "BUILD" ]; then
   echo BUILD
+  "$SCRIPT_DIR/bump-version.sh"
   flutter build apk --release
 fi
 

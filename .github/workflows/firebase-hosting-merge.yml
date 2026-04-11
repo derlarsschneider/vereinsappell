@@ -32,11 +32,12 @@ jobs:
     - name: 🕒 Set Version
       id: version
       run: |
-        BUILD_NAME=$(date +"%y.%m.%d")
+        BUILD_NAME=$(date +"%Y.%m.%d")
         BUILD_NUMBER=$(date +"%H%M")
         echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
         echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
         echo "📦 Version ist ${BUILD_NAME}+${BUILD_NUMBER}"
+        ./build-scripts/bump-version.sh "$BUILD_NAME"
 
     - name: 🔥 Setup Firebase CLI
       run: npm install -g firebase-tools

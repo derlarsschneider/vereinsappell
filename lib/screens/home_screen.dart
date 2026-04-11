@@ -13,6 +13,7 @@ import 'package:vereinsappell/screens/strafen_screen.dart';
 
 import '../api/customers_api.dart';
 import '../config_loader.dart';
+import '../version.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'documents_screen.dart';
@@ -278,6 +279,14 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Version $appVersion',
+                  style: TextStyle(
+                    fontSize: 11,
                     color: Colors.grey,
                   ),
                 ),
