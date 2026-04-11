@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../config_loader.dart';
 import 'create_verein_screen.dart';
@@ -18,6 +19,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   bool scanning = false;
   bool qrHandled = false;
   final MobileScannerController cameraController = MobileScannerController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   final _apiBaseUrlController = TextEditingController();
   final _applicationIdController = TextEditingController();
@@ -101,6 +103,32 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     });
   }
 
+  Future<void> pickImageAndScanQR() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+
+      if (image == null) return;
+
+      // Hier wird das Bild mit mobile_scanner analysiert
+      final result = await cameraController.analyzeImage(image.path);
+
+      if (result != null && result.barcodes.isNotEmpty) {
+        final String? code = result.barcodes.first.rawValue;
+        if (code != null) {
+          handleQRCode(code);
+        } else {
+          showError("Kein QR-Code im Bild gefunden.");
+        }
+      } else {
+        showError("Kein QR-Code im Bild gefunden.");
+      }
+    } catch (e) {
+      showError("Fehler beim Scannen des Bildes: $e");
+    }
+  }
+
   void handleLogin() async {
     final apiBaseUrl = _apiBaseUrlController.text.trim();
     final applicationId = _applicationIdController.text.trim();
@@ -166,6 +194,14 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
                   minimumSize: Size(double.infinity, 60),
                 ),
               ),
+              SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: pickImageAndScanQR,
+                child: Text('📸 QR-Code aus Bild laden', style: TextStyle(fontSize: 18)),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 60),
+                ),
+              ),
             ],
           ),
         ),
@@ -215,6 +251,14 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
               onPressed: startQRScan,
               child: Text('📷 Einem Verein beitreten', style: TextStyle(fontSize: 20)),
               style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 60),
+              ),
+            ),
+            SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: pickImageAndScanQR,
+              child: Text('🖼️ QR-Code aus Bild', style: TextStyle(fontSize: 18)),
+              style: OutlinedButton.styleFrom(
                 minimumSize: Size(double.infinity, 60),
               ),
             ),
