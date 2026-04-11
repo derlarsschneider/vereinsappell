@@ -42,7 +42,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         futureResponse.whenComplete(() {
           widget.config.member.registerPushSubscriptionWeb();
           FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-            showNotification('${message.notification?.title}: ${message.notification?.body}');
+            showNotification('${message.data['title']}: ${message.data['body']}');
           });
         });
       }
