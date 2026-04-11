@@ -13,18 +13,24 @@ class DocumentApi {
   Uri _docsUrl([String? filename]) =>
       Uri.parse('${config.apiBaseUrl}/docs${filename != null ? '/$filename' : ''}');
 
+  Map<String, String> _authHeaders() {
+    return headers(config);
+  }
+
   /// Lädt alle Dokumente von der API.
   Future<List<Map<String, dynamic>>> fetchDocuments() async {
     final response = await http.get(
       _docsUrl(),
-      headers: headers(config),
+      headers: _authHeaders(),
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else if (response.statusCode == 401) {
+      throw Exception("Falsches Passwort oder Zugriff verweigert.");
     } else {
-      throw Exception("Fehler beim Laden der Dokumente");
+      throw Exception("Fehler beim Laden der Dokumente (${response.statusCode}).");
     }
   }
 
@@ -32,8 +38,11 @@ class DocumentApi {
   Future<void> deleteDocument(String fileName) async {
     final response = await http.delete(
       _docsUrl(fileName),
-      headers: headers(config),
+      headers: _authHeaders(),
     );
+    if (response.statusCode == 401) {
+      throw Exception("Falsches Passwort oder Zugriff verweigert.");
+    }
     if (response.statusCode != 200) {
       throw Exception("Fehler beim Löschen: ${response.statusCode}");
     }
@@ -43,8 +52,11 @@ class DocumentApi {
   Future<Uint8List> downloadDocument(String fileName) async {
     final response = await http.get(
       _docsUrl(fileName),
-      headers: headers(config),
+      headers: _authHeaders(),
     );
+    if (response.statusCode == 401) {
+      throw Exception("Falsches Passwort oder Zugriff verweigert.");
+    }
     if (response.statusCode != 200) {
       throw Exception("Fehler beim Download: ${response.statusCode}");
     }
@@ -63,9 +75,13 @@ class DocumentApi {
 
     final response = await http.post(
       _docsUrl(),
-      headers: headers(config),
+      headers: _authHeaders(),
       body: body,
     );
+
+    if (response.statusCode == 401) {
+      throw Exception("Falsches Passwort oder Zugriff verweigert.");
+    }
 
     if (response.statusCode != 200) {
       throw Exception("Upload fehlgeschlagen: ${response.statusCode}");
