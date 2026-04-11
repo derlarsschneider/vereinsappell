@@ -146,17 +146,27 @@ class Member extends ChangeNotifier {
   set phone2(String value) => _phone2 = value;
 
   Future<void> fetchMember() async {
-    final response = await http.get(
-      Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
-      headers: headers(config),
-    );
-    if (response.statusCode == 200) {
+    final http.Response response;
+    try {
+      response = await http.get(
+        Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
+        headers: headers(config),
+      );
+    } catch (e) {
+      throw Exception('Netzwerkfehler: $e');
+    }
+
+    if (response.statusCode != 200) {
+      final preview = response.body.length > 200 ? response.body.substring(0, 200) : response.body;
+      throw Exception('HTTP ${response.statusCode}: $preview');
+    }
+
+    try {
       final Map<String, dynamic>? member = jsonDecode(response.body);
       updateMember(member);
-    } else {
-      print('Fehler beim Laden des Mitglieds: ${response.statusCode}');
-      print('${response.body}');
-      throw Exception('Fehler beim Laden des Mitglieds: ${response.statusCode}');
+    } catch (e) {
+      final preview = response.body.length > 200 ? response.body.substring(0, 200) : response.body;
+      throw Exception('Ungültige API-Antwort (kein JSON): "$preview"');
     }
   }
 

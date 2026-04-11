@@ -14,6 +14,7 @@ import 'package:vereinsappell/screens/strafen_screen.dart';
 import '../api/customers_api.dart';
 import '../config_loader.dart';
 import '../version.dart';
+import '../widgets/pig_overlay.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'documents_screen.dart';
@@ -44,6 +45,11 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           widget.config.member.registerPushSubscriptionWeb();
           FirebaseMessaging.onMessage.listen((RemoteMessage message) {
             showNotification('${message.data['title']}: ${message.data['body']}');
+            if (message.data['type'] == 'fine') {
+              showFineOverlay(context);
+            } else {
+              showPigOverlay(context);
+            }
           });
         });
       }
@@ -110,6 +116,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             _buildGridMenu(context, member),
             const SizedBox(height: 16),
             _buildMemberInfoCard(context, member),
+            if (kDebugMode) _buildDebugButtons(context),
           ],
         ),
       ),
@@ -236,6 +243,28 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDebugButtons(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('🛠️ Debug', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 4),
+          OutlinedButton(
+            onPressed: () => showPigOverlay(context),
+            child: const Text('🐷 Schwein-Animation testen'),
+          ),
+          const SizedBox(height: 4),
+          OutlinedButton(
+            onPressed: () => showFineOverlay(context),
+            child: const Text('💰 Strafen-Animation testen'),
+          ),
+        ],
       ),
     );
   }
