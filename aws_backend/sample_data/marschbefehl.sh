@@ -1,34 +1,28 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+JSON_FILE="${SCRIPT_DIR}/marschbefehl2025.json"
+TABLE_NAME="vereins-app-beta-marschbefehl"
+ITEM_FILE="${SCRIPT_DIR}/temp_item.json"
+
 function add_marschbefehl() {
-    TABLE_NAME="vereins-app-beta-marschbefehl"
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    ITEM_FILE="${SCRIPT_DIR}/temp_item.json"
-    
-    # JSON korrekt mit jq erzeugen
     jq -nc \
        --arg type "marschbefehl" \
        --arg datetime "$1" \
        --arg text "$2" \
        '{type: {S: $type}, datetime: {S: $datetime}, text: {S: $text}}' | tee "$ITEM_FILE"
-    
-    # Einfügen in DynamoDB über Datei
+
     aws dynamodb put-item \
-	--table-name "$TABLE_NAME" \
-	--item file://"$ITEM_FILE"
-    
-    # Aufräumen (optional)
+        --table-name "$TABLE_NAME" \
+        --item file://"$ITEM_FILE"
+
     rm "$ITEM_FILE"
 }
 
-add_marschbefehl "2026-05-30 18:00" "Kirmesplatzeröffnung an der Frankenheim-Bude
-Anschl. Kirmeseröffnungsparty im Festzelt (freiwillig)"
-add_marschbefehl "2026-05-31 12:00" "Eröffnung des Schützenfestes"
-add_marschbefehl "2026-05-31 12:15" "Schießwettbewerbe des Regiments"
-
-
-
-
-
+jq -c '.[]' "$JSON_FILE" | while IFS= read -r entry; do
+    datetime=$(printf '%s' "$entry" | jq -r '.datetime')
+    text=$(printf '%s' "$entry" | jq -r '.text')
+    add_marschbefehl "$datetime" "$text"
+done
 
 echo "✅ Marschbefehl wurde erstellt."
