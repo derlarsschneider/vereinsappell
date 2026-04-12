@@ -2,6 +2,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'dart:js_interop';
+
+
+@JS('hardReload')
+external JSPromise _jsHardReload();
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -277,7 +283,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           try {
             _updateApplication();
             await member.fetchMember();
-            showInfo('Mitgliedsdaten aktualisiert');
+            if (kIsWeb) {
+              await _jsHardReload().toDart;
+            } else {
+              if (!mounted) return;
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+            }
           } catch (e) {
             showError('Fehler beim Aktualisieren der Mitgliedsdaten: ${e}');
           }

@@ -56,20 +56,19 @@ void main() async {
     String? apiBaseUrlGetParam = url.queryParameters['apiBaseUrl'];
     String? applicationIdGetParam = url.queryParameters['applicationId'];
     String? memberIdGetParam = url.queryParameters['memberId'];
+    String? passwordGetParam = url.queryParameters['password'];
 
-    String? apiBaseUrlConfigParam = config?.apiBaseUrl;
-    String? applicationIdConfigParam = config?.applicationId;
-    String? memberIdConfigParam = config?.memberId;
-
-    String? apiBaseUrl = apiBaseUrlGetParam ?? apiBaseUrlConfigParam;
-    String? applicationId = applicationIdGetParam ?? applicationIdConfigParam;
-    String? memberId = memberIdGetParam ?? memberIdConfigParam;
+    String? apiBaseUrl = apiBaseUrlGetParam ?? config?.apiBaseUrl;
+    String? applicationId = applicationIdGetParam ?? config?.applicationId;
+    String? memberId = memberIdGetParam ?? config?.memberId;
+    String? password = passwordGetParam ?? config?.sessionPassword;
 
     if (apiBaseUrl != null && applicationId != null && memberId != null) {
       config = AppConfig(
         apiBaseUrl: apiBaseUrl,
         applicationId: applicationId,
         memberId: memberId,
+        sessionPassword: password,
       );
       saveConfig(config);
     }

@@ -32,6 +32,7 @@ class AppConfig {
       apiBaseUrl: json['apiBaseUrl'],
       applicationId: json['applicationId'],
       memberId: json['memberId'],
+      sessionPassword: json['password'],
     );
   }
 
@@ -40,6 +41,7 @@ class AppConfig {
       'apiBaseUrl': apiBaseUrl,
       'applicationId': applicationId,
       'memberId': memberId,
+      if (sessionPassword != null) 'password': sessionPassword,
     };
   }
 }

@@ -24,6 +24,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   final _apiBaseUrlController = TextEditingController();
   final _applicationIdController = TextEditingController();
   final _memberIdController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       _apiBaseUrlController.text = url.queryParameters['apiBaseUrl'] ?? '';
       _applicationIdController.text = url.queryParameters['applicationId'] ?? '';
       _memberIdController.text = url.queryParameters['memberId'] ?? '';
+      _passwordController.text = url.queryParameters['password'] ?? '';
     }
   }
 
@@ -42,6 +44,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     _apiBaseUrlController.dispose();
     _applicationIdController.dispose();
     _memberIdController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -133,6 +136,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     final apiBaseUrl = _apiBaseUrlController.text.trim();
     final applicationId = _applicationIdController.text.trim();
     final memberId = _memberIdController.text.trim();
+    final password = _passwordController.text.trim();
 
     if (apiBaseUrl.isEmpty || applicationId.isEmpty || memberId.isEmpty) {
       showError("Alle Felder müssen ausgefüllt sein.");
@@ -143,6 +147,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       apiBaseUrl: apiBaseUrl,
       applicationId: applicationId,
       memberId: memberId,
+      sessionPassword: password.isEmpty ? null : password,
     );
 
     try {
@@ -185,6 +190,12 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
               TextField(
                 controller: _memberIdController,
                 decoration: InputDecoration(labelText: 'Member ID'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Passwort'),
+                obscureText: true,
               ),
               SizedBox(height: 24),
               ElevatedButton(
