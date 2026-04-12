@@ -100,24 +100,28 @@ class _PigOverlayState extends State<_PigOverlay> {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: AnimatedPositioned(
-        duration: _animDuration,
-        curve: Curves.linear,
-        left: _x,
-        top: _y,
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()..scale(_facingRight ? 1.0 : -1.0, 1.0),
-          child: SizedBox(
-            width: _pigSize,
-            height: _pigSize,
-            child: Lottie.asset(
-              'assets/animations/piggy_bank_dancing.json',
-              repeat: true,
-              frameRate: FrameRate.max,
+      child: Stack(
+        children: [
+          AnimatedPositioned(
+            duration: _animDuration,
+            curve: Curves.linear,
+            left: _x,
+            top: _y,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..scale(_facingRight ? 1.0 : -1.0, 1.0),
+              child: SizedBox(
+                width: _pigSize,
+                height: _pigSize,
+                child: Lottie.asset(
+                  'assets/animations/piggy_bank_dancing.json',
+                  repeat: true,
+                  frameRate: FrameRate.max,
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -175,22 +179,26 @@ class _DancingOverlayState extends State<_DancingOverlay> {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Positioned(
-        left: _x,
-        top: _y,
-        child: AnimatedOpacity(
-          opacity: _opacity,
-          duration: const Duration(milliseconds: 400),
-          child: SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: Lottie.asset(
-              widget.animationPath,
-              repeat: true,
-              frameRate: FrameRate.max,
+      child: Stack(
+        children: [
+          Positioned(
+            left: _x,
+            top: _y,
+            child: AnimatedOpacity(
+              opacity: _opacity,
+              duration: const Duration(milliseconds: 400),
+              child: SizedBox(
+                width: widget.size,
+                height: widget.size,
+                child: Lottie.asset(
+                  widget.animationPath,
+                  repeat: true,
+                  frameRate: FrameRate.max,
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
