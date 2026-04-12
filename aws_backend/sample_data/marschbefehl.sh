@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-JSON_FILE="${SCRIPT_DIR}/marschbefehl2025.json"
+JSON_FILE="${SCRIPT_DIR}/marschbefehl2026.json"
 TABLE_NAME="vereins-app-beta-marschbefehl"
 ITEM_FILE="${SCRIPT_DIR}/temp_item.json"
 
