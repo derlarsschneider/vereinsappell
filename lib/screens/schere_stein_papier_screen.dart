@@ -218,14 +218,22 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
 
       _log('_tryMatchFromWaitingList: versuche $waiterId zu claimen');
       final newGameId = '${DateTime.now().millisecondsSinceEpoch}';
+
+      // Spiel anlegen BEVOR die Transaktion Spieler 1 benachrichtigt,
+      // damit _joinGame() das Spiel sofort findet.
+      _warteSub?.cancel();
+      _gameId = newGameId;
+      _gegnerId = waiterId;
+      _gegnerName = (waiterData['name'] as String?) ?? waiterId;
+      await _waitingRef.child(_myId).remove();
+      await _createGame();
+
       final result =
           await _waitingRef.child(waiterId).runTransaction((currentData) {
         _log('  transaction callback: currentData = $currentData');
-        // Firebase Web ruft den Callback beim ersten Mal mit null auf (kein Cache).
-        // Transaction.success(null) triggert einen Server-Fetch und einen erneuten Aufruf.
         if (currentData == null) return Transaction.success(null);
         final map = Map<Object?, Object?>.from(currentData as Map);
-        if (map['gameId'] != null) return Transaction.abort(); // bereits gematcht
+        if (map['gameId'] != null) return Transaction.abort();
         return Transaction.success({...map, 'gameId': newGameId});
       });
 
@@ -233,14 +241,19 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
       if (!mounted) return;
 
       if (result.committed) {
-        _log('_tryMatchFromWaitingList: gematcht mit $waiterId → _createGame');
-        _warteSub?.cancel();
-        _gameId = newGameId;
-        _gegnerId = waiterId;
-        _gegnerName = (waiterData['name'] as String?) ?? waiterId;
-        await _waitingRef.child(_myId).remove();
-        await _createGame();
+        _log('_tryMatchFromWaitingList: gematcht mit $waiterId');
         await _waitingRef.child(waiterId).remove();
+        return;
+      } else {
+        // Transaktion fehlgeschlagen – Spieler 1 wurde inzwischen von jemand anderem gematcht.
+        // Spiel wieder aufräumen und neu suchen.
+        _log('_tryMatchFromWaitingList: Transaktion fehlgeschlagen, räume auf und starte neu');
+        _gameSub?.cancel();
+        await _gameRef.remove();
+        _gameId = '';
+        _gegnerId = '';
+        _gegnerName = '';
+        _startSearch();
         return;
       }
     }
@@ -336,10 +349,16 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
           _meineWahl = meineWahl;
         });
       } else {
+        // meineWahl == null in Firebase: entweder neue Runde (nach Aufdecken) oder
+        // Gegner hat bestätigt während wir noch lokal gewählt aber noch nicht abgeschickt haben.
+        // In letzterem Fall lokale Wahl NICHT zurücksetzen.
+        final neueRunde = _phase == _Phase.bestaetigt || _phase == _Phase.aufdecken;
         setState(() {
           _phase = _Phase.waehle;
-          _meineWahl = null;
-          _gegnerWahl = null;
+          if (neueRunde) {
+            _meineWahl = null;
+            _gegnerWahl = null;
+          }
         });
       }
     });
