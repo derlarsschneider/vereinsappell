@@ -86,6 +86,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
         showError("QR-Code unvollständig.");
       }
     } catch (e) {
+      qrHandled = false; // Scan erneut erlauben nach ungültigem QR-Code
       showError("Ungültiger QR-Code.");
     }
   }
