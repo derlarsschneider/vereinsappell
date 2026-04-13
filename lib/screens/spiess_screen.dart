@@ -184,7 +184,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
   }
 
   Widget _buildMemberItem(dynamic member) {
-    final bool isSelected = selectedMemberId == member['id'];
+    final bool isSelected = selectedMemberId == member['memberId'];
     return ListTile(
       title: AutoSizeText(
         member['name'] ?? 'Unbekannt',
