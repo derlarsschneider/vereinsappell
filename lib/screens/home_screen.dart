@@ -1,4 +1,5 @@
 // lib/screens/home_screen.dart
+import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
@@ -37,6 +38,7 @@ class HomeScreen extends DefaultScreen {
 class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationName = "Vereins Appell";
   String _applicationLogoBase64 = "";
+  StreamSubscription? _messageSubscription;
 
   @override
   void initState() {
@@ -48,7 +50,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         Future<void> futureResponse = widget.config.member.fetchMember();
         futureResponse.whenComplete(() {
           widget.config.member.registerPushSubscriptionWeb();
-          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
             showNotification('${message.data['title']}: ${message.data['body']}');
             if (message.data['type'] == 'fine') {
               showFineOverlay(context);
@@ -61,6 +63,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     } catch (e) {
       showError('Fehler beim Registrieren der Push-Subscriptions: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _messageSubscription?.cancel();
+    super.dispose();
   }
 
   void _updateApplication() {
