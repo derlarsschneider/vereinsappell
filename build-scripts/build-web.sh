@@ -15,7 +15,7 @@ else
   BUILD_NUMBER=$(date +"%H%M")
 fi
 
-"$SCRIPT_DIR/bump-version.sh" "$BUILD_NAME"
+"$SCRIPT_DIR/bump-version.sh" "${BUILD_NAME}.${BUILD_NUMBER}"
 echo "📦 Baue Web App mit Version ${BUILD_NAME}+${BUILD_NUMBER}"
 
 flutter build web --build-name="${BUILD_NAME}" --build-number="${BUILD_NUMBER}" --release
