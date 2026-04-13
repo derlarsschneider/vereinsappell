@@ -11,6 +11,7 @@ import 'package:universal_html/html.dart' as html;
 import 'package:vereinsappell/screens/default_screen.dart';
 
 import '../api/documents_api.dart';
+import '../logic/documents_logic.dart';
 
 class DocumentScreen extends DefaultScreen {
   const DocumentScreen({super.key, required super.config}) : super(title: 'Dokumente');
@@ -81,7 +82,7 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
     setState(() => isLoading = true);
     try {
       final result = await api.fetchDocuments();
-      setState(() => _grouped = _group(result));
+      setState(() => _grouped = groupDocuments(result));
     } catch (e) {
       if (e.toString().contains('Falsches Passwort') ||
           e.toString().contains('401')) {
@@ -100,26 +101,8 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
     }
   }
 
-  /// Gruppiert eine Liste von Dokumenten (mit optionalem Kategorie-Prefix) nach Kategorie.
-  Map<String, List<String>> _group(List<Map<String, dynamic>> docs) {
-    final Map<String, List<String>> result = {};
-    for (final doc in docs) {
-      final name = doc['name'] as String? ?? '';
-      final slash = name.indexOf('/');
-      final category = slash >= 0 ? name.substring(0, slash) : '';
-      final shortName = slash >= 0 ? name.substring(slash + 1) : name;
-      (result[category] ??= []).add(shortName);
-    }
-    // Sortieren: erst benannte Kategorien (alphabetisch), dann unkategorisiert
-    final sorted = <String, List<String>>{};
-    final named = result.keys.where((k) => k.isNotEmpty).toList()..sort();
-    for (final k in named) sorted[k] = result[k]!..sort();
-    if (result.containsKey('')) sorted[''] = result['']!..sort();
-    return sorted;
-  }
-
   String _fullName(String category, String shortName) =>
-      category.isEmpty ? shortName : '$category/$shortName';
+      fullDocumentName(category, shortName);
 
   List<String> get _existingCategories =>
       _grouped.keys.where((k) => k.isNotEmpty).toList();

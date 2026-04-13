@@ -5,57 +5,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import '../config_loader.dart';
+import '../logic/ssp_logic.dart';
 import '../storage.dart';
-
-// ─── Datenmodell ────────────────────────────────────────────────────────────
-
-enum _Zug { schere, stein, papier }
-
-const _zugEmoji = {
-  _Zug.schere: '✂️',
-  _Zug.stein: '🪨',
-  _Zug.papier: '✋',
-};
-
-_Zug? _zugFromString(String? s) => switch (s) {
-      'schere' => _Zug.schere,
-      'stein' => _Zug.stein,
-      'papier' => _Zug.papier,
-      _ => null
-    };
-
-String _zugToString(_Zug z) => switch (z) {
-      _Zug.schere => 'schere',
-      _Zug.stein => 'stein',
-      _Zug.papier => 'papier',
-    };
-
-/// +1 = a gewinnt, -1 = b gewinnt, 0 = Unentschieden
-int _ergebnis(_Zug a, _Zug b) {
-  if (a == b) return 0;
-  if ((a == _Zug.stein && b == _Zug.schere) ||
-      (a == _Zug.schere && b == _Zug.papier) ||
-      (a == _Zug.papier && b == _Zug.stein)) {
-    return 1;
-  }
-  return -1;
-}
-
-class _Spielstand {
-  int siege;
-  int niederlagen;
-  int unentschieden;
-
-  _Spielstand({this.siege = 0, this.niederlagen = 0, this.unentschieden = 0});
-
-  factory _Spielstand.fromJson(Map<dynamic, dynamic> map) => _Spielstand(
-        siege: (map['s'] as int?) ?? 0,
-        niederlagen: (map['n'] as int?) ?? 0,
-        unentschieden: (map['u'] as int?) ?? 0,
-      );
-
-  Map<String, int> toJson() => {'s': siege, 'n': niederlagen, 'u': unentschieden};
-}
 
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
@@ -76,13 +27,13 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
 
   // ─── Spielzustand ───────────────────────────────────────────────────────
   _Phase _phase = _Phase.suche;
-  _Zug? _meineWahl;
-  _Zug? _gegnerWahl;
+  Zug? _meineWahl;
+  Zug? _gegnerWahl;
   String _gameId = '';
   String _gegnerId = '';
   String _gegnerName = '';
   bool _gameStarted = false;
-  _Spielstand _spielstand = _Spielstand();
+  Spielstand _spielstand = Spielstand();
 
   StreamSubscription? _warteSub;
   StreamSubscription? _gameSub;
@@ -126,8 +77,8 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
     final json = getItem(_scoreKey);
     setState(() {
       _spielstand = json != null
-          ? _Spielstand.fromJson(jsonDecode(json) as Map)
-          : _Spielstand();
+          ? Spielstand.fromJson(jsonDecode(json) as Map)
+          : Spielstand();
     });
   }
 
@@ -136,8 +87,8 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
   }
 
   void _spielstandZuruecksetzen() {
-    setItem(_scoreKey, jsonEncode(_Spielstand().toJson()));
-    setState(() => _spielstand = _Spielstand());
+    setItem(_scoreKey, jsonEncode(Spielstand().toJson()));
+    setState(() => _spielstand = Spielstand());
   }
 
   // ─── Matchmaking ────────────────────────────────────────────────────────
@@ -338,8 +289,8 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
 
       // Spielzüge auswerten
       final choices = data['choices'] as Map?;
-      final meineWahl = _zugFromString(choices?[_myId] as String?);
-      final gegnerWahl = _zugFromString(choices?[_gegnerId] as String?);
+      final meineWahl = zugFromString(choices?[_myId] as String?);
+      final gegnerWahl = zugFromString(choices?[_gegnerId] as String?);
 
       if (meineWahl != null && gegnerWahl != null) {
         if (_phase != _Phase.aufdecken) _aufdecken(meineWahl, gegnerWahl);
@@ -368,17 +319,17 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
 
   Future<void> _wahlBestaetigen() async {
     if (_meineWahl == null) return;
-    await _gameRef.child('choices/$_myId').set(_zugToString(_meineWahl!));
+    await _gameRef.child('choices/$_myId').set(zugToString(_meineWahl!));
   }
 
-  void _aufdecken(_Zug meineWahl, _Zug gegnerWahl) {
+  void _aufdecken(Zug meineWahl, Zug gegnerWahl) {
     setState(() {
       _phase = _Phase.aufdecken;
       _meineWahl = meineWahl;
       _gegnerWahl = gegnerWahl;
     });
 
-    final e = _ergebnis(meineWahl, gegnerWahl);
+    final e = ergebnis(meineWahl, gegnerWahl);
     if (e == 1) {
       _spielstand.siege++;
     } else if (e == -1) {
@@ -550,7 +501,7 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
             ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _Zug.values.map(_buildZugButton).toList(),
+            children: Zug.values.map(_buildZugButton).toList(),
           ),
           const SizedBox(height: 28),
           if (_phase == _Phase.waehle && _meineWahl != null)
@@ -565,7 +516,7 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
         ],
       );
 
-  Widget _buildZugButton(_Zug zug) {
+  Widget _buildZugButton(Zug zug) {
     final ausgewaehlt = _meineWahl == zug;
     final gesperrt = _phase == _Phase.bestaetigt;
     return GestureDetector(
@@ -588,7 +539,7 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
         ),
         child: Center(
           child: Text(
-            _zugEmoji[zug]!,
+            zugEmoji[zug]!,
             style: TextStyle(fontSize: gesperrt ? 30 : 36),
           ),
         ),
@@ -597,7 +548,7 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
   }
 
   Widget _buildAufdecken() {
-    final e = _ergebnis(_meineWahl!, _gegnerWahl!);
+    final e = ergebnis(_meineWahl!, _gegnerWahl!);
     final (text, farbe) = switch (e) {
       1 => ('Gewonnen! 🎉', Colors.green),
       -1 => ('Verloren! 😞', Colors.red),
@@ -625,13 +576,13 @@ class _SchereSteinPapierScreenState extends State<SchereSteinPapierScreen> {
     );
   }
 
-  Widget _buildAufdeckSpalte(String name, _Zug zug) => Column(
+  Widget _buildAufdeckSpalte(String name, Zug zug) => Column(
         children: [
           Text(name,
               style: const TextStyle(fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
-          Text(_zugEmoji[zug]!, style: const TextStyle(fontSize: 60)),
+          Text(zugEmoji[zug]!, style: const TextStyle(fontSize: 60)),
         ],
       );
 
