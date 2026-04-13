@@ -122,13 +122,14 @@ def add_member(body):
     data_city = data.get('city', '')
     data_phone1 = data.get('phone1', '')
     data_phone2 = data.get('phone2', '')
-
+    data_is_active = data.get('isActive', True)
 
     item = {
         'memberId': data_member_id,
         'name': data_name,
         'isAdmin': data_is_admin,
         'isSpiess': data_is_spiess,
+        'isActive': data_is_active,
         'token': data_token,
         'street': data_street,
         'houseNumber': data_house_number,

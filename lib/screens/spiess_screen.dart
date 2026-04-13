@@ -48,7 +48,7 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
     try {
       final List<dynamic> data = await membersApi.fetchMembers();
       setState(() {
-        members = data;
+        members = data.where((m) => m['isActive'] != false).toList();
       });
     } catch (e) {
       showError('Fehler beim Abrufen der Mitglieder: $e');

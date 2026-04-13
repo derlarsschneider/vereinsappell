@@ -89,16 +89,17 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
     }
   }
 
-  Future<void> deleteMember() async {
+  Future<void> toggleActive() async {
     if (selectedMember == null) return;
+    final wasActive = selectedMember!['isActive'] != false;
+    setState(() => selectedMember!['isActive'] = !wasActive);
     try {
-      await api.deleteMember(selectedMember!['memberId']);
-      setState(() {
-        mitglieder.removeWhere((m) => m['memberId'] == selectedMember!['memberId']);
-        selectedMember = null;
-      });
-      showInfo('Mitglied gelöscht');
+      await api.saveMember(selectedMember!);
+      final index = mitglieder.indexWhere((m) => m['memberId'] == selectedMember!['memberId']);
+      if (index != -1) mitglieder[index] = Map<String, dynamic>.from(selectedMember!);
+      showInfo(wasActive ? 'Mitglied deaktiviert' : 'Mitglied aktiviert');
     } catch (e) {
+      setState(() => selectedMember!['isActive'] = wasActive);
       showError('$e');
     }
   }
@@ -125,8 +126,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
             itemCount: mitglieder.length,
             itemBuilder: (context, index) {
               final member = mitglieder[index];
+              final isActive = member['isActive'] != false;
               return ListTile(
-                title: Text(member['name'] ?? 'Unbekannt'),
+                title: Text(
+                  isActive ? (member['name'] ?? 'Unbekannt') : '${member['name'] ?? 'Unbekannt'} (inaktiv)',
+                  style: isActive ? null : TextStyle(color: Colors.grey),
+                ),
                 onTap: () => _selectMember(member),
               );
             },
@@ -267,31 +272,12 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
                   ),
                   SizedBox(height: 10),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text('Mitglied löschen'),
-                          content: Text('Bist du sicher, dass du dieses Mitglied löschen willst?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: Text('Abbrechen'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                deleteMember();
-                              },
-                              child: Text('Löschen'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.delete),
-                    label: Text('Löschen'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: toggleActive,
+                    icon: Icon(selectedMember!['isActive'] != false ? Icons.person_off : Icons.person),
+                    label: Text(selectedMember!['isActive'] != false ? 'Deaktivieren' : 'Aktivieren'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: selectedMember!['isActive'] != false ? Colors.orange : Colors.green,
+                    ),
                   ),
                 ],
               ),
