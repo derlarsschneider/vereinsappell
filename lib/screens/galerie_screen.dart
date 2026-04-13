@@ -88,7 +88,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
         filename: filename,
       );
       showInfo('Foto hochgeladen');
-      api.fetchThumbnails();
+      await fetchThumbnails();
     } catch (e) {
       showError('Fehler: $e');
     } finally {
@@ -99,9 +99,9 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   Future<void> deletePhoto(String photoId) async {
     setState(() => isLoading = true);
     try {
-      api.deletePhoto(photoId);
+      await api.deletePhoto(photoId);
       showInfo('Foto gelöscht');
-      fetchThumbnails();
+      await fetchThumbnails();
     } catch (e) {
       showError('Fehler: $e');
     } finally {
