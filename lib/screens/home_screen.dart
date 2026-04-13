@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vereinsappell/screens/knobeln_screen.dart';
+import 'package:vereinsappell/screens/schere_stein_papier_screen.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
@@ -196,8 +197,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                KnobelnScreen(),
+            builder: (_) => KnobelnScreen(),
+          ),
+        ),
+      ),
+      _buildMenuTile(
+        context,
+        '✂️ Schere Stein Papier',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SchereSteinPapierScreen(config: widget.config),
           ),
         ),
       ),

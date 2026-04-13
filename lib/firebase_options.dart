@@ -51,6 +51,7 @@ class DefaultFirebaseOptions {
     authDomain: 'vereinsappell.firebaseapp.com',
     storageBucket: 'vereinsappell.firebasestorage.app',
     measurementId: 'G-53744R6XG0',
+    databaseURL: 'https://vereinsappell-default-rtdb.europe-west1.firebasedatabase.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
