@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
+set -euo pipefail
+
 # parse command line parameters
+SKIP_BUILD="0"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --skip-build)
