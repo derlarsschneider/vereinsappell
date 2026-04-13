@@ -8,11 +8,13 @@ import 'headers.dart';
 
 class FinesApi {
   final AppConfig config;
+  final http.Client _client;
 
-  FinesApi(this.config);
+  FinesApi(this.config, {http.Client? client})
+      : _client = client ?? http.Client();
 
   Future<Map<String, dynamic>> fetchFines(String memberId) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/fines?memberId=${memberId}'),
       headers: headers(config),
     );
@@ -34,7 +36,7 @@ class FinesApi {
         .now()
         .millisecondsSinceEpoch
         .toString();
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/fines'),
       headers: headers(config),
       body: json.encode({
@@ -52,7 +54,7 @@ class FinesApi {
   }
 
   Future<void> deleteFine(String fineId, String memberId) async {
-    final response = await http.delete(
+    final response = await _client.delete(
       Uri.parse('${config.apiBaseUrl}/fines/$fineId?memberId=$memberId'),
       headers: headers(config),
     );

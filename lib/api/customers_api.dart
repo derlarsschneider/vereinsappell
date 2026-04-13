@@ -7,12 +7,13 @@ import 'headers.dart';
 
 class CustomersApi {
   final AppConfig config;
+  final http.Client _client;
 
-  CustomersApi(this.config);
-
+  CustomersApi(this.config, {http.Client? client})
+      : _client = client ?? http.Client();
 
   Future<Map<String, dynamic>> getCustomer(String customerId) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/customers/$customerId'),
       headers: headers(config),
     );

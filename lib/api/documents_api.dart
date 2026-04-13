@@ -7,8 +7,10 @@ import 'headers.dart';
 
 class DocumentApi {
   final AppConfig config;
+  final http.Client _client;
 
-  DocumentApi(this.config);
+  DocumentApi(this.config, {http.Client? client})
+      : _client = client ?? http.Client();
 
   Uri _docsUrl([String? filename]) {
     if (filename == null) return Uri.parse('${config.apiBaseUrl}/docs');
@@ -23,7 +25,7 @@ class DocumentApi {
 
   /// Lädt alle Dokumente von der API.
   Future<List<Map<String, dynamic>>> fetchDocuments() async {
-    final response = await http.get(
+    final response = await _client.get(
       _docsUrl(),
       headers: _authHeaders(),
     );
@@ -40,7 +42,7 @@ class DocumentApi {
 
   /// Löscht ein Dokument mit dem angegebenen Dateinamen.
   Future<void> deleteDocument(String fileName) async {
-    final response = await http.delete(
+    final response = await _client.delete(
       _docsUrl(fileName),
       headers: _authHeaders(),
     );
@@ -54,7 +56,7 @@ class DocumentApi {
 
   /// Lädt ein Dokument mit dem angegebenen Dateinamen.
   Future<Uint8List> downloadDocument(String fileName) async {
-    final response = await http.get(
+    final response = await _client.get(
       _docsUrl(fileName),
       headers: _authHeaders(),
     );
@@ -77,7 +79,7 @@ class DocumentApi {
       'file': base64Encode(fileBytes),
     });
 
-    final response = await http.post(
+    final response = await _client.post(
       _docsUrl(),
       headers: _authHeaders(),
       body: body,

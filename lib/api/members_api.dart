@@ -7,12 +7,13 @@ import 'headers.dart';
 
 class MembersApi {
   final AppConfig config;
+  final http.Client _client;
 
-  MembersApi(this.config);
-
+  MembersApi(this.config, {http.Client? client})
+      : _client = client ?? http.Client();
 
   Future<List<dynamic>> fetchMembers() async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/members'),
       headers: headers(config),
     );
@@ -37,7 +38,7 @@ class MembersApi {
       'phone1': '',
       'phone2': '',
     };
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/members'),
       headers: headers(config),
       body: json.encode(newMember),
@@ -50,7 +51,7 @@ class MembersApi {
   }
 
   Future<void> saveMember(Map<String, dynamic> member) async {
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/members'),
       headers: headers(config),
       body: json.encode(member),
@@ -61,7 +62,7 @@ class MembersApi {
   }
 
   Future<void> deleteMember(String memberId) async {
-    final response = await http.delete(
+    final response = await _client.delete(
       Uri.parse('${config.apiBaseUrl}/members/$memberId'),
       headers: headers(config),
     );

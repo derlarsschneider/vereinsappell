@@ -6,11 +6,13 @@ import 'headers.dart';
 
 class GalleryApi {
   final AppConfig config;
+  final http.Client _client;
 
-  GalleryApi(this.config);
+  GalleryApi(this.config, {http.Client? client})
+      : _client = client ?? http.Client();
 
   Future<List<Map<String, dynamic>>> fetchThumbnails() async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/photos/thumbnails'),
       headers: headers(config),
     );
@@ -23,7 +25,7 @@ class GalleryApi {
   }
 
   Future<Uint8List> fetchPhoto(String name) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/photos/img/$name'),
       headers: headers(config),
     );
@@ -42,12 +44,12 @@ class GalleryApi {
     final imgName = 'img/$filename';
     final thumbName = 'thumbnails/$filename';
 
-    final responseImg = await http.post(
+    final responseImg = await _client.post(
       Uri.parse('${config.apiBaseUrl}/photos'),
       headers: headers(config),
       body: json.encode([{'file': base64Encode(original), 'name': imgName}]),
     );
-    final responseThumb = await http.post(
+    final responseThumb = await _client.post(
       Uri.parse('${config.apiBaseUrl}/photos'),
       headers: headers(config),
       body: json.encode([{'file': base64Encode(thumbnail), 'name': thumbName}]),
@@ -60,7 +62,7 @@ class GalleryApi {
   }
 
   Future<void> deletePhoto(String name) async {
-    final response = await http.delete(
+    final response = await _client.delete(
       Uri.parse('${config.apiBaseUrl}/photos/$name'),
       headers: headers(config),
     );
