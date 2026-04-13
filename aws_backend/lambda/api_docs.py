@@ -21,18 +21,19 @@ def handle_docs(event, context):
     # is_spiess = executing_member.get('isSpiess', False)
     # is_myself =  executing_member.get('memberId') == member_id
     if method == 'GET' and path == '/docs':
-        return _add_headers(get_docs(event))
+        return _add_headers(get_docs(event), event=event)
     elif method == 'GET' and path.startswith('/docs/'):
-        return _add_headers(get_doc(event))
+        return _add_headers(get_doc(event), event=event)
     elif method == 'POST' and path.startswith('/docs'):
-        return _add_headers(add_doc(event))
+        return _add_headers(add_doc(event), event=event)
     elif method == 'DELETE' and path.startswith('/docs/'):
-        return _add_headers(delete_doc(event))
+        return _add_headers(delete_doc(event), event=event)
 
-def _add_headers(response, more_fields={}):
+def _add_headers(response, more_fields={}, event=None):
+    origin = (event or {}).get('headers', {}).get('origin', 'https://vereinsappell.web.app')
     response_headers = {
-        "Access-Control-Allow-Origin": "https://vereinsappell.web.app",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Headers": "Content-Type,applicationId,memberId,password",
         "Access-Control-Allow-Methods": "OPTIONS,GET,POST,DELETE",
     }
     return {**response_headers, **response, **more_fields}

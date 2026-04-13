@@ -27,34 +27,35 @@ def handle_members(event, context):
         # LIST members
         if not is_admin and not is_spiess:
             return ERROR_403
-        return add_headers(list_members())
+        return add_headers(list_members(), event=event)
     elif method == 'GET':
         if path.endswith('/all'):
             # GET member with all details
             if not is_admin:
                 return ERROR_403
-            return add_headers(get_member(member_id, True), {'memberId': member_id})
+            return add_headers(get_member(member_id, True), {'memberId': member_id}, event=event)
         else:
             # GET member with reduced details
             if not is_admin and not is_spiess and not is_myself:
                 return ERROR_403
-            return add_headers(get_member(member_id, False))
+            return add_headers(get_member(member_id, False), event=event)
     elif method == 'POST':
         # ADD member
         if not is_admin:
             return ERROR_403
-        return add_headers(add_member(event['body']))
+        return add_headers(add_member(event['body']), event=event)
     elif method == 'DELETE':
         # DELETE member
         if not is_admin:
             return ERROR_403
-        return add_headers(delete_member(member_id))
+        return add_headers(delete_member(member_id), event=event)
 
 
-def add_headers(response, more_fields={}):
+def add_headers(response, more_fields={}, event=None):
+    origin = (event or {}).get('headers', {}).get('origin', 'https://vereinsappell.web.app')
     response_headers = {
-        "Access-Control-Allow-Origin": "https://vereinsappell.web.app",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Headers": "Content-Type,applicationId,memberId,password",
         "Access-Control-Allow-Methods": "OPTIONS,GET,POST,DELETE",
     }
     return {**response_headers, **response, **more_fields}

@@ -27,9 +27,10 @@ def lambda_handler(event, context):
     try:
         method = event.get('requestContext', {}).get('http', {}).get('method')
         path = event.get('requestContext', {}).get('http', {}).get('path')
+        origin = event.get('headers', {}).get('origin', 'https://vereinsappell.web.app')
         headers = {
-            "Access-Control-Allow-Origin": "https://vereinsappell.web.app",
-            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Headers": "Content-Type,applicationId,memberId,password",
             "Access-Control-Allow-Methods": "OPTIONS,GET,POST,DELETE",
         }
 
