@@ -1,12 +1,7 @@
 // lib/screens/home_screen.dart
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'dart:js_interop';
-
-
-@JS('hardReload')
-external JSPromise _jsHardReload();
+import 'dart:typed_data';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -27,6 +22,9 @@ import 'documents_screen.dart';
 import 'galerie_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
+
+@JS('hardReload')
+external JSPromise _jsHardReload();
 
 class HomeScreen extends DefaultScreen {
   const HomeScreen({super.key, required super.config}) : super(title: "Home");
