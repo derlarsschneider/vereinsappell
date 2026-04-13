@@ -10,8 +10,12 @@ class DocumentApi {
 
   DocumentApi(this.config);
 
-  Uri _docsUrl([String? filename]) =>
-      Uri.parse('${config.apiBaseUrl}/docs${filename != null ? '/$filename' : ''}');
+  Uri _docsUrl([String? filename]) {
+    if (filename == null) return Uri.parse('${config.apiBaseUrl}/docs');
+    // Encode each path segment individually so slashes (for categories) pass through
+    final encoded = filename.split('/').map(Uri.encodeComponent).join('/');
+    return Uri.parse('${config.apiBaseUrl}/docs/$encoded');
+  }
 
   Map<String, String> _authHeaders() {
     return headers(config);
