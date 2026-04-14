@@ -70,3 +70,5 @@ test.json
 
 # Build system backups
 *.backup
+/.claude/.nfs*
+/aws_backend/sample_data/marschbefehl*.json
