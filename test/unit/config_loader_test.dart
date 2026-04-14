@@ -104,5 +104,39 @@ void main() {
         expect(decoded.containsKey('isSpiess'), isTrue);
       });
     });
+
+    test('updateMember sets reminderEnabled from JSON', () async {
+      await withStubHttp(() async {
+        final config = AppConfig(
+          apiBaseUrl: 'http://x', applicationId: 'a', memberId: 'm',
+        );
+        config.member.updateMember({'reminderEnabled': false, 'reminderHoursBefore': 6});
+        expect(config.member.reminderEnabled, false);
+        expect(config.member.reminderHoursBefore, 6);
+      });
+    });
+
+    test('updateMember uses defaults when reminder fields absent', () async {
+      await withStubHttp(() async {
+        final config = AppConfig(
+          apiBaseUrl: 'http://x', applicationId: 'a', memberId: 'm',
+        );
+        config.member.updateMember({'name': 'X'});
+        expect(config.member.reminderEnabled, true);
+        expect(config.member.reminderHoursBefore, 24);
+      });
+    });
+
+    test('encodeMember includes reminderEnabled and reminderHoursBefore', () async {
+      await withStubHttp(() async {
+        final config = AppConfig(
+          apiBaseUrl: 'http://x', applicationId: 'a', memberId: 'm',
+        );
+        config.member.updateMember({'reminderEnabled': false, 'reminderHoursBefore': 48});
+        final json = jsonDecode(config.member.encodeMember());
+        expect(json['reminderEnabled'], false);
+        expect(json['reminderHoursBefore'], 48);
+      });
+    });
   });
 }

@@ -117,6 +117,9 @@ class Member extends ChangeNotifier {
   String _phone1 = '';
   String _phone2 = '';
 
+  bool _reminderEnabled = true;
+  int _reminderHoursBefore = 24;
+
   Member({required this.config}) {
     fetchMember();
   }
@@ -134,6 +137,9 @@ class Member extends ChangeNotifier {
   String get phone1 => _phone1;
   String get phone2 => _phone2;
 
+  bool get reminderEnabled => _reminderEnabled;
+  int get reminderHoursBefore => _reminderHoursBefore;
+
   // Setter
   set name(String value) => _name = value;
   set isSpiess(bool value) => _isSpiess = value;
@@ -146,6 +152,9 @@ class Member extends ChangeNotifier {
   set city(String value) => _city = value;
   set phone1(String value) => _phone1 = value;
   set phone2(String value) => _phone2 = value;
+
+  set reminderEnabled(bool v) => _reminderEnabled = v;
+  set reminderHoursBefore(int v) => _reminderHoursBefore = v;
 
   Future<void> fetchMember() async {
     final http.Response response;
@@ -224,6 +233,9 @@ class Member extends ChangeNotifier {
     _phone1 = member?['phone1'] ?? '';
     _phone2 = member?['phone2'] ?? '';
 
+    _reminderEnabled = member?['reminderEnabled'] ?? true;
+    _reminderHoursBefore = member?['reminderHoursBefore'] ?? 24;
+
     notifyListeners();
   }
 
@@ -240,6 +252,8 @@ class Member extends ChangeNotifier {
       'city': _city,
       'phone1': _phone1,
       'phone2': _phone2,
+      'reminderEnabled': _reminderEnabled,
+      'reminderHoursBefore': _reminderHoursBefore,
     });
   }
 }
