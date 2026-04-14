@@ -60,10 +60,82 @@ class _CalendarScreenState extends DefaultScreenState<CalendarScreen> {
     return DateFormat('dd.MM.yyyy HH:mm \'Uhr\'').format(dt);
   }
 
+  Future<void> _showReminderSettings() async {
+    bool enabled = widget.config.member.reminderEnabled;
+    int hoursBefore = widget.config.member.reminderHoursBefore;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Erinnerungseinstellungen'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                title: const Text('Erinnerungen aktivieren'),
+                value: enabled,
+                onChanged: (v) => setDialogState(() => enabled = v),
+              ),
+              if (enabled) ...[
+                const SizedBox(height: 8),
+                for (final entry in const {
+                  2: '2 Stunden',
+                  6: '6 Stunden',
+                  24: '1 Tag',
+                  48: '2 Tage',
+                }.entries)
+                  RadioListTile<int>(
+                    title: Text(entry.value),
+                    value: entry.key,
+                    groupValue: hoursBefore,
+                    onChanged: (v) => setDialogState(() => hoursBefore = v!),
+                  ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Abbrechen'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final prevEnabled = widget.config.member.reminderEnabled;
+                final prevHours = widget.config.member.reminderHoursBefore;
+                widget.config.member.reminderEnabled = enabled;
+                widget.config.member.reminderHoursBefore = hoursBefore;
+                try {
+                  await widget.config.member.saveMember();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) showInfo('Einstellungen gespeichert');
+                } catch (e) {
+                  widget.config.member.reminderEnabled = prevEnabled;
+                  widget.config.member.reminderHoursBefore = prevHours;
+                  if (mounted) showError('Fehler beim Speichern: $e');
+                }
+              },
+              child: const Text('Speichern'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('📅 Termine')),
+      appBar: AppBar(
+        title: const Text('📅 Termine'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Erinnerungseinstellungen',
+            onPressed: _showReminderSettings,
+          ),
+        ],
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : error != null
