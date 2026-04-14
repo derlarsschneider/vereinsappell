@@ -29,12 +29,15 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
+    try {
       final url = Uri.base;
       _apiBaseUrlController.text = url.queryParameters['apiBaseUrl'] ?? '';
       _applicationIdController.text = url.queryParameters['applicationId'] ?? '';
       _memberIdController.text = url.queryParameters['memberId'] ?? '';
       _passwordController.text = url.queryParameters['password'] ?? '';
+    }
+    catch (e) {
+      print(e);
     }
   }
 

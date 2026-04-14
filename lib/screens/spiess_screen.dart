@@ -80,6 +80,11 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
     }
   }
 
+  double sumOfFines() {
+    return selectedMemberFines.fold(
+        0, (sum, item) => sum + (item['amount'] != null ? Decimal.parse(item['amount']).toDouble() : 0));
+  }
+
   Future<void> addFine(String memberId, String reason, double amount, BuildContext dialogContext) async {
     try {
       await finesApi.addFine(memberId, reason, amount);
@@ -268,6 +273,13 @@ class _SpiessScreenState extends DefaultScreenState<SpiessScreen> {
                   child: Text(
                     selectedMemberName!,
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Gesamt: ${sumOfFines().toStringAsFixed(2)} €',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Padding(

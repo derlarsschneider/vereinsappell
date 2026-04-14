@@ -7,11 +7,13 @@ import 'dart:convert';
 import 'package:vereinsappell/screens/default_screen.dart';
 
 class StrafenScreen extends DefaultScreen {
+  final FinesApi? finesApi;
 
   const StrafenScreen({
     super.key,
     required super.config,
-  }) : super(title: 'Strafen',);
+    this.finesApi,
+  }) : super(title: 'Strafen');
 
   @override
   DefaultScreenState createState() => _StrafenScreenState();
@@ -26,7 +28,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
   @override
   void initState() {
     super.initState();
-    api = FinesApi(widget.config);
+    api = widget.finesApi ?? FinesApi(widget.config);
     fetchStrafen();
   }
 

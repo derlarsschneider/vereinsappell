@@ -14,7 +14,10 @@ import '../api/documents_api.dart';
 import '../logic/documents_logic.dart';
 
 class DocumentScreen extends DefaultScreen {
-  const DocumentScreen({super.key, required super.config}) : super(title: 'Dokumente');
+  final DocumentApi? documentApi;
+
+  const DocumentScreen({super.key, required super.config, this.documentApi})
+      : super(title: 'Dokumente');
 
   @override
   DefaultScreenState<DocumentScreen> createState() => _DocumentScreenState();
@@ -30,7 +33,7 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
   @override
   void initState() {
     super.initState();
-    api = DocumentApi(widget.config);
+    api = widget.documentApi ?? DocumentApi(widget.config);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _ensurePassword();
       await fetchDocuments();
