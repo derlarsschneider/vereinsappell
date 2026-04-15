@@ -296,8 +296,32 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
                               ? IconButton(
                                   icon: const Icon(Icons.delete,
                                       color: Colors.red),
-                                  onPressed: () =>
-                                      deleteDocument(category, shortName),
+                                  onPressed: () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text('Dokument löschen?'),
+                                        content: Text(shortName),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: const Text('Abbrechen'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: const Text('Löschen',
+                                                style: TextStyle(
+                                                    color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirmed == true) {
+                                      await deleteDocument(category, shortName);
+                                    }
+                                  },
                                 )
                               : null,
                           onTap: () => previewOrDownload(category, shortName),

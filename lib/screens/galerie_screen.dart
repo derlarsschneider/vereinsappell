@@ -151,21 +151,18 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
                   top: 4,
                   right: 4,
                   child: GestureDetector(
-                    onTap: () {
-                      showDialog(
+                    onTap: () async {
+                      final confirmed = await showDialog<bool>(
                         context: context,
                         builder: (_) => AlertDialog(
                           title: Text('Foto löschen?'),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => Navigator.pop(context, false),
                               child: Text('Abbrechen'),
                             ),
                             TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                deletePhoto(name);
-                              },
+                              onPressed: () => Navigator.pop(context, true),
                               child: Text(
                                 'Löschen',
                                 style: TextStyle(color: Colors.red),
@@ -174,6 +171,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
                           ],
                         ),
                       );
+                      if (confirmed == true) await deletePhoto(name);
                     },
                     child: Container(
                       decoration: BoxDecoration(
