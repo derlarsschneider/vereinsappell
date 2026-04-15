@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:vereinsappell/screens/default_screen.dart';
@@ -153,9 +154,15 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
         final dir = await getTemporaryDirectory();
         final file = io.File('${dir.path}/$shortName');
         await file.writeAsBytes(bytes);
-        final result = await OpenFile.open(file.path);
-        if (result.type != ResultType.done) {
-          showError('Konnte Datei nicht öffnen: ${result.message}');
+        if (io.Platform.isIOS) {
+          // open_file uses UIDocumentInteractionController which silently fails
+          // on iOS with Flutter's view hierarchy; share_plus is reliable
+          await Share.shareXFiles([XFile(file.path)]);
+        } else {
+          final result = await OpenFile.open(file.path);
+          if (result.type != ResultType.done) {
+            showError('Konnte Datei nicht öffnen: ${result.message}');
+          }
         }
       }
     } catch (e) {

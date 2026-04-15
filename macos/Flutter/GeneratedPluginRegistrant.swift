@@ -13,6 +13,7 @@ import firebase_messaging
 import mobile_scanner
 import open_file_mac
 import path_provider_foundation
+import share_plus
 import window_size
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -24,5 +25,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   MobileScannerPlugin.register(with: registry.registrar(forPlugin: "MobileScannerPlugin"))
   OpenFilePlugin.register(with: registry.registrar(forPlugin: "OpenFilePlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
+  SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))
   WindowSizePlugin.register(with: registry.registrar(forPlugin: "WindowSizePlugin"))
 }
