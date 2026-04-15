@@ -10,6 +10,20 @@ s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 # 🔒 Passwortschutz (einfach, aber effektiv)
 DOCS_PASSWORD = os.environ.get('DOCS_PASSWORD', 'geheim123')
 
+import re
+
+_VALID_DOC_NAME = re.compile(r'^[A-Za-z0-9._\-/]+$')
+
+def _is_valid_doc_name(name: str) -> bool:
+    """Reject names with path traversal or disallowed characters."""
+    if not name or not _VALID_DOC_NAME.match(name):
+        return False
+    # Block path traversal even after normalization
+    if '..' in name.split('/'):
+        return False
+    return True
+
+
 def handle_docs(event, context):
     method = event.get('requestContext', {}).get('http', {}).get('method')
     path = event.get('requestContext', {}).get('http', {}).get('path')
@@ -112,6 +126,8 @@ def add_doc(event, prefix: str = "docs"):
     body = base64.b64decode(event["body"]) if event.get("isBase64Encoded") else event["body"].encode("utf-8")
     data = json.loads(body)
     name = data["name"]
+    if not _is_valid_doc_name(name):
+        return {"statusCode": 400, "body": json.dumps({"error": "Ungültiger Dateiname"})}
     file_base64 = data["file"]
     key = f"{prefix}/{name}"
 
