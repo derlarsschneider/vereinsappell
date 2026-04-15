@@ -32,6 +32,12 @@
 </head>
 <body>
 <script>
+  // Register Firebase messaging service worker explicitly so it owns a stable
+  // push subscription regardless of Flutter's own service worker lifecycle.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+  }
+
   window.hardReload = async function () {
     try {
       if ('serviceWorker' in navigator) {

@@ -1,6 +1,10 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
+// Take control immediately so push subscriptions are tied to this SW.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+
 firebase.initializeApp({
   apiKey: "AIzaSyARJfC5X_25RTZjHZQhOtFThFrrlXqH_f0",
   authDomain: "vereinsappell.firebaseapp.com",
@@ -14,15 +18,17 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
-  const notificationTitle = payload.data.title;
+  // payload.notification is populated from webpush.notification in the FCM payload.
+  // Fall back to payload.data for backwards compatibility.
+  const title = payload.notification?.title || payload.data?.title || '';
   const notificationOptions = {
-    body: payload.data.body,
+    body: payload.notification?.body || payload.data?.body || '',
     icon: 'icons/Icon-192.png',
     data: {
-      url: payload.data.url || '/',
+      url: payload.data?.url || '/',
     },
   };
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(title, notificationOptions);
 });
 
 self.addEventListener('notificationclick', function(event) {

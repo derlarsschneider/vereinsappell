@@ -44,10 +44,19 @@ def send_push_notification(token: str, notification: dict, secret_name: str) -> 
     access_token = get_access_token(service_account_json)
 
     # Erstelle Nachricht
+    # webpush.notification causes the browser OS to show the notification
+    # even when the PWA / browser process is not running.
     message = {
         "message": {
             "token": token,
             "data": notification,
+            "webpush": {
+                "notification": {
+                    "title": notification.get("title", ""),
+                    "body": notification.get("body", ""),
+                    "icon": "/icons/Icon-192.png",
+                }
+            },
         }
     }
 
