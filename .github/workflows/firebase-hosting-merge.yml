@@ -111,6 +111,11 @@ jobs:
     - name: 🏗️ Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
+    - name: 🔐 Write Firebase Service Account
+      run: |
+        mkdir -p aws_backend/secrets
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > aws_backend/secrets/firebase-service-account.json
+
     - name: 🚀 Deploy Backend
       working-directory: aws_backend
       run: ./update_backend.sh
