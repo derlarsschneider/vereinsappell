@@ -23,6 +23,7 @@ cd "$SCRIPT_DIR"
 authorizer/zip.sh
 lambda/zip.sh
 
+terraform init -input=false
 terraform apply -auto-approve
 
 authorizer/update.sh
