@@ -17,6 +17,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+WORKSPACE="${TF_WORKSPACE:-vereins-app-beta}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -24,6 +26,7 @@ authorizer/zip.sh
 lambda/zip.sh
 
 terraform init -input=false
+terraform workspace select "$WORKSPACE" 2>/dev/null || terraform workspace new "$WORKSPACE"
 terraform apply -auto-approve
 
 authorizer/update.sh
