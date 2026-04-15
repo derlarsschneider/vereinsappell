@@ -1,4 +1,5 @@
 import base64
+import decimal
 import json
 import os
 import uuid
@@ -7,6 +8,13 @@ from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key
 from push_notifications import send_push_notification
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        return super().default(o)
 import error_handler
 
 from api_members import handle_members
@@ -213,13 +221,6 @@ def get_fines(event):
         KeyConditionExpression=Key('memberId').eq(member_id)
     )
     items = fines_response.get('Items', [])
-    import decimal
-    class DecimalEncoder(json.JSONEncoder):
-        def default(self, o):
-            if isinstance(o, decimal.Decimal):
-                return str(o)
-            return super(DecimalEncoder, self).default(o)
-
     return {
         'statusCode': 200,
         'body': json.dumps({"name": name, "fines": items}, cls=DecimalEncoder)
