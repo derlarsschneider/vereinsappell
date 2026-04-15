@@ -6,47 +6,8 @@ on:
     - main
 
 jobs:
-  test-frontend:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: 📥 Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: 🔧 Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.32.5
-
-    - name: 📦 Install Dependencies
-      run: flutter pub get
-
-    - name: 🧪 Run Flutter Tests
-      run: flutter test
-
-  test-backend:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: 📥 Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: 📦 Install Test Dependencies
-      run: pip install pytest boto3 requests
-
-    - name: 🧪 Run Backend Tests
-      working-directory: aws_backend/lambda
-      run: pytest tests/
-
-  deploy-frontend:
+  frontend:
     runs-on: macos-latest
-    needs: [test-frontend, test-backend]
 
     env:
       ANDROID_APP_ID: 1:336568095877:android:f757f959bbe6c96be8c5ec
@@ -67,6 +28,9 @@ jobs:
       run: |
         flutter clean
         flutter pub get
+
+    - name: 🧪 Run Flutter Tests
+      run: flutter test
 
     - name: 🕒 Set Version
       id: version
@@ -118,13 +82,24 @@ jobs:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
       if: false
 
-  deploy-backend:
+  backend:
     runs-on: ubuntu-latest
-    needs: [test-frontend, test-backend]
 
     steps:
     - name: 📥 Checkout Repository
       uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 📦 Install Test Dependencies
+      run: pip install pytest boto3 requests
+
+    - name: 🧪 Run Backend Tests
+      working-directory: aws_backend/lambda
+      run: pytest tests/
 
     - name: 🔧 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -135,11 +110,6 @@ jobs:
 
     - name: 🏗️ Setup Terraform
       uses: hashicorp/setup-terraform@v3
-
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
 
     - name: 🚀 Deploy Backend
       working-directory: aws_backend

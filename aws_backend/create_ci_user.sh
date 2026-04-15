@@ -3,12 +3,21 @@
 # Idempotent: safe to run multiple times.
 #
 # Usage:
-#   ./create_ci_user.sh
+#   ./create_ci_user.sh [--rotate-key]
 #
-# On first run: creates user, policy, access key and prints the key.
-# On re-runs:   updates the policy document; skips user/key creation.
+# On first run:       creates user, policy, access key and prints the key.
+# On re-runs:         updates the policy document; asks whether to rotate the key.
+# --rotate-key flag:  rotates the key non-interactively (e.g. from another script).
 
 set -euo pipefail
+
+ROTATE_KEY=false
+for arg in "$@"; do
+  case "$arg" in
+    --rotate-key) ROTATE_KEY=true ;;
+    *) echo "Unknown argument: $arg"; exit 1 ;;
+  esac
+done
 
 REGION="eu-central-1"
 USER_NAME="vereinsappell-ci"
@@ -257,12 +266,28 @@ KEY_COUNT=$(aws iam list-access-keys \
   --query 'length(AccessKeyMetadata)' \
   --output text)
 
-if [ "$KEY_COUNT" -gt 0 ]; then
+if [ "$KEY_COUNT" -gt 0 ] && [ "$ROTATE_KEY" = false ]; then
   echo ""
-  echo ">>> Access key already exists — skipping creation."
-  echo "    To rotate: delete the existing key in the AWS console and re-run this script."
-else
-  echo ""
+  echo ">>> Access key already exists."
+  read -r -p "    Rotate key? Old key will be deleted immediately. [y/N] " ANSWER
+  [[ "$ANSWER" =~ ^[Yy]$ ]] && ROTATE_KEY=true
+fi
+
+if [ "$KEY_COUNT" -gt 0 ] && [ "$ROTATE_KEY" = true ]; then
+  echo ">>> Deleting existing access keys..."
+  aws iam list-access-keys \
+    --user-name "$USER_NAME" \
+    --query 'AccessKeyMetadata[*].AccessKeyId' \
+    --output text \
+  | tr '\t' '\n' \
+  | while read -r KEY_ID; do
+      aws iam delete-access-key --user-name "$USER_NAME" --access-key-id "$KEY_ID"
+      echo "    Deleted $KEY_ID"
+    done
+  KEY_COUNT=0
+fi
+
+if [ "$KEY_COUNT" -eq 0 ]; then
   echo ">>> Creating access key..."
   KEYS=$(aws iam create-access-key \
     --user-name "$USER_NAME" \
