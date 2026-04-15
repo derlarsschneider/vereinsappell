@@ -6,6 +6,10 @@ resource "aws_secretsmanager_secret" "firebase_credentials" {
 resource "aws_secretsmanager_secret_version" "firebase_credentials_version" {
     secret_id     = aws_secretsmanager_secret.firebase_credentials.id
     secret_string = file("${path.module}/secrets/firebase-service-account.json")
+
+    lifecycle {
+        ignore_changes = [secret_string]
+    }
 }
 
 resource "aws_iam_policy" "secretsmanager_policy" {

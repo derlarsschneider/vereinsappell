@@ -215,7 +215,15 @@ POLICY_DOC=$(cat <<EOF
         "logs:TagResource",
         "logs:UntagResource",
         "logs:PutRetentionPolicy",
-        "logs:DeleteRetentionPolicy"
+        "logs:DeleteRetentionPolicy",
+        "logs:CreateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:GetLogDelivery",
+        "logs:UpdateLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DescribeLogGroups"
       ],
       "Resource": "*"
     }
