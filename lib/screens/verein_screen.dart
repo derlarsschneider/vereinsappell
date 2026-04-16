@@ -253,7 +253,7 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                     DropdownButtonFormField<String>(
                       decoration:
                           const InputDecoration(labelText: 'Verein auswählen'),
-                      initialValue: _selectedClub?['application_id'] as String?,
+                      value: _selectedClub?['application_id'] as String?,
                       items: _allClubs.map((c) {
                         return DropdownMenuItem<String>(
                           value: c['application_id'] as String,
