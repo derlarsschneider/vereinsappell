@@ -24,6 +24,7 @@ import 'documents_screen.dart';
 import 'galerie_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
+import 'verein_screen.dart';
 
 @JS('hardReload')
 external JSPromise _jsHardReload();
@@ -38,6 +39,7 @@ class HomeScreen extends DefaultScreen {
 class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationName = "Vereins Appell";
   String _applicationLogoBase64 = "";
+  List<String>? _activeScreens; // null = show all (backwards compatible)
   StreamSubscription? _messageSubscription;
 
   @override
@@ -76,11 +78,19 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     customersApi.getCustomer(widget.config.applicationId).then((customer) {
       setState(() {
         _applicationName = customer['application_name'];
+        final screens = customer['active_screens'];
+        if (screens != null) {
+          _activeScreens = List<String>.from(screens);
+        }
       });
     }).catchError((error) {
-      // Optional: Fehlerbehandlung
       showError("Fehler beim Laden des Vereins: $error");
     });
+  }
+
+  bool _isScreenActive(String key) {
+    if (_activeScreens == null) return true;
+    return _activeScreens!.contains(key);
   }
 
   Uint8List _decodeBase64(String base64String) {
@@ -138,37 +148,40 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
   Widget _buildGridMenu(BuildContext context, Member member) {
     final tiles = <Widget>[
-      _buildMenuTile(
-        context,
-        '📅 Termine',
-        () => Navigator.push(
+      if (_isScreenActive('termine'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => CalendarScreen(config: widget.config),
+          '📅 Termine',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CalendarScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
-      _buildMenuTile(
-        context,
-        '📢 Marschbefehl',
-        () => Navigator.push(
+      if (_isScreenActive('marschbefehl'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => MarschbefehlScreen(config: widget.config),
+          '📢 Marschbefehl',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MarschbefehlScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
-      _buildMenuTile(
-        context,
-        '💰 Strafen',
-        () => Navigator.push(
+      if (_isScreenActive('strafen'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => StrafenScreen(config: widget.config),
+          '💰 Strafen',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StrafenScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
-      if (member.isSpiess)
+      if (member.isSpiess && _isScreenActive('strafen'))
         _buildMenuTile(
           context,
           '🛡️ Spieß',
@@ -179,37 +192,39 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             ),
           ),
         ),
-      _buildMenuTile(
-        context,
-        '📄 Dokumente',
-        () => Navigator.push(
+      if (_isScreenActive('dokumente'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => DocumentScreen(config: widget.config),
+          '📄 Dokumente',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DocumentScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
-      _buildMenuTile(
-        context,
-        '📸 Fotogalerie',
-        () => Navigator.push(
+      if (_isScreenActive('galerie'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => GalleryScreen(config: widget.config),
+          '📸 Fotogalerie',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GalleryScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
-
-      _buildMenuTile(
-        context,
-        '✂️ Schere Stein Papier',
-        () => Navigator.push(
+      if (_isScreenActive('schere_stein_papier'))
+        _buildMenuTile(
           context,
-          MaterialPageRoute(
-            builder: (_) => SchereSteinPapierScreen(config: widget.config),
+          '✂️ Schere Stein Papier',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SchereSteinPapierScreen(config: widget.config),
+            ),
           ),
         ),
-      ),
       if (member.isAdmin)
         _buildMenuTile(
           context,
@@ -218,6 +233,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => MitgliederScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (member.isAdmin || member.isSuperAdmin)
+        _buildMenuTile(
+          context,
+          '🏛️ Verein',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => VereinScreen(config: widget.config),
             ),
           ),
         ),
