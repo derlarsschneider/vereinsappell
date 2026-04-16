@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
 import '../api/customers_api.dart';
+import '../config_loader.dart';
 import 'default_screen.dart';
 
 const _allScreens = [
@@ -218,6 +219,21 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                     _allClubs.add(created);
                   });
                   _applyClub(created);
+
+                  // Auto-add the new club as a local account
+                  final newMemberId = created['member_id'] as String? ?? '';
+                  final newApiBaseUrl =
+                      created['api_base_url'] as String? ?? widget.config.apiBaseUrl;
+                  final newAppId = created['application_id'] as String?;
+                  if (newMemberId.isNotEmpty && newAppId != null && newAppId.isNotEmpty) {
+                    await addOrActivateAccount(AppConfig(
+                      apiBaseUrl: newApiBaseUrl,
+                      applicationId: newAppId,
+                      memberId: newMemberId,
+                      label: name,
+                    ));
+                  }
+
                   showInfo('Verein erstellt');
                 } catch (e) {
                   showError('Fehler: $e');
