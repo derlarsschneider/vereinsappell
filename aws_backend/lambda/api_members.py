@@ -83,6 +83,7 @@ def get_member(member_id, all_details):
             'name': item['name'],
             'isAdmin': item.get('isAdmin', False),
             'isSpiess': item.get('isSpiess', False),
+            'isSuperAdmin': item.get('isSuperAdmin', False),
             'token': item.get('token', ''),
         }
 
@@ -115,6 +116,7 @@ def add_member(body):
     data_name = data['name']
     data_is_admin = data.get('isAdmin', False)
     data_is_spiess = data.get('isSpiess', False)
+    data_is_super_admin = data.get('isSuperAdmin', False)
     data_token = data.get('token', '')
     data_street = data.get('street', '')
     data_house_number = data.get('houseNumber', '')
@@ -129,6 +131,7 @@ def add_member(body):
         'name': data_name,
         'isAdmin': data_is_admin,
         'isSpiess': data_is_spiess,
+        'isSuperAdmin': data_is_super_admin,
         'isActive': data_is_active,
         'token': data_token,
         'street': data_street,

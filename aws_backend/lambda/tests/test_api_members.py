@@ -151,5 +151,56 @@ class TestDeleteMember(unittest.TestCase):
         self.assertEqual(response['statusCode'], 403)
 
 
+class TestSuperAdmin(unittest.TestCase):
+    def setUp(self):
+        self.mock_table = MagicMock()
+        api_members.members_table = self.mock_table
+
+        self.super_admin = {
+            'memberId': 'super1',
+            'name': 'Super Admin',
+            'isAdmin': True,
+            'isSpiess': False,
+            'isSuperAdmin': True,
+            'token': '',
+        }
+
+        def get_item_side_effect(Key):
+            data = {'super1': self.super_admin}
+            item = data.get(Key.get('memberId'))
+            return {'Item': item} if item else {}
+
+        self.mock_table.get_item.side_effect = get_item_side_effect
+
+    def test_get_member_includes_is_super_admin(self):
+        event = {
+            'requestContext': {'http': {'method': 'GET', 'path': '/members/super1'}},
+            'headers': {'memberid': 'super1'},
+            'pathParameters': {'memberId': 'super1'},
+        }
+        response = api_members.handle_members(event, {})
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertIn('isSuperAdmin', body)
+        self.assertTrue(body['isSuperAdmin'])
+
+    def test_add_member_stores_is_super_admin(self):
+        self.mock_table.put_item.return_value = {}
+        event = {
+            'requestContext': {'http': {'method': 'POST', 'path': '/members'}},
+            'headers': {'memberid': 'super1'},
+            'pathParameters': {},
+            'body': json.dumps({
+                'memberId': 'newsuper',
+                'name': 'New Super',
+                'isSuperAdmin': True,
+            }),
+        }
+        response = api_members.handle_members(event, {})
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertTrue(body['isSuperAdmin'])
+
+
 if __name__ == '__main__':
     unittest.main()
