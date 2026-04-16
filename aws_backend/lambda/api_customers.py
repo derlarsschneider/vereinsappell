@@ -62,6 +62,7 @@ def create_customer(event):
     api_url = body.get('api_url') or API_BASE_URL
     application_logo = body.get('application_logo', '')
     active_screens = body.get('active_screens', ALL_SCREEN_KEYS)
+    requesting_member_id = event.get('headers', {}).get('memberid', '')
 
     item = {
         'application_id': application_id,
@@ -74,7 +75,11 @@ def create_customer(event):
 
     return {
         'statusCode': 200,
-        'body': json.dumps(item)
+        'body': json.dumps({
+            **item,
+            'member_id': requesting_member_id,
+            'api_base_url': API_BASE_URL,
+        })
     }
 
 

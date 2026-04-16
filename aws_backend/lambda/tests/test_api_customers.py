@@ -119,3 +119,28 @@ class TestCreateCustomer(unittest.TestCase):
             response = api_customers.create_customer(event)
         item = json.loads(response['body'])
         self.assertEqual(item['api_url'], 'https://api.example.com')
+
+    def test_create_customer_response_includes_member_id(self):
+        event = _event('POST', '/customers', body={'application_name': 'New Club'})
+        event['headers'] = {'memberid': 'super123'}
+        response = api_customers.create_customer(event)
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertEqual(body['member_id'], 'super123')
+
+    def test_create_customer_response_includes_api_base_url(self):
+        with patch.object(api_customers, 'API_BASE_URL', 'https://api.example.com'):
+            event = _event('POST', '/customers', body={'application_name': 'New Club'})
+            event['headers'] = {}
+            response = api_customers.create_customer(event)
+        body = json.loads(response['body'])
+        self.assertEqual(body['api_base_url'], 'https://api.example.com')
+
+    def test_create_customer_response_member_id_empty_when_no_header(self):
+        event = _event('POST', '/customers', body={'application_name': 'New Club'})
+        # no 'headers' key — must not crash
+        event.pop('headers', None)
+        response = api_customers.create_customer(event)
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertEqual(body['member_id'], '')
