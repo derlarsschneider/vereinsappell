@@ -34,7 +34,7 @@ def update_customer(event):
 
     update_expr = 'SET application_name = :name, active_screens = :screens'
     expr_values = {
-        ':name': body['application_name'],
+        ':name': body.get('application_name', ''),
         ':screens': body.get('active_screens', ALL_SCREEN_KEYS),
     }
     logo = body.get('application_logo', '')

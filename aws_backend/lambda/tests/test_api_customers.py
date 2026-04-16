@@ -2,7 +2,7 @@ import json
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 sys.modules.setdefault('boto3', MagicMock())
 
@@ -108,7 +108,7 @@ class TestCreateCustomer(unittest.TestCase):
         )
         response = api_customers.create_customer(event)
         item = json.loads(response['body'])
-        self.assertEqual(len(item['active_screens']), 6)
+        self.assertEqual(len(item['active_screens']), len(api_customers.ALL_SCREEN_KEYS))
 
     def test_create_customer_conflict(self):
         self.mock_table.get_item.return_value = {'Item': {'application_id': 'existing'}}
@@ -122,12 +122,11 @@ class TestCreateCustomer(unittest.TestCase):
 
     def test_create_customer_uses_api_base_url_default(self):
         self.mock_table.get_item.return_value = {}
-        os.environ['API_BASE_URL'] = 'https://api.example.com'
-        api_customers.API_BASE_URL = 'https://api.example.com'
-        event = _event(
-            'POST', '/customers',
-            body={'application_id': 'newclub', 'application_name': 'New Club'},
-        )
-        response = api_customers.create_customer(event)
+        with patch.object(api_customers, 'API_BASE_URL', 'https://api.example.com'):
+            event = _event(
+                'POST', '/customers',
+                body={'application_id': 'newclub', 'application_name': 'New Club'},
+            )
+            response = api_customers.create_customer(event)
         item = json.loads(response['body'])
         self.assertEqual(item['api_url'], 'https://api.example.com')
