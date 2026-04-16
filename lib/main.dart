@@ -64,13 +64,14 @@ void main() async {
     String? password = passwordGetParam ?? config?.sessionPassword;
 
     if (apiBaseUrl != null && applicationId != null && memberId != null) {
-      config = AppConfig(
+      final incoming = AppConfig(
         apiBaseUrl: apiBaseUrl,
         applicationId: applicationId,
         memberId: memberId,
         sessionPassword: password,
       );
-      saveConfig(config);
+      await addOrActivateAccount(incoming);
+      config = await loadConfig();
     }
   }
 
