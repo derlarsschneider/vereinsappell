@@ -1,5 +1,6 @@
 // lib/screens/verein_screen.dart
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -83,6 +84,22 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
           ? List<String>.from(screens)
           : _allScreens.map((s) => s['key']!).toList();
     });
+  }
+
+  Uint8List? _decodeBase64Safe(String raw) {
+    final dataUrlMatch = RegExp(r'^data:[^;]+;base64,').firstMatch(raw);
+    if (dataUrlMatch != null) raw = raw.substring(dataUrlMatch.end);
+    raw = raw.replaceAll(RegExp(r'\s'), '');
+    // remainder==1 is never valid base64 — drop the spurious trailing character
+    if (raw.length % 4 == 1) raw = raw.substring(0, raw.length - 1);
+    final remainder = raw.length % 4;
+    if (remainder != 0) raw += '=' * (4 - remainder);
+
+    try {
+      return base64Decode(raw);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _pickLogo() async {
@@ -262,11 +279,12 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   Row(
                     children: [
                       if (_logoBase64.isNotEmpty) ...[
-                        Image.memory(
-                          base64Decode(_logoBase64),
-                          height: 48,
-                          errorBuilder: (ctx2, e, stack) => const SizedBox(),
-                        ),
+                        if (_decodeBase64Safe(_logoBase64) case final bytes?)
+                          Image.memory(
+                            bytes,
+                            height: 48,
+                            errorBuilder: (ctx2, e, stack) => const SizedBox(),
+                          ),
                         const SizedBox(width: 8),
                       ],
                       TextButton.icon(

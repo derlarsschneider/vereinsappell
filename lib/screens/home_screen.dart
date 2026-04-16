@@ -94,11 +94,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   }
 
   Uint8List _decodeBase64(String base64String) {
-    // Padding korrigieren, falls notwendig
-    int remainder = base64String.length % 4;
-    if (remainder != 0) {
-      base64String += '=' * (4 - remainder);
-    }
+    final dataUrlMatch = RegExp(r'^data:[^;]+;base64,').firstMatch(base64String);
+    if (dataUrlMatch != null) base64String = base64String.substring(dataUrlMatch.end);
+    base64String = base64String.replaceAll(RegExp(r'\s'), '');
+    if (base64String.length % 4 == 1) base64String = base64String.substring(0, base64String.length - 1);
+    final remainder = base64String.length % 4;
+    if (remainder != 0) base64String += '=' * (4 - remainder);
     return base64Decode(base64String);
   }
 
