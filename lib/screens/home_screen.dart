@@ -41,11 +41,15 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationLogoBase64 = "";
   List<String>? _activeScreens; // null = show all (backwards compatible)
   StreamSubscription? _messageSubscription;
+  List<AppConfig> _allAccounts = [];
+  int _activeAccountIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _updateApplication();
+    _allAccounts = loadAllAccounts();
+    _activeAccountIndex = getActiveAccountIndex();
 
     try {
       if (kIsWeb) {
@@ -73,6 +77,56 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     super.dispose();
   }
 
+  void _loadAccounts() {
+    setState(() {
+      _allAccounts = loadAllAccounts();
+      _activeAccountIndex = getActiveAccountIndex();
+    });
+  }
+
+  void _showAccountSwitcher() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Verein wechseln',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ..._allAccounts.asMap().entries.map((entry) {
+            final i = entry.key;
+            final account = entry.value;
+            final displayLabel =
+                account.label.isNotEmpty ? account.label : account.applicationId;
+            return ListTile(
+              title: Text(displayLabel),
+              trailing: i == _activeAccountIndex
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : null,
+              onTap: () {
+                Navigator.pop(ctx);
+                if (i == _activeAccountIndex) return;
+                setActiveAccount(i);
+                if (kIsWeb) {
+                  _jsHardReload();
+                } else {
+                  if (!mounted) return;
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                }
+              },
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
   void _updateApplication() {
     CustomersApi customersApi = CustomersApi(widget.config);
     customersApi.getCustomer(widget.config.applicationId).then((customer) {
@@ -83,6 +137,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           _activeScreens = List<String>.from(screens);
         }
       });
+      updateActiveAccountLabel(customer['application_name'] as String? ?? '');
     }).catchError((error) {
       showError("Fehler beim Laden des Vereins: $error");
     });
@@ -110,15 +165,29 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _applicationName,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-          softWrap: true,
-        ),
+        title: _allAccounts.length > 1
+            ? TextButton(
+                onPressed: _showAccountSwitcher,
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                child: Text(
+                  _applicationName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  softWrap: true,
+                ),
+              )
+            : Text(
+                _applicationName,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                softWrap: true,
+              ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
