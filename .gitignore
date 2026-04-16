@@ -72,3 +72,4 @@ test.json
 *.backup
 /.claude/.nfs*
 /aws_backend/sample_data/marschbefehl*.json
+/.claude/TODOS.md

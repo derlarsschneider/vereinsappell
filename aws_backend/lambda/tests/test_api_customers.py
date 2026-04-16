@@ -133,6 +133,7 @@ class TestCreateCustomer(unittest.TestCase):
             event = _event('POST', '/customers', body={'application_name': 'New Club'})
             event['headers'] = {}
             response = api_customers.create_customer(event)
+        self.assertEqual(response['statusCode'], 200)
         body = json.loads(response['body'])
         self.assertEqual(body['api_base_url'], 'https://api.example.com')
 
