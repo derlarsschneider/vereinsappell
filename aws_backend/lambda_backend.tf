@@ -13,6 +13,7 @@ resource "aws_lambda_function" "lambda_backend" {
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name,
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name,
             S3_BUCKET_NAME = aws_s3_bucket.s3_bucket.bucket,
+            API_BASE_URL             = aws_apigatewayv2_api.http_api.api_endpoint,
         }
     }
 }
@@ -49,7 +50,7 @@ resource "aws_apigatewayv2_api" "http_api" {
             ],
             var.extra_cors_origins
         )
-        allow_methods     = ["GET", "POST", "DELETE", "OPTIONS"]
+        allow_methods     = ["GET", "POST", "DELETE", "OPTIONS", "PUT"]
         allow_headers     = ["content-type", "applicationId", "memberId", "password"]
         allow_credentials = false
         max_age           = 3600

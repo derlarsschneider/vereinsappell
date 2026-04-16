@@ -16,3 +16,27 @@ resource "aws_apigatewayv2_route" "customer_get" {
     authorization_type = "CUSTOM"
     authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
 }
+
+resource "aws_apigatewayv2_route" "customer_list" {
+    api_id             = aws_apigatewayv2_api.http_api.id
+    route_key          = "GET /customers"
+    target             = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+    authorization_type = "CUSTOM"
+    authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
+}
+
+resource "aws_apigatewayv2_route" "customer_post" {
+    api_id             = aws_apigatewayv2_api.http_api.id
+    route_key          = "POST /customers"
+    target             = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+    authorization_type = "CUSTOM"
+    authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
+}
+
+resource "aws_apigatewayv2_route" "customer_put" {
+    api_id             = aws_apigatewayv2_api.http_api.id
+    route_key          = "PUT /customers/{customerId}"
+    target             = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+    authorization_type = "CUSTOM"
+    authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
+}
