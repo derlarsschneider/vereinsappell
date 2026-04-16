@@ -71,6 +71,15 @@ def lambda_handler(event, context):
             return {**headers, **add_docs(event)}
         elif method == 'DELETE' and path.startswith('/docs'):
             return {**headers, **delete_doc(event)}
+        elif method == 'GET' and path == '/customers':
+            import api_customers
+            return {**headers, **api_customers.list_customers()}
+        elif method == 'POST' and path == '/customers':
+            import api_customers
+            return {**headers, **api_customers.create_customer(event)}
+        elif method == 'PUT' and path.startswith('/customers/'):
+            import api_customers
+            return {**headers, **api_customers.update_customer(event)}
         elif method == 'GET' and path.startswith('/customers/'):
             import api_customers
             return {**headers, **api_customers.get_customer_by_id(event, context)}
