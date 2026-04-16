@@ -139,4 +139,69 @@ void main() {
       });
     });
   });
+
+  group('AppConfig label', () {
+    test('fromJson reads label field', () async {
+      await withStubHttp(() async {
+        final config = AppConfig.fromJson({
+          'apiBaseUrl': 'https://api.example.com',
+          'applicationId': 'app-1',
+          'memberId': 'mem-1',
+          'label': 'Schützenlust',
+        });
+        expect(config.label, 'Schützenlust');
+      });
+    });
+
+    test('fromJson defaults label to empty string when absent', () async {
+      await withStubHttp(() async {
+        final config = AppConfig.fromJson({
+          'apiBaseUrl': 'https://api.example.com',
+          'applicationId': 'app-1',
+          'memberId': 'mem-1',
+        });
+        expect(config.label, '');
+      });
+    });
+
+    test('toJson includes label', () async {
+      await withStubHttp(() async {
+        final config = AppConfig(
+          apiBaseUrl: 'https://api.example.com',
+          applicationId: 'app-1',
+          memberId: 'mem-1',
+          label: 'Schützenlust',
+        );
+        expect(config.toJson()['label'], 'Schützenlust');
+      });
+    });
+  });
+
+  group('accountIndexOf', () {
+    test('returns index of matching account', () async {
+      await withStubHttp(() async {
+        final accounts = [
+          {'applicationId': 'app-1', 'memberId': 'mem-1'},
+          {'applicationId': 'app-2', 'memberId': 'mem-1'},
+        ];
+        expect(accountIndexOf(accounts, 'app-2', 'mem-1'), 1);
+      });
+    });
+
+    test('returns -1 when applicationId matches but memberId differs', () async {
+      await withStubHttp(() async {
+        final accounts = [
+          {'applicationId': 'app-1', 'memberId': 'mem-1'},
+        ];
+        expect(accountIndexOf(accounts, 'app-1', 'mem-999'), -1);
+      });
+    });
+
+    test('returns -1 when no match', () async {
+      await withStubHttp(() async {
+        final accounts = <Map<String, dynamic>>[];
+        expect(accountIndexOf(accounts, 'app-x', 'mem-x'), -1);
+      });
+    });
+  });
 }

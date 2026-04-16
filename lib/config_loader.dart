@@ -5,7 +5,6 @@ import 'dart:io' as io;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-// Mobile/Desktop-Support
 import 'package:path_provider/path_provider.dart';
 
 import 'api/headers.dart';
@@ -15,6 +14,7 @@ class AppConfig {
   final String apiBaseUrl;
   final String applicationId;
   final String memberId;
+  final String label;
   late final Member member;
   String? sessionPassword;
 
@@ -22,6 +22,7 @@ class AppConfig {
     required this.apiBaseUrl,
     required this.applicationId,
     required this.memberId,
+    this.label = '',
     this.sessionPassword,
   }) {
     member = Member(config: this);
@@ -29,10 +30,11 @@ class AppConfig {
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
     return AppConfig(
-      apiBaseUrl: json['apiBaseUrl'],
-      applicationId: json['applicationId'],
-      memberId: json['memberId'],
-      sessionPassword: json['password'],
+      apiBaseUrl: json['apiBaseUrl'] as String,
+      applicationId: json['applicationId'] as String,
+      memberId: json['memberId'] as String,
+      label: (json['label'] as String?) ?? '',
+      sessionPassword: json['password'] as String?,
     );
   }
 
@@ -41,26 +43,64 @@ class AppConfig {
       'apiBaseUrl': apiBaseUrl,
       'applicationId': applicationId,
       'memberId': memberId,
+      'label': label,
       if (sessionPassword != null) 'password': sessionPassword,
     };
   }
 }
 
-// ✅ Konfiguration laden
+/// Pure helper — finds the index of an account in a raw JSON list by
+/// applicationId + memberId. Exported so it can be unit-tested without storage.
+int accountIndexOf(
+  List<Map<String, dynamic>> accounts,
+  String applicationId,
+  String memberId,
+) {
+  return accounts.indexWhere(
+    (a) => a['applicationId'] == applicationId && a['memberId'] == memberId,
+  );
+}
+
+// ── Storage helpers ──────────────────────────────────────────────────────────
+
+List<Map<String, dynamic>> _readAccountsJson() {
+  final raw = getItem('accounts');
+  if (raw == null) return [];
+  try {
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+  } catch (_) {
+    return [];
+  }
+}
+
+void _writeAccountsJson(List<Map<String, dynamic>> accounts) {
+  setItem('accounts', jsonEncode(accounts));
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
+
 Future<AppConfig?> loadConfig() async {
   try {
     if (kIsWeb) {
-      final jsonStr = getItem('config');
-      if (jsonStr == null) return null;
-      final jsonData = jsonDecode(jsonStr);
-      return AppConfig.fromJson(jsonData);
+      // Migration: move old single 'config' key → accounts array
+      final oldJson = getItem('config');
+      if (oldJson != null && getItem('accounts') == null) {
+        final old = AppConfig.fromJson(jsonDecode(oldJson) as Map<String, dynamic>);
+        _writeAccountsJson([old.toJson()]);
+        setItem('activeAccount', '0');
+        removeItem('config');
+      }
+
+      final accounts = _readAccountsJson();
+      if (accounts.isEmpty) return null;
+      final idx = (int.tryParse(getItem('activeAccount') ?? '0') ?? 0)
+          .clamp(0, accounts.length - 1);
+      return AppConfig.fromJson(accounts[idx]);
     } else {
       final dir = await getApplicationDocumentsDirectory();
       final file = io.File('${dir.path}/config.json');
       if (!await file.exists()) return null;
-      final contents = await file.readAsString();
-      final jsonData = jsonDecode(contents);
-      return AppConfig.fromJson(jsonData);
+      return AppConfig.fromJson(jsonDecode(await file.readAsString()) as Map<String, dynamic>);
     }
   } catch (e) {
     print('Fehler beim Laden der Konfiguration: $e');
@@ -68,16 +108,24 @@ Future<AppConfig?> loadConfig() async {
   }
 }
 
-// ✅ Konfiguration speichern
 Future<void> saveConfig(AppConfig config) async {
-  final jsonStr = jsonEncode(config.toJson());
   try {
     if (kIsWeb) {
-      setItem('config', jsonStr);
+      final accounts = _readAccountsJson();
+      final idx = (int.tryParse(getItem('activeAccount') ?? '0') ?? 0)
+          .clamp(0, accounts.isEmpty ? 0 : accounts.length - 1);
+      if (idx < accounts.length) {
+        accounts[idx] = config.toJson();
+        setItem('activeAccount', '$idx');
+      } else {
+        accounts.add(config.toJson());
+        setItem('activeAccount', '${accounts.length - 1}');
+      }
+      _writeAccountsJson(accounts);
     } else {
       final dir = await getApplicationDocumentsDirectory();
       final file = io.File('${dir.path}/config.json');
-      await file.writeAsString(jsonStr);
+      await file.writeAsString(jsonEncode(config.toJson()));
     }
   } catch (e) {
     print('Fehler beim Speichern der Konfiguration: $e');
@@ -85,20 +133,66 @@ Future<void> saveConfig(AppConfig config) async {
   }
 }
 
-// ✅ Konfiguration löschen
 Future<void> deleteConfig() async {
   try {
     if (kIsWeb) {
+      removeItem('accounts');
+      removeItem('activeAccount');
       removeItem('config');
     } else {
       final dir = await getApplicationDocumentsDirectory();
       final file = io.File('${dir.path}/config.json');
-      if (await file.exists()) {
-        await file.delete();
-      }
+      if (await file.exists()) await file.delete();
     }
   } catch (e) {
     print('Fehler beim Löschen der Konfiguration: $e');
+  }
+}
+
+List<AppConfig> loadAllAccounts() {
+  if (!kIsWeb) return [];
+  return _readAccountsJson()
+      .map((json) => AppConfig.fromJson(json))
+      .toList();
+}
+
+int getActiveAccountIndex() {
+  if (!kIsWeb) return 0;
+  final accounts = _readAccountsJson();
+  final idx = int.tryParse(getItem('activeAccount') ?? '0') ?? 0;
+  return accounts.isEmpty ? 0 : idx.clamp(0, accounts.length - 1);
+}
+
+void setActiveAccount(int index) {
+  if (!kIsWeb) return;
+  setItem('activeAccount', '$index');
+}
+
+Future<void> addOrActivateAccount(AppConfig config) async {
+  if (!kIsWeb) {
+    await saveConfig(config);
+    return;
+  }
+  final accounts = _readAccountsJson();
+  final existing = accountIndexOf(accounts, config.applicationId, config.memberId);
+  if (existing != -1) {
+    setActiveAccount(existing);
+  } else {
+    accounts.add(config.toJson());
+    _writeAccountsJson(accounts);
+    setActiveAccount(accounts.length - 1);
+  }
+}
+
+void updateActiveAccountLabel(String label) {
+  // Empty label is never stored — the club name fetch is the only source,
+  // and an empty name means the fetch hasn't completed yet.
+  if (!kIsWeb || label.isEmpty) return;
+  final accounts = _readAccountsJson();
+  final idx = getActiveAccountIndex().clamp(0, accounts.isEmpty ? 0 : accounts.length - 1);
+  if (idx < accounts.length) {
+    accounts[idx]['label'] = label;
+    _writeAccountsJson(accounts);
   }
 }
 
