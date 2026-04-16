@@ -102,25 +102,25 @@ class TestAddMember(unittest.TestCase):
 
         self.admin = {'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
         self.mock_table.get_item.return_value = {'Item': self.admin}
-        self.mock_table.put_item.return_value = {}
+        self.mock_table.update_item.return_value = {}
 
     def test_add_member_defaults_is_active_true(self):
         body = {'memberId': 'new1', 'name': 'Neues Mitglied'}
         event = _admin_event('POST', '/members', body=body)
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 200)
-        put_call = self.mock_table.put_item.call_args
-        item = put_call.kwargs['Item']
-        self.assertTrue(item['isActive'])
+        update_call = self.mock_table.update_item.call_args
+        values = update_call.kwargs['ExpressionAttributeValues']
+        self.assertTrue(values[':isActive'])
 
     def test_add_member_stores_is_active_false(self):
         body = {'memberId': 'new2', 'name': 'Inaktives Mitglied', 'isActive': False}
         event = _admin_event('POST', '/members', body=body)
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 200)
-        put_call = self.mock_table.put_item.call_args
-        item = put_call.kwargs['Item']
-        self.assertFalse(item['isActive'])
+        update_call = self.mock_table.update_item.call_args
+        values = update_call.kwargs['ExpressionAttributeValues']
+        self.assertFalse(values[':isActive'])
 
 
 class TestDeleteMember(unittest.TestCase):
@@ -184,8 +184,10 @@ class TestSuperAdmin(unittest.TestCase):
         self.assertIn('isSuperAdmin', body)
         self.assertTrue(body['isSuperAdmin'])
 
-    def test_add_member_stores_is_super_admin(self):
-        self.mock_table.put_item.return_value = {}
+    def test_add_member_does_not_overwrite_is_super_admin(self):
+        # isSuperAdmin is managed directly in DynamoDB and must never be
+        # overwritten by the regular save flow, even if the client sends it.
+        self.mock_table.update_item.return_value = {}
         event = {
             'requestContext': {'http': {'method': 'POST', 'path': '/members'}},
             'headers': {'memberid': 'super1'},
@@ -198,8 +200,9 @@ class TestSuperAdmin(unittest.TestCase):
         }
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 200)
-        body = json.loads(response['body'])
-        self.assertTrue(body['isSuperAdmin'])
+        update_call = self.mock_table.update_item.call_args
+        values = update_call.kwargs['ExpressionAttributeValues']
+        self.assertNotIn(':isSuperAdmin', values)
 
 
 if __name__ == '__main__':

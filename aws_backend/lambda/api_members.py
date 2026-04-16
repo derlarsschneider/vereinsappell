@@ -116,7 +116,6 @@ def add_member(body):
     data_name = data['name']
     data_is_admin = data.get('isAdmin', False)
     data_is_spiess = data.get('isSpiess', False)
-    data_is_super_admin = data.get('isSuperAdmin', False)
     data_token = data.get('token', '')
     data_street = data.get('street', '')
     data_house_number = data.get('houseNumber', '')
@@ -126,12 +125,40 @@ def add_member(body):
     data_phone2 = data.get('phone2', '')
     data_is_active = data.get('isActive', True)
 
+    # Use update_item instead of put_item so that fields managed outside this
+    # endpoint (e.g. isSuperAdmin set directly in DynamoDB) are never overwritten.
+    members_table.update_item(
+        Key={'memberId': data_member_id},
+        UpdateExpression=(
+            'SET #name = :name, isAdmin = :isAdmin, isSpiess = :isSpiess, '
+            'isActive = :isActive, #token = :token, street = :street, '
+            'houseNumber = :houseNumber, postalCode = :postalCode, '
+            'city = :city, phone1 = :phone1, phone2 = :phone2'
+        ),
+        ExpressionAttributeNames={
+            '#name': 'name',
+            '#token': 'token',
+        },
+        ExpressionAttributeValues={
+            ':name': data_name,
+            ':isAdmin': data_is_admin,
+            ':isSpiess': data_is_spiess,
+            ':isActive': data_is_active,
+            ':token': data_token,
+            ':street': data_street,
+            ':houseNumber': data_house_number,
+            ':postalCode': data_postal_code,
+            ':city': data_city,
+            ':phone1': data_phone1,
+            ':phone2': data_phone2,
+        },
+    )
+
     item = {
         'memberId': data_member_id,
         'name': data_name,
         'isAdmin': data_is_admin,
         'isSpiess': data_is_spiess,
-        'isSuperAdmin': data_is_super_admin,
         'isActive': data_is_active,
         'token': data_token,
         'street': data_street,
@@ -141,8 +168,6 @@ def add_member(body):
         'phone1': data_phone1,
         'phone2': data_phone2,
     }
-
-    members_table.put_item(Item=item)
 
     return {
         'statusCode': 200,

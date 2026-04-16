@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 import boto3
 
 def table():
@@ -56,19 +57,11 @@ def update_customer(event):
 
 def create_customer(event):
     body = json.loads(event['body'])
-    application_id = body['application_id']
+    application_id = str(uuid.uuid4())
     application_name = body['application_name']
     api_url = body.get('api_url') or API_BASE_URL
     application_logo = body.get('application_logo', '')
     active_screens = body.get('active_screens', ALL_SCREEN_KEYS)
-
-    t = table()
-    response = t.get_item(Key={'application_id': application_id})
-    if response.get('Item'):
-        return {
-            'statusCode': 409,
-            'body': json.dumps({'error': 'Verein existiert bereits'})
-        }
 
     item = {
         'application_id': application_id,
@@ -77,7 +70,7 @@ def create_customer(event):
         'application_logo': application_logo,
         'active_screens': active_screens,
     }
-    t.put_item(Item=item)
+    table().put_item(Item=item)
 
     return {
         'statusCode': 200,

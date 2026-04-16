@@ -89,43 +89,32 @@ class TestCreateCustomer(unittest.TestCase):
         api_customers.table = MagicMock(return_value=self.mock_table)
 
     def test_create_customer_success(self):
-        self.mock_table.get_item.return_value = {}
         event = _event(
             'POST', '/customers',
-            body={'application_id': 'newclub', 'application_name': 'New Club'},
+            body={'application_name': 'New Club'},
         )
         response = api_customers.create_customer(event)
         self.assertEqual(response['statusCode'], 200)
         self.mock_table.put_item.assert_called_once()
         item = json.loads(response['body'])
-        self.assertEqual(item['application_id'], 'newclub')
+        # application_id is a server-generated UUID
+        self.assertIn('application_id', item)
+        self.assertEqual(len(item['application_id']), 36)  # UUID format
 
     def test_create_customer_defaults_active_screens(self):
-        self.mock_table.get_item.return_value = {}
         event = _event(
             'POST', '/customers',
-            body={'application_id': 'newclub', 'application_name': 'New Club'},
+            body={'application_name': 'New Club'},
         )
         response = api_customers.create_customer(event)
         item = json.loads(response['body'])
         self.assertEqual(len(item['active_screens']), len(api_customers.ALL_SCREEN_KEYS))
 
-    def test_create_customer_conflict(self):
-        self.mock_table.get_item.return_value = {'Item': {'application_id': 'existing'}}
-        event = _event(
-            'POST', '/customers',
-            body={'application_id': 'existing', 'application_name': 'Existing'},
-        )
-        response = api_customers.create_customer(event)
-        self.assertEqual(response['statusCode'], 409)
-        self.mock_table.put_item.assert_not_called()
-
     def test_create_customer_uses_api_base_url_default(self):
-        self.mock_table.get_item.return_value = {}
         with patch.object(api_customers, 'API_BASE_URL', 'https://api.example.com'):
             event = _event(
                 'POST', '/customers',
-                body={'application_id': 'newclub', 'application_name': 'New Club'},
+                body={'application_name': 'New Club'},
             )
             response = api_customers.create_customer(event)
         item = json.loads(response['body'])

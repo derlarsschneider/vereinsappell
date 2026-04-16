@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
 import '../api/customers_api.dart';
 import 'default_screen.dart';
@@ -102,6 +103,18 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     }
   }
 
+  // Resize and JPEG-compress an image so it fits within DynamoDB's item size limit.
+  Uint8List _resizeLogo(Uint8List bytes) {
+    final src = img.decodeImage(bytes);
+    if (src == null) return bytes;
+    const maxDim = 256;
+    final larger = src.width > src.height ? src.width : src.height;
+    final image = larger > maxDim
+        ? img.copyResize(src, width: (src.width * maxDim / larger).round())
+        : src;
+    return Uint8List.fromList(img.encodeJpg(image, quality: 85));
+  }
+
   Future<void> _pickLogo() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -110,7 +123,7 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     if (result == null || result.files.isEmpty) return;
     final bytes = result.files.first.bytes;
     if (bytes == null) return;
-    setState(() => _logoBase64 = base64Encode(bytes));
+    setState(() => _logoBase64 = base64Encode(_resizeLogo(bytes)));
   }
 
   Future<void> _save() async {
@@ -132,7 +145,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   }
 
   void _showCreateDialog() {
-    final idCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
     final urlCtrl = TextEditingController();
     String dialogLogo = '';
@@ -146,11 +158,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: idCtrl,
-                  decoration:
-                      const InputDecoration(labelText: 'Application ID *'),
-                ),
                 TextField(
                   controller: nameCtrl,
                   decoration: const InputDecoration(labelText: 'Name *'),
@@ -174,8 +181,8 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                         if (result != null && result.files.isNotEmpty) {
                           final bytes = result.files.first.bytes;
                           if (bytes != null) {
-                            setDialogState(
-                                () => dialogLogo = base64Encode(bytes));
+                            setDialogState(() =>
+                                dialogLogo = base64Encode(_resizeLogo(bytes)));
                           }
                         }
                       },
@@ -194,13 +201,11 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final id = idCtrl.text.trim();
                 final name = nameCtrl.text.trim();
-                if (id.isEmpty || name.isEmpty) return;
+                if (name.isEmpty) return;
                 Navigator.pop(ctx);
                 try {
                   final payload = <String, dynamic>{
-                    'application_id': id,
                     'application_name': name,
                   };
                   final url = urlCtrl.text.trim();
