@@ -86,7 +86,9 @@ class TestUpdateCustomer(unittest.TestCase):
 class TestCreateCustomer(unittest.TestCase):
     def setUp(self):
         self.mock_table = MagicMock()
+        self.mock_members_table = MagicMock()
         api_customers.table = MagicMock(return_value=self.mock_table)
+        api_customers._members_table = MagicMock(return_value=self.mock_members_table)
 
     def test_create_customer_success(self):
         event = _event(
@@ -145,3 +147,20 @@ class TestCreateCustomer(unittest.TestCase):
         self.assertEqual(response['statusCode'], 200)
         body = json.loads(response['body'])
         self.assertEqual(body['member_id'], '')
+
+    def test_create_customer_adds_creator_as_admin_and_superadmin(self):
+        event = _event('POST', '/customers', body={'application_name': 'New Club'})
+        event['headers'] = {'memberid': 'super123'}
+        api_customers.create_customer(event)
+        self.mock_members_table.put_item.assert_called_once()
+        item = self.mock_members_table.put_item.call_args.kwargs['Item']
+        self.assertTrue(item['isAdmin'])
+        self.assertTrue(item['isSuperAdmin'])
+        self.assertTrue(item['isActive'])
+        self.assertEqual(item['memberId'], 'super123')
+
+    def test_create_customer_no_member_created_without_requester(self):
+        event = _event('POST', '/customers', body={'application_name': 'New Club'})
+        event['headers'] = {}
+        api_customers.create_customer(event)
+        self.mock_members_table.put_item.assert_not_called()

@@ -10,6 +10,11 @@ def table():
     return customers_table
 
 
+def _members_table():
+    dynamodb = boto3.resource('dynamodb')
+    return dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+
+
 ALL_SCREEN_KEYS = ['termine', 'marschbefehl', 'strafen', 'dokumente', 'galerie', 'schere_stein_papier']
 API_BASE_URL = os.environ.get('API_BASE_URL', '')
 
@@ -72,6 +77,16 @@ def create_customer(event):
         'active_screens': active_screens,
     }
     table().put_item(Item=item)
+
+    if requesting_member_id:
+        _members_table().put_item(Item={
+            'applicationId': application_id,
+            'memberId': requesting_member_id,
+            'isAdmin': True,
+            'isSuperAdmin': True,
+            'isActive': True,
+            'name': '',
+        })
 
     return {
         'statusCode': 200,
