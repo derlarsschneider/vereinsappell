@@ -168,6 +168,24 @@ void setActiveAccount(int index) {
   setItem('activeAccount', '$index');
 }
 
+void removeAccount(int index) {
+  if (!kIsWeb) return;
+  final accounts = _readAccountsJson();
+  if (index >= 0 && index < accounts.length) {
+    accounts.removeAt(index);
+    _writeAccountsJson(accounts);
+
+    final currentIdx = getActiveAccountIndex();
+    if (currentIdx == index) {
+      // If we deleted the active account, reset to first or clear
+      setActiveAccount(0);
+    } else if (currentIdx > index) {
+      // Shift active index down if we deleted something before it
+      setActiveAccount(currentIdx - 1);
+    }
+  }
+}
+
 Future<void> addOrActivateAccount(AppConfig config) async {
   if (!kIsWeb) {
     await saveConfig(config);
