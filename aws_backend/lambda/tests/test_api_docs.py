@@ -2,7 +2,7 @@ import base64
 import json
 import sys
 import unittest
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 from botocore.exceptions import ClientError
 
 sys.modules.setdefault('boto3', MagicMock())
@@ -10,11 +10,17 @@ sys.modules.setdefault('boto3', MagicMock())
 sys.path.insert(0, '.')
 import api_docs
 
+APP_ID = 'app-123'
+PREFIX = f'{APP_ID}/docs'
+
 
 def _event(method, path, headers=None, file_name=None, body=None, body_base64=False):
+    h = {'applicationid': APP_ID}
+    if headers:
+        h.update(headers)
     event = {
         'requestContext': {'http': {'method': method, 'path': path}},
-        'headers': headers or {},
+        'headers': h,
         'pathParameters': {},
     }
     if file_name:
@@ -29,7 +35,7 @@ def _event(method, path, headers=None, file_name=None, body=None, body_base64=Fa
 
 
 def _auth_event(method, path, **kwargs):
-    return _event(method, path, headers={'password': 'testpw'}, **kwargs)
+    return _event(method, path, headers={'applicationid': APP_ID, 'password': 'testpw'}, **kwargs)
 
 
 def _not_found_error():
@@ -63,24 +69,24 @@ class TestGetDocs(unittest.TestCase):
     def test_get_docs_calls_list_objects_with_prefix(self):
         self.mock_s3.list_objects_v2.return_value = {'Contents': []}
         event = _auth_event('GET', '/docs')
-        response = api_docs.get_docs(event)
+        response = api_docs.get_docs(event, PREFIX)
         self.assertEqual(response['statusCode'], 200)
         self.mock_s3.list_objects_v2.assert_called_once_with(
-            Bucket='test-bucket', Prefix='docs/'
+            Bucket='test-bucket', Prefix=f'{PREFIX}/'
         )
 
     def test_get_docs_wrong_password_returns_401_no_s3_call(self):
-        event = _event('GET', '/docs', headers={'password': 'bad'})
-        response = api_docs.get_docs(event)
+        event = _event('GET', '/docs', headers={'applicationid': APP_ID, 'password': 'bad'})
+        response = api_docs.get_docs(event, PREFIX)
         self.assertEqual(response['statusCode'], 401)
         self.mock_s3.list_objects_v2.assert_not_called()
 
     def test_get_docs_strips_prefix_from_names(self):
         self.mock_s3.list_objects_v2.return_value = {
-            'Contents': [{'Key': 'docs/Protokolle/file.pdf'}]
+            'Contents': [{'Key': f'{PREFIX}/Protokolle/file.pdf'}]
         }
         event = _auth_event('GET', '/docs')
-        response = api_docs.get_docs(event)
+        response = api_docs.get_docs(event, PREFIX)
         files = json.loads(response['body'])
         self.assertEqual(files[0]['name'], 'Protokolle/file.pdf')
 
@@ -99,10 +105,10 @@ class TestGetDoc(unittest.TestCase):
             'ContentType': 'application/pdf',
         }
         event = _auth_event('GET', '/docs/file.pdf', file_name='file.pdf')
-        response = api_docs.get_doc(event)
+        response = api_docs.get_doc(event, PREFIX)
         self.assertEqual(response['statusCode'], 200)
         self.mock_s3.get_object.assert_called_once_with(
-            Bucket='test-bucket', Key='docs/file.pdf'
+            Bucket='test-bucket', Key=f'{PREFIX}/file.pdf'
         )
 
     def test_get_doc_with_category(self):
@@ -111,10 +117,10 @@ class TestGetDoc(unittest.TestCase):
             'ContentType': 'application/pdf',
         }
         event = _auth_event('GET', '/docs/Protokolle/file.pdf', file_name='Protokolle/file.pdf')
-        response = api_docs.get_doc(event)
+        response = api_docs.get_doc(event, PREFIX)
         self.assertEqual(response['statusCode'], 200)
         self.mock_s3.get_object.assert_called_once_with(
-            Bucket='test-bucket', Key='docs/Protokolle/file.pdf'
+            Bucket='test-bucket', Key=f'{PREFIX}/Protokolle/file.pdf'
         )
 
 
@@ -132,16 +138,16 @@ class TestAddDoc(unittest.TestCase):
         file_content = base64.b64encode(b'pdf content').decode()
         body = {'name': 'test.pdf', 'file': file_content}
         event = _auth_event('POST', '/docs', body=body)
-        response = api_docs.add_doc(event)
+        response = api_docs.add_doc(event, PREFIX)
         self.assertEqual(response['statusCode'], 200)
         self.mock_s3.put_object.assert_called_once()
 
     def test_add_doc_returns_409_when_file_exists(self):
-        self.mock_s3.head_object.return_value = {}  # file exists
+        self.mock_s3.head_object.return_value = {}
         file_content = base64.b64encode(b'pdf content').decode()
         body = {'name': 'existing.pdf', 'file': file_content}
         event = _auth_event('POST', '/docs', body=body)
-        response = api_docs.add_doc(event)
+        response = api_docs.add_doc(event, PREFIX)
         self.assertEqual(response['statusCode'], 409)
         self.mock_s3.put_object.assert_not_called()
 
@@ -156,10 +162,10 @@ class TestDeleteDoc(unittest.TestCase):
     def test_delete_doc_calls_delete_object_with_correct_key(self):
         self.mock_s3.delete_object.return_value = {}
         event = _auth_event('DELETE', '/docs/file.pdf', file_name='file.pdf')
-        response = api_docs.delete_doc(event)
+        response = api_docs.delete_doc(event, PREFIX)
         self.assertEqual(response['statusCode'], 200)
         self.mock_s3.delete_object.assert_called_once_with(
-            Bucket='test-bucket', Key='docs/file.pdf'
+            Bucket='test-bucket', Key=f'{PREFIX}/file.pdf'
         )
 
 

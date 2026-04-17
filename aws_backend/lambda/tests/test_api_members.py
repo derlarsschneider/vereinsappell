@@ -9,11 +9,16 @@ sys.modules.setdefault('boto3', MagicMock())
 sys.path.insert(0, '.')
 import api_members
 
+APP_ID = 'app-123'
+
 
 def _event(method, path, headers=None, member_id=None, body=None):
+    h = {'applicationid': APP_ID}
+    if headers:
+        h.update(headers)
     event = {
         'requestContext': {'http': {'method': method, 'path': path}},
-        'headers': headers or {},
+        'headers': h,
         'pathParameters': {},
     }
     if member_id:
@@ -24,7 +29,7 @@ def _event(method, path, headers=None, member_id=None, body=None):
 
 
 def _admin_event(method, path, **kwargs):
-    return _event(method, path, headers={'memberid': 'admin1'}, **kwargs)
+    return _event(method, path, headers={'applicationid': APP_ID, 'memberid': 'admin1'}, **kwargs)
 
 
 class TestListMembers(unittest.TestCase):
@@ -32,8 +37,8 @@ class TestListMembers(unittest.TestCase):
         self.mock_table = MagicMock()
         api_members.members_table = self.mock_table
 
-        self.admin = {'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
-        self.member = {'memberId': 'user1', 'isAdmin': False, 'isSpiess': False}
+        self.admin = {'applicationId': APP_ID, 'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
+        self.member = {'applicationId': APP_ID, 'memberId': 'user1', 'isAdmin': False, 'isSpiess': False}
 
         def get_item_side_effect(Key):
             data = {'admin1': self.admin, 'user1': self.member}
@@ -41,7 +46,7 @@ class TestListMembers(unittest.TestCase):
             return {'Item': item} if item else {}
 
         self.mock_table.get_item.side_effect = get_item_side_effect
-        self.mock_table.scan.return_value = {'Items': [self.admin, self.member]}
+        self.mock_table.query.return_value = {'Items': [self.admin, self.member]}
 
     def test_list_members_as_admin(self):
         event = _admin_event('GET', '/members')
@@ -51,7 +56,7 @@ class TestListMembers(unittest.TestCase):
         self.assertEqual(len(items), 2)
 
     def test_list_members_as_non_admin(self):
-        event = _event('GET', '/members', headers={'memberid': 'user1'})
+        event = _event('GET', '/members', headers={'applicationid': APP_ID, 'memberid': 'user1'})
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 403)
 
@@ -61,8 +66,9 @@ class TestGetMember(unittest.TestCase):
         self.mock_table = MagicMock()
         api_members.members_table = self.mock_table
 
-        self.admin = {'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
+        self.admin = {'applicationId': APP_ID, 'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
         self.full_member = {
+            'applicationId': APP_ID,
             'memberId': 'user1',
             'name': 'Max Mustermann',
             'isAdmin': False,
@@ -100,7 +106,7 @@ class TestAddMember(unittest.TestCase):
         self.mock_table = MagicMock()
         api_members.members_table = self.mock_table
 
-        self.admin = {'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
+        self.admin = {'applicationId': APP_ID, 'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
         self.mock_table.get_item.return_value = {'Item': self.admin}
         self.mock_table.update_item.return_value = {}
 
@@ -122,14 +128,23 @@ class TestAddMember(unittest.TestCase):
         values = update_call.kwargs['ExpressionAttributeValues']
         self.assertFalse(values[':isActive'])
 
+    def test_add_member_key_includes_application_id(self):
+        body = {'memberId': 'new3', 'name': 'Test'}
+        event = _admin_event('POST', '/members', body=body)
+        api_members.handle_members(event, {})
+        update_call = self.mock_table.update_item.call_args
+        key = update_call.kwargs['Key']
+        self.assertEqual(key['applicationId'], APP_ID)
+        self.assertEqual(key['memberId'], 'new3')
+
 
 class TestDeleteMember(unittest.TestCase):
     def setUp(self):
         self.mock_table = MagicMock()
         api_members.members_table = self.mock_table
 
-        self.admin = {'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
-        self.user = {'memberId': 'user1', 'isAdmin': False, 'isSpiess': False}
+        self.admin = {'applicationId': APP_ID, 'memberId': 'admin1', 'isAdmin': True, 'isSpiess': False}
+        self.user = {'applicationId': APP_ID, 'memberId': 'user1', 'isAdmin': False, 'isSpiess': False}
 
         def get_item_side_effect(Key):
             data = {'admin1': self.admin, 'user1': self.user}
@@ -139,14 +154,17 @@ class TestDeleteMember(unittest.TestCase):
         self.mock_table.get_item.side_effect = get_item_side_effect
         self.mock_table.delete_item.return_value = {}
 
-    def test_delete_member_calls_delete_item(self):
+    def test_delete_member_key_includes_application_id(self):
         event = _admin_event('DELETE', '/members/user1', member_id='user1')
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 200)
-        self.mock_table.delete_item.assert_called_once_with(Key={'memberId': 'user1'})
+        key = self.mock_table.delete_item.call_args.kwargs['Key']
+        self.assertEqual(key['applicationId'], APP_ID)
+        self.assertEqual(key['memberId'], 'user1')
 
     def test_delete_member_as_non_admin(self):
-        event = _event('DELETE', '/members/user1', headers={'memberid': 'user1'}, member_id='user1')
+        event = _event('DELETE', '/members/user1',
+                       headers={'applicationid': APP_ID, 'memberid': 'user1'}, member_id='user1')
         response = api_members.handle_members(event, {})
         self.assertEqual(response['statusCode'], 403)
 
@@ -157,6 +175,7 @@ class TestSuperAdmin(unittest.TestCase):
         api_members.members_table = self.mock_table
 
         self.super_admin = {
+            'applicationId': APP_ID,
             'memberId': 'super1',
             'name': 'Super Admin',
             'isAdmin': True,
@@ -175,7 +194,7 @@ class TestSuperAdmin(unittest.TestCase):
     def test_get_member_includes_is_super_admin(self):
         event = {
             'requestContext': {'http': {'method': 'GET', 'path': '/members/super1'}},
-            'headers': {'memberid': 'super1'},
+            'headers': {'applicationid': APP_ID, 'memberid': 'super1'},
             'pathParameters': {'memberId': 'super1'},
         }
         response = api_members.handle_members(event, {})
@@ -185,12 +204,10 @@ class TestSuperAdmin(unittest.TestCase):
         self.assertTrue(body['isSuperAdmin'])
 
     def test_add_member_does_not_overwrite_is_super_admin(self):
-        # isSuperAdmin is managed directly in DynamoDB and must never be
-        # overwritten by the regular save flow, even if the client sends it.
         self.mock_table.update_item.return_value = {}
         event = {
             'requestContext': {'http': {'method': 'POST', 'path': '/members'}},
-            'headers': {'memberid': 'super1'},
+            'headers': {'applicationid': APP_ID, 'memberid': 'super1'},
             'pathParameters': {},
             'body': json.dumps({
                 'memberId': 'newsuper',
