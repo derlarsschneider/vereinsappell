@@ -211,6 +211,7 @@ class Member extends ChangeNotifier {
   bool _isSpiess = false;
   bool _isAdmin = false;
   bool _isSuperAdmin = false;
+  bool _isActive = true;
   String _token = '';
 
   String _street = '';
@@ -232,6 +233,7 @@ class Member extends ChangeNotifier {
   bool get isSpiess => _isSpiess;
   bool get isAdmin => _isAdmin;
   bool get isSuperAdmin => _isSuperAdmin;
+  bool get isActive => _isActive;
   String get token => _token;
 
   String get street => _street;
@@ -249,6 +251,7 @@ class Member extends ChangeNotifier {
   set isSpiess(bool value) => _isSpiess = value;
   set isAdmin(bool value) => _isAdmin = value;
   set isSuperAdmin(bool value) => _isSuperAdmin = value;
+  set isActive(bool value) => _isActive = value;
   set token(String value) => _token = value;
 
   set street(String value) => _street = value;
@@ -330,6 +333,7 @@ class Member extends ChangeNotifier {
     _isSpiess = member?['isSpiess'] ?? false;
     _isAdmin = member?['isAdmin'] ?? false;
     _isSuperAdmin = member?['isSuperAdmin'] ?? false;
+    _isActive = member?['isActive'] ?? true;
     _token = member?['token'] ?? '';
 
     _street = member?['street'] ?? '';

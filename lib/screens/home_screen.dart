@@ -163,6 +163,10 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   Widget build(BuildContext context) {
     final member = Provider.of<Member>(context);
 
+    if (!member.isActive && !member.isSuperAdmin) {
+      return _buildDeactivatedScreen();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: _allAccounts.length > 1
@@ -355,6 +359,28 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       ),
     );
   }
+
+  Widget _buildDeactivatedScreen() => Scaffold(
+        appBar: AppBar(title: const Text('Vereins Appell')),
+        body: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Dein Konto wurde deaktiviert.',
+                style: TextStyle(fontSize: 18),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Bitte wende dich an den Administrator.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _buildDebugButtons(BuildContext context) {
     return Padding(

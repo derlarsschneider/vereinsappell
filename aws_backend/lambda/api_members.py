@@ -80,6 +80,7 @@ def get_member(application_id, member_id, all_details):
         'isAdmin': item.get('isAdmin', False),
         'isSpiess': item.get('isSpiess', False),
         'isSuperAdmin': item.get('isSuperAdmin', False),
+        'isActive': item.get('isActive', True),
         'token': item.get('token', ''),
     }
     return {'statusCode': 200, 'body': json.dumps(result)}

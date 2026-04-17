@@ -94,6 +94,7 @@ class TestGetMember(unittest.TestCase):
         self.assertNotIn('phone1', body)
         self.assertIn('memberId', body)
         self.assertIn('name', body)
+        self.assertIn('isActive', body)
 
     def test_get_member_not_found(self):
         event = _admin_event('GET', '/members/unknown', member_id='unknown')
