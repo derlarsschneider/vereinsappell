@@ -9,9 +9,11 @@ applicationId assignment strategy:
   - fines:        memberId attribute on each fine uses the same prefix rule
   - marschbefehl: no member link; assigned to the single club if unambiguous,
                   otherwise requires --default-application-id
+  - reminders_sent: intentionally NOT restored — it is a TTL dedup table; items expire
+                    automatically after 7 days and a fresh start is harmless
 
 Usage:
-    AWS_PROFILE=<profile> python3 restore.py [--workspace vereinsappell] [--default-application-id <id>]
+    AWS_PROFILE=<profile> python3 restore.py [--workspace vereins-app-beta] [--default-application-id <id>]
 """
 import argparse
 import json
@@ -93,7 +95,7 @@ def restore_marschbefehl(table, entries, default_app_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--workspace', default='vereinsappell')
+    parser.add_argument('--workspace', default='vereins-app-beta')
     parser.add_argument('--default-application-id', default=None,
                         help='Fallback applicationId for marschbefehl (auto-detected if only one club)')
     args = parser.parse_args()

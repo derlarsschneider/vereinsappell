@@ -5,7 +5,7 @@ Step 1: Export all data from old DynamoDB tables and list S3 objects.
 Run BEFORE deploying new Terraform. Writes JSON backup files to this directory.
 
 Usage:
-    AWS_PROFILE=<profile> python3 backup.py [--workspace vereinsappell]
+    AWS_PROFILE=<profile> python3 backup.py [--workspace vereins-app-beta]
 """
 import argparse
 import json
@@ -41,7 +41,7 @@ def list_s3_objects(s3, bucket, prefix=''):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--workspace', default='vereinsappell',
+    parser.add_argument('--workspace', default='vereins-app-beta',
                         help='Terraform workspace (= DynamoDB table name prefix)')
     args = parser.parse_args()
 
@@ -65,10 +65,11 @@ def main():
     print(f'✅ S3 bucket: {bucket}')
 
     tables = {
-        'members':      dynamodb.Table(f'{ws}-members'),
-        'fines':        dynamodb.Table(f'{ws}-fines'),
-        'marschbefehl': dynamodb.Table(f'{ws}-marschbefehl'),
-        'customers':    dynamodb.Table('vereinsappell-customers'),
+        'members':         dynamodb.Table(f'{ws}-members'),
+        'fines':           dynamodb.Table(f'{ws}-fines'),
+        'marschbefehl':    dynamodb.Table(f'{ws}-marschbefehl'),
+        'customers':       dynamodb.Table(f'{ws}-customers'),
+        'reminders_sent':  dynamodb.Table(f'{ws}-reminders_sent'),
     }
 
     for name, table in tables.items():

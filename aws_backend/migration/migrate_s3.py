@@ -12,7 +12,7 @@ Only objects whose key starts with 'docs/' or 'photos/' are migrated.
 Everything else is left untouched.
 
 Usage:
-    AWS_PROFILE=<profile> python3 migrate_s3.py [--workspace vereinsappell] [--application-id <id>] [--dry-run]
+    AWS_PROFILE=<profile> python3 migrate_s3.py [--workspace vereins-app-beta] [--application-id <id>] [--dry-run]
 """
 import argparse
 import json
@@ -47,7 +47,7 @@ def new_key(old_key, application_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--workspace', default='vereinsappell')
+    parser.add_argument('--workspace', default='vereins-app-beta')
     parser.add_argument('--application-id', default=None,
                         help='applicationId to use as S3 prefix (auto-detected if single club)')
     parser.add_argument('--dry-run', action='store_true',
