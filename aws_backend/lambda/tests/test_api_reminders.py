@@ -95,6 +95,9 @@ if __name__ == '__main__':
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+APP_ID = 'app-123'
+
+
 def _make_ics(uid: str, hours_from_now: float, summary: str = 'Test') -> str:
     dt = datetime.now(timezone.utc) + timedelta(hours=hours_from_now)
     dtstart = dt.strftime('%Y%m%dT%H%M%SZ')
@@ -107,6 +110,7 @@ def _make_ics(uid: str, hours_from_now: float, summary: str = 'Test') -> str:
 
 def _make_member(token='tok', enabled=True, hours=24) -> dict:
     return {
+        'applicationId': APP_ID,
         'memberId': 'm1',
         'token': token,
         'reminderEnabled': enabled,
@@ -119,12 +123,14 @@ class TestCheckReminders(unittest.TestCase):
         import api_reminders
         self.mod = api_reminders
 
-        self.members_table = MagicMock()
+        self.members_table   = MagicMock()
         self.reminders_table = MagicMock()
+        self.customers_table = MagicMock()
         self.reminders_table.get_item.return_value = {}  # no dedup hit
 
-        self.mod.members_table = self.members_table
+        self.mod.members_table   = self.members_table
         self.mod.reminders_table = self.reminders_table
+        self.mod.customers_table = self.customers_table
         self.mod.s3_client = MagicMock()
         self.mod.send_push_notification = MagicMock(
             return_value={'status_code': 200, 'response': {}}
@@ -134,16 +140,19 @@ class TestCheckReminders(unittest.TestCase):
         self.mod.s3_client.get_object.return_value = {
             'Body': MagicMock(read=lambda: ics.encode())
         }
-        self.members_table.scan.return_value = {'Items': members}
+        self.customers_table.scan.return_value = {
+            'Items': [{'application_id': APP_ID}]
+        }
+        self.members_table.query.return_value = {'Items': members}
         return self.mod.check_reminders({}, {})
 
     def test_sends_notification_when_event_in_window(self):
-        ics = _make_ics('uid1', hours_from_now=23.5)  # in [23,24)
+        ics = _make_ics('uid1', hours_from_now=23.5)
         self._run(ics, [_make_member(hours=24)])
         self.mod.send_push_notification.assert_called_once()
 
     def test_no_notification_outside_window(self):
-        ics = _make_ics('uid2', hours_from_now=22.0)  # not in [23,24)
+        ics = _make_ics('uid2', hours_from_now=22.0)
         self._run(ics, [_make_member(hours=24)])
         self.mod.send_push_notification.assert_not_called()
 
@@ -159,7 +168,9 @@ class TestCheckReminders(unittest.TestCase):
 
     def test_no_notification_when_dedup_hit(self):
         ics = _make_ics('uid5', hours_from_now=23.5)
-        self.reminders_table.get_item.return_value = {'Item': {'memberId': 'm1', 'eventId': 'uid5'}}
+        self.reminders_table.get_item.return_value = {
+            'Item': {'applicationId': APP_ID, 'memberId_eventId': 'm1#uid5'}
+        }
         self._run(ics, [_make_member(hours=24)])
         self.mod.send_push_notification.assert_not_called()
 
@@ -167,10 +178,12 @@ class TestCheckReminders(unittest.TestCase):
         ics = _make_ics('uid6', hours_from_now=23.5)
         self._run(ics, [_make_member(hours=24)])
         self.reminders_table.put_item.assert_called_once()
-        call_kwargs = self.reminders_table.put_item.call_args[1]['Item']
-        self.assertEqual(call_kwargs['memberId'], 'm1')
-        self.assertEqual(call_kwargs['eventId'], 'uid6')
-        self.assertIn('ttl', call_kwargs)
+        item = self.reminders_table.put_item.call_args.kwargs['Item']
+        self.assertEqual(item['applicationId'], APP_ID)
+        self.assertEqual(item['memberId_eventId'], 'm1#uid6')
+        self.assertEqual(item['memberId'], 'm1')
+        self.assertEqual(item['eventId'], 'uid6')
+        self.assertIn('ttl', item)
 
     def test_returns_200(self):
         ics = _make_ics('uid7', hours_from_now=23.5)
@@ -185,8 +198,10 @@ class TestCheckReminders(unittest.TestCase):
         self.mod.s3_client.get_object.return_value = {
             'Body': MagicMock(read=lambda: ics.encode())
         }
-        self.members_table.scan.return_value = {'Items': [member1, member2]}
+        self.customers_table.scan.return_value = {
+            'Items': [{'application_id': APP_ID}]
+        }
+        self.members_table.query.return_value = {'Items': [member1, member2]}
         result = self.mod.check_reminders({}, {})
-        # m1 failed, m2 should still have been attempted
         self.assertEqual(self.mod.send_push_notification.call_count, 2)
         self.assertEqual(result['statusCode'], 200)
