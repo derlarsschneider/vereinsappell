@@ -1,15 +1,16 @@
 resource "aws_dynamodb_table" "fines_table" {
     name         = "${local.name_prefix}-fines"
     billing_mode = "PAY_PER_REQUEST"
-    hash_key     = "memberId"
+    hash_key     = "applicationId"
     range_key    = "fineId"
 
     attribute {
-        name = "fineId"
+        name = "applicationId"
         type = "S"
     }
+
     attribute {
-        name = "memberId"
+        name = "fineId"
         type = "S"
     }
 }

@@ -1,7 +1,13 @@
 resource "aws_dynamodb_table" "members_table" {
     name         = "${local.name_prefix}-members"
     billing_mode = "PAY_PER_REQUEST"
-    hash_key     = "memberId"
+    hash_key     = "applicationId"
+    range_key    = "memberId"
+
+    attribute {
+        name = "applicationId"
+        type = "S"
+    }
 
     attribute {
         name = "memberId"

@@ -1,13 +1,14 @@
 resource "aws_dynamodb_table" "marschbefehl_table" {
     name         = "${local.name_prefix}-marschbefehl"
     billing_mode = "PAY_PER_REQUEST"
-    hash_key     = "type"
+    hash_key     = "applicationId"
     range_key    = "datetime"
 
     attribute {
-        name = "type"
+        name = "applicationId"
         type = "S"
     }
+
     attribute {
         name = "datetime"
         type = "S"
