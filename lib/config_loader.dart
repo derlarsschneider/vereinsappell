@@ -176,6 +176,14 @@ Future<void> addOrActivateAccount(AppConfig config) async {
   final accounts = _readAccountsJson();
   final existing = accountIndexOf(accounts, config.applicationId, config.memberId);
   if (existing != -1) {
+    final stored = accounts[existing];
+    final updated = config.toJson();
+    // Preserve label from stored account if the incoming one is blank.
+    if ((updated['label'] as String? ?? '').isEmpty && (stored['label'] as String? ?? '').isNotEmpty) {
+      updated['label'] = stored['label'];
+    }
+    accounts[existing] = updated;
+    _writeAccountsJson(accounts);
     setActiveAccount(existing);
   } else {
     accounts.add(config.toJson());
