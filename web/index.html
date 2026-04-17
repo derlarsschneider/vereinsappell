@@ -55,10 +55,7 @@
     } catch (e) {
       console.error('Hard reload failed:', e);
     }
-    // Force reload from server by adding a unique query parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('v', Date.now().toString());
-    window.location.href = url.toString();
+    window.location.replace(window.location.origin + '/');
   };
 </script>
 <script src="flutter_bootstrap.js" async></script>

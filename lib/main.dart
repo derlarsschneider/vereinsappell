@@ -53,22 +53,17 @@ void main() async {
 
   if (kIsWeb) {
     final url = Uri.base;
-    String? apiBaseUrlGetParam = url.queryParameters['apiBaseUrl'];
-    String? applicationIdGetParam = url.queryParameters['applicationId'];
-    String? memberIdGetParam = url.queryParameters['memberId'];
-    String? passwordGetParam = url.queryParameters['password'];
+    final apiBaseUrlParam = url.queryParameters['apiBaseUrl'];
+    final applicationIdParam = url.queryParameters['applicationId'];
+    final memberIdParam = url.queryParameters['memberId'];
+    final passwordParam = url.queryParameters['password'];
 
-    String? apiBaseUrl = apiBaseUrlGetParam ?? config?.apiBaseUrl;
-    String? applicationId = applicationIdGetParam ?? config?.applicationId;
-    String? memberId = memberIdGetParam ?? config?.memberId;
-    String? password = passwordGetParam ?? config?.sessionPassword;
-
-    if (apiBaseUrl != null && applicationId != null && memberId != null) {
+    if (apiBaseUrlParam != null && applicationIdParam != null && memberIdParam != null) {
       final incoming = AppConfig(
-        apiBaseUrl: apiBaseUrl,
-        applicationId: applicationId,
-        memberId: memberId,
-        sessionPassword: password,
+        apiBaseUrl: apiBaseUrlParam,
+        applicationId: applicationIdParam,
+        memberId: memberIdParam,
+        sessionPassword: passwordParam,
       );
       await addOrActivateAccount(incoming);
       config = await loadConfig();
