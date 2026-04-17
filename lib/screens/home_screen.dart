@@ -132,6 +132,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     customersApi.getCustomer(widget.config.applicationId).then((customer) {
       setState(() {
         _applicationName = customer['application_name'];
+        _applicationLogoBase64 = customer['application_logo'] ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
           _activeScreens = List<String>.from(screens);
