@@ -63,8 +63,9 @@ def parse_events(ics_content: str) -> list:
 _dynamodb = boto3.resource('dynamodb')
 s3_client = boto3.client('s3')
 
-members_table = _dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+members_table   = _dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
 reminders_table = _dynamodb.Table(os.environ.get('REMINDERS_TABLE_NAME', ''))
+customers_table = _dynamodb.Table(os.environ.get('CUSTOMERS_TABLE_NAME', ''))
 
 _FIREBASE_SECRET = os.environ.get('FIREBASE_SECRET_NAME', 'firebase-credentials')
 
@@ -82,6 +83,7 @@ def _get_ics_content() -> str:
 # ── Lambda handler ────────────────────────────────────────────────────────────
 
 def check_reminders(event, context):
+    from boto3.dynamodb.conditions import Key
     try:
         ics_content = _get_ics_content()
     except Exception as e:
@@ -94,55 +96,69 @@ def check_reminders(event, context):
         return {'statusCode': 200, 'body': 'no events'}
 
     now = datetime.now(timezone.utc)
-    members_resp = members_table.scan()
-    members = members_resp.get('Items', [])
 
-    for member in members:
-        token = member.get('token', '')
-        if not token:
-            continue
-        if not member.get('reminderEnabled', True):
-            continue
+    customers_resp = customers_table.scan()
+    customers = customers_resp.get('Items', [])
 
-        hours_before = int(member.get('reminderHoursBefore', 24))
-        member_id = member['memberId']
+    for customer in customers:
+        application_id = customer['application_id']
 
-        for ev in events:
-            hours_until = (ev['dtstart'] - now).total_seconds() / 3600
-            if not (hours_before - 1 <= hours_until < hours_before):
+        members_resp = members_table.query(
+            KeyConditionExpression=Key('applicationId').eq(application_id)
+        )
+        members = members_resp.get('Items', [])
+
+        for member in members:
+            token = member.get('token', '')
+            if not token:
+                continue
+            if not member.get('reminderEnabled', True):
                 continue
 
-            uid = ev['uid']
+            hours_before = int(member.get('reminderHoursBefore', 24))
+            member_id = member['memberId']
 
-            try:
-                hit = reminders_table.get_item(Key={'memberId': member_id, 'eventId': uid})
-                if 'Item' in hit:
-                    print(f'Already sent: {member_id}/{uid}')
+            for ev in events:
+                hours_until = (ev['dtstart'] - now).total_seconds() / 3600
+                if not (hours_before - 1 <= hours_until < hours_before):
                     continue
-            except Exception as e:
-                print(f'Dedup check error: {e}')
-                continue
 
-            dt_str = ev['dtstart'].strftime('%d.%m.%Y %H:%M Uhr')
-            try:
-                send_push_notification(
-                    token=token,
-                    notification={
-                        'title': f'Erinnerung: {ev["summary"]}',
-                        'body': f'Termin am {dt_str}',
-                        'type': 'reminder',
-                    },
-                    secret_name=_FIREBASE_SECRET,
-                )
-                print(f'Notification sent: {member_id}/{uid}')
+                uid = ev['uid']
+                dedup_key = f'{member_id}#{uid}'
 
-                ttl = int((ev['dtstart'] + timedelta(days=7)).timestamp())
-                reminders_table.put_item(Item={
-                    'memberId': member_id,
-                    'eventId': uid,
-                    'ttl': ttl,
-                })
-            except Exception as e:
-                print(f'Failed to notify {member_id}/{uid}: {e}')
+                try:
+                    hit = reminders_table.get_item(
+                        Key={'applicationId': application_id, 'memberId_eventId': dedup_key}
+                    )
+                    if 'Item' in hit:
+                        print(f'Already sent: {application_id}/{member_id}/{uid}')
+                        continue
+                except Exception as e:
+                    print(f'Dedup check error: {e}')
+                    continue
+
+                dt_str = ev['dtstart'].strftime('%d.%m.%Y %H:%M Uhr')
+                try:
+                    send_push_notification(
+                        token=token,
+                        notification={
+                            'title': f'Erinnerung: {ev["summary"]}',
+                            'body': f'Termin am {dt_str}',
+                            'type': 'reminder',
+                        },
+                        secret_name=_FIREBASE_SECRET,
+                    )
+                    print(f'Notification sent: {application_id}/{member_id}/{uid}')
+
+                    ttl = int((ev['dtstart'] + timedelta(days=7)).timestamp())
+                    reminders_table.put_item(Item={
+                        'applicationId': application_id,
+                        'memberId_eventId': dedup_key,
+                        'memberId': member_id,
+                        'eventId': uid,
+                        'ttl': ttl,
+                    })
+                except Exception as e:
+                    print(f'Failed to notify {application_id}/{member_id}/{uid}: {e}')
 
     return {'statusCode': 200, 'body': 'done'}
