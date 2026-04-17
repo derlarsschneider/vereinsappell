@@ -68,7 +68,7 @@ def main():
         'members':         dynamodb.Table(f'{ws}-members'),
         'fines':           dynamodb.Table(f'{ws}-fines'),
         'marschbefehl':    dynamodb.Table(f'{ws}-marschbefehl'),
-        'customers':       dynamodb.Table(f'{ws}-customers'),
+        'customers':       dynamodb.Table(f'vereinsappell-customers'),
         'reminders_sent':  dynamodb.Table(f'{ws}-reminders_sent'),
     }
 

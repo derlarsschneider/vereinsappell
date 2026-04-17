@@ -22,7 +22,7 @@ import boto3
 
 REGION = 'eu-central-1'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-MIGRATABLE_PREFIXES = ('docs/', 'photos/')
+MIGRATABLE_PREFIXES = ('docs/', 'photos/', 'calendar/')
 
 
 def load_backup_s3():

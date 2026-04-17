@@ -19,6 +19,8 @@ import argparse
 import json
 import os
 import sys
+from email.policy import default
+
 import boto3
 from boto3.dynamodb.conditions import Key
 
@@ -35,47 +37,37 @@ def load_backup(name):
         return json.load(f)
 
 
-def find_application_id(member_id, application_ids):
-    """memberId = applicationId + millisecond-timestamp (13 digits)."""
-    for app_id in application_ids:
-        if member_id.startswith(app_id):
-            return app_id
-    return None
-
-
 def batch_write(table, items):
     with table.batch_writer() as batch:
         for item in items:
             batch.put_item(Item=item)
 
 
-def restore_members(table, members, application_ids):
+def restore_members(table, members, application_id):
     ok, skipped = 0, 0
     for m in members:
         member_id = m.get('memberId')
-        app_id = find_application_id(member_id, application_ids)
-        if not app_id:
+        if not application_id:
             print(f'  ⚠️  Cannot assign applicationId for memberId={member_id} — skipping')
             skipped += 1
             continue
-        item = {**m, 'applicationId': app_id}
+        item = {**m, 'applicationId': application_id}
         table.put_item(Item=item)
         ok += 1
     print(f'  ✅ members: {ok} restored, {skipped} skipped')
 
 
-def restore_fines(table, fines, application_ids):
+def restore_fines(table, fines, application_id):
     ok, skipped = 0, 0
     for fine in fines:
         member_id = fine.get('memberId', '')
-        app_id = find_application_id(member_id, application_ids)
-        if not app_id:
+        if not application_id:
             print(f'  ⚠️  Cannot assign applicationId for fine memberId={member_id} — skipping')
             skipped += 1
             continue
         # Remove old composite key attribute if present
         item = {k: v for k, v in fine.items() if k != 'app-memberId-fineId'}
-        item['applicationId'] = app_id
+        item['applicationId'] = application_id
         table.put_item(Item=item)
         ok += 1
     print(f'  ✅ fines: {ok} restored, {skipped} skipped')
@@ -103,22 +95,11 @@ def main():
     ws = args.workspace
     dynamodb = boto3.resource('dynamodb', region_name=REGION)
 
-    customers = load_backup('customers')
-    application_ids = [c['application_id'] for c in customers]
-    print(f'📋 Known applicationIds: {application_ids}')
+    application_id = args.default_application_id
 
-    if not application_ids:
+    if not application_id:
         print('❌ No customers found in backup — cannot restore.')
         sys.exit(1)
-
-    default_app_id = args.default_application_id
-    if not default_app_id:
-        if len(application_ids) == 1:
-            default_app_id = application_ids[0]
-            print(f'📌 Single club detected — using {default_app_id} for marschbefehl')
-        else:
-            print('❌ Multiple clubs found. Pass --default-application-id <id> for marschbefehl assignment.')
-            sys.exit(1)
 
     members_table      = dynamodb.Table(f'{ws}-members')
     fines_table        = dynamodb.Table(f'{ws}-fines')
@@ -129,13 +110,13 @@ def main():
     marschbefehl = load_backup('marschbefehl')
 
     print(f'\n🔄 Restoring {len(members)} members …')
-    restore_members(members_table, members, application_ids)
+    restore_members(members_table, members, application_id)
 
     print(f'🔄 Restoring {len(fines)} fines …')
-    restore_fines(fines_table, fines, application_ids)
+    restore_fines(fines_table, fines, application_id)
 
     print(f'🔄 Restoring {len(marschbefehl)} marschbefehl entries …')
-    restore_marschbefehl(marschbefehl_table, marschbefehl, default_app_id)
+    restore_marschbefehl(marschbefehl_table, marschbefehl, application_id)
 
     print('\n✅ Restore complete. Run python3 migrate_s3.py next.')
 
