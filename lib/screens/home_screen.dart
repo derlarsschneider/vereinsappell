@@ -433,12 +433,25 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '👤 Mitglied: ${member.name.isNotEmpty ? member.name : widget.config.memberId}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '👤 Mitglied: ${member.name.isNotEmpty ? member.name : widget.config.memberId}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (kIsWeb)
+                      IconButton(
+                        icon: const Icon(Icons.refresh, size: 20),
+                        tooltip: 'App hart neu laden',
+                        onPressed: () => _jsHardReload(),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text('🛡️ Spieß: ${member.isSpiess ? "Ja" : "Nein"}'),

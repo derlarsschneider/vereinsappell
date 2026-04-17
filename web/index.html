@@ -42,14 +42,23 @@
     try {
       if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
+        for (const r of regs) {
+          await r.unregister();
+        }
       }
       if ('caches' in window) {
         const keys = await window.caches.keys();
-        await Promise.all(keys.map(k => window.caches.delete(k)));
+        for (const k of keys) {
+          await window.caches.delete(k);
+        }
       }
-    } catch (e) {}
-    window.location.reload();
+    } catch (e) {
+      console.error('Hard reload failed:', e);
+    }
+    // Force reload from server by adding a unique query parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('v', Date.now().toString());
+    window.location.href = url.toString();
   };
 </script>
 <script src="flutter_bootstrap.js" async></script>
