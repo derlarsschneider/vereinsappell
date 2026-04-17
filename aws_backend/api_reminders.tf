@@ -2,15 +2,15 @@
 resource "aws_dynamodb_table" "reminders_sent_table" {
   name         = "${local.name_prefix}-reminders_sent"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "memberId"
-  range_key    = "eventId"
+  hash_key     = "applicationId"
+  range_key    = "memberId_eventId"
 
   attribute {
-    name = "memberId"
+    name = "applicationId"
     type = "S"
   }
   attribute {
-    name = "eventId"
+    name = "memberId_eventId"
     type = "S"
   }
 
@@ -31,10 +31,11 @@ resource "aws_lambda_function" "lambda_reminders" {
 
   environment {
     variables = {
-      MEMBERS_TABLE_NAME   = aws_dynamodb_table.members_table.name
-      REMINDERS_TABLE_NAME = aws_dynamodb_table.reminders_sent_table.name
-      S3_BUCKET_NAME       = aws_s3_bucket.s3_bucket.bucket
-      FIREBASE_SECRET_NAME = aws_secretsmanager_secret.firebase_credentials.name
+      MEMBERS_TABLE_NAME    = aws_dynamodb_table.members_table.name
+      REMINDERS_TABLE_NAME  = aws_dynamodb_table.reminders_sent_table.name
+      CUSTOMERS_TABLE_NAME  = aws_dynamodb_table.customer_config_table.name
+      S3_BUCKET_NAME        = aws_s3_bucket.s3_bucket.bucket
+      FIREBASE_SECRET_NAME  = aws_secretsmanager_secret.firebase_credentials.name
     }
   }
 }
