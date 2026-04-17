@@ -12,172 +12,144 @@ ERROR_403 = {
     'body': json.dumps({'error': 'Nicht berechtigt'})
 }
 
+
 def handle_members(event, context):
     method = event.get('requestContext', {}).get('http', {}).get('method')
     path = event.get('requestContext', {}).get('http', {}).get('path')
-    member_id = event.get('pathParameters', {}).get('memberId', {})
-    request_headers = event.get("headers", {})
-    executing_member_id = request_headers.get("memberid", "")
-    executing_member = _get_member_by_id(executing_member_id) or {}
+    member_id = event.get('pathParameters', {}).get('memberId', '')
+    request_headers = event.get('headers', {})
+    application_id = request_headers.get('applicationid', '')
+    executing_member_id = request_headers.get('memberid', '')
+    executing_member = _get_member_by_id(application_id, executing_member_id) or {}
     is_admin = executing_member.get('isAdmin', False)
     is_spiess = executing_member.get('isSpiess', False)
-    is_myself =  executing_member.get('memberId') == member_id
+    is_myself = executing_member.get('memberId') == member_id
 
     if method == 'GET' and path == '/members':
-        # LIST members
         if not is_admin and not is_spiess:
             return ERROR_403
-        return add_headers(list_members(), event=event)
+        return add_headers(list_members(application_id), event=event)
     elif method == 'GET':
         if path.endswith('/all'):
-            # GET member with all details
             if not is_admin:
                 return ERROR_403
-            return add_headers(get_member(member_id, True), {'memberId': member_id}, event=event)
+            return add_headers(get_member(application_id, member_id, True), event=event)
         else:
-            # GET member with reduced details
             if not is_admin and not is_spiess and not is_myself:
                 return ERROR_403
-            return add_headers(get_member(member_id, False), event=event)
+            return add_headers(get_member(application_id, member_id, False), event=event)
     elif method == 'POST':
-        # ADD member
         if not is_admin:
             return ERROR_403
-        return add_headers(add_member(event['body']), event=event)
+        return add_headers(add_member(event['body'], application_id), event=event)
     elif method == 'DELETE':
-        # DELETE member
         if not is_admin:
             return ERROR_403
-        return add_headers(delete_member(member_id), event=event)
+        return add_headers(delete_member(application_id, member_id), event=event)
 
 
 def add_headers(response, more_fields={}, event=None):
     origin = (event or {}).get('headers', {}).get('origin', 'https://vereinsappell.web.app')
     response_headers = {
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Headers": "Content-Type,applicationId,memberId,password",
-        "Access-Control-Allow-Methods": "OPTIONS,GET,POST,DELETE",
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Headers': 'Content-Type,applicationId,memberId,password',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET,POST,DELETE',
     }
     return {**response_headers, **response, **more_fields}
 
-def _get_member_by_id(member_id):
+
+def _get_member_by_id(application_id, member_id):
+    if not application_id or not member_id:
+        return None
     response = members_table.get_item(
-        Key={'memberId': member_id}
+        Key={'applicationId': application_id, 'memberId': member_id}
     )
-    item = response.get('Item')
-    return item
+    return response.get('Item')
 
 
-def get_member(member_id, all_details):
-    item = _get_member_by_id(member_id)
+def get_member(application_id, member_id, all_details):
+    item = _get_member_by_id(application_id, member_id)
     if not item:
         return {
             'statusCode': 404,
             'body': json.dumps({'error': 'Mitglied nicht gefunden'})
         }
-    if all_details:
-        result = item
-    else:
-        result = {
-            'memberId': item['memberId'],
-            'name': item['name'],
-            'isAdmin': item.get('isAdmin', False),
-            'isSpiess': item.get('isSpiess', False),
-            'isSuperAdmin': item.get('isSuperAdmin', False),
-            'token': item.get('token', ''),
-        }
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(result)
+    result = item if all_details else {
+        'memberId': item['memberId'],
+        'name': item['name'],
+        'isAdmin': item.get('isAdmin', False),
+        'isSpiess': item.get('isSpiess', False),
+        'isSuperAdmin': item.get('isSuperAdmin', False),
+        'token': item.get('token', ''),
     }
+    return {'statusCode': 200, 'body': json.dumps(result)}
 
 
-def list_members():
+def list_members(application_id):
+    from boto3.dynamodb.conditions import Key
     items = []
-
-    response = members_table.scan()
+    response = members_table.query(
+        KeyConditionExpression=Key('applicationId').eq(application_id)
+    )
     items.extend(response['Items'])
-
-    # Falls es mehr als 1MB Daten sind, wird die Scan-Operation paginiert
     while 'LastEvaluatedKey' in response:
-        response = members_table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        response = members_table.query(
+            KeyConditionExpression=Key('applicationId').eq(application_id),
+            ExclusiveStartKey=response['LastEvaluatedKey'],
+        )
         items.extend(response['Items'])
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(items)
-    }
+    return {'statusCode': 200, 'body': json.dumps(items)}
 
 
-def add_member(body):
+def add_member(body, application_id):
     data = json.loads(body)
     data_member_id = data['memberId']
-    data_name = data['name']
-    data_is_admin = data.get('isAdmin', False)
-    data_is_spiess = data.get('isSpiess', False)
-    data_token = data.get('token', '')
-    data_street = data.get('street', '')
-    data_house_number = data.get('houseNumber', '')
-    data_postal_code = data.get('postalCode', '')
-    data_city = data.get('city', '')
-    data_phone1 = data.get('phone1', '')
-    data_phone2 = data.get('phone2', '')
-    data_is_active = data.get('isActive', True)
 
-    # Use update_item instead of put_item so that fields managed outside this
-    # endpoint (e.g. isSuperAdmin set directly in DynamoDB) are never overwritten.
     members_table.update_item(
-        Key={'memberId': data_member_id},
+        Key={'applicationId': application_id, 'memberId': data_member_id},
         UpdateExpression=(
             'SET #name = :name, isAdmin = :isAdmin, isSpiess = :isSpiess, '
             'isActive = :isActive, #token = :token, street = :street, '
             'houseNumber = :houseNumber, postalCode = :postalCode, '
             'city = :city, phone1 = :phone1, phone2 = :phone2'
         ),
-        ExpressionAttributeNames={
-            '#name': 'name',
-            '#token': 'token',
-        },
+        ExpressionAttributeNames={'#name': 'name', '#token': 'token'},
         ExpressionAttributeValues={
-            ':name': data_name,
-            ':isAdmin': data_is_admin,
-            ':isSpiess': data_is_spiess,
-            ':isActive': data_is_active,
-            ':token': data_token,
-            ':street': data_street,
-            ':houseNumber': data_house_number,
-            ':postalCode': data_postal_code,
-            ':city': data_city,
-            ':phone1': data_phone1,
-            ':phone2': data_phone2,
+            ':name': data['name'],
+            ':isAdmin': data.get('isAdmin', False),
+            ':isSpiess': data.get('isSpiess', False),
+            ':isActive': data.get('isActive', True),
+            ':token': data.get('token', ''),
+            ':street': data.get('street', ''),
+            ':houseNumber': data.get('houseNumber', ''),
+            ':postalCode': data.get('postalCode', ''),
+            ':city': data.get('city', ''),
+            ':phone1': data.get('phone1', ''),
+            ':phone2': data.get('phone2', ''),
         },
     )
-
-    item = {
-        'memberId': data_member_id,
-        'name': data_name,
-        'isAdmin': data_is_admin,
-        'isSpiess': data_is_spiess,
-        'isActive': data_is_active,
-        'token': data_token,
-        'street': data_street,
-        'houseNumber': data_house_number,
-        'postalCode': data_postal_code,
-        'city': data_city,
-        'phone1': data_phone1,
-        'phone2': data_phone2,
-    }
 
     return {
         'statusCode': 200,
-        'body': json.dumps(item)
+        'body': json.dumps({
+            'memberId': data_member_id,
+            'name': data['name'],
+            'isAdmin': data.get('isAdmin', False),
+            'isSpiess': data.get('isSpiess', False),
+            'isActive': data.get('isActive', True),
+            'token': data.get('token', ''),
+            'street': data.get('street', ''),
+            'houseNumber': data.get('houseNumber', ''),
+            'postalCode': data.get('postalCode', ''),
+            'city': data.get('city', ''),
+            'phone1': data.get('phone1', ''),
+            'phone2': data.get('phone2', ''),
+        })
     }
 
 
-def delete_member(member_id):
+def delete_member(application_id, member_id):
     members_table.delete_item(
-        Key={'memberId': member_id}
+        Key={'applicationId': application_id, 'memberId': member_id}
     )
-
     return {'statusCode': 200, 'body': json.dumps({'message': 'Mitglied gelöscht'})}
