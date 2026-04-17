@@ -57,13 +57,31 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     setState(() => isLoading = true);
     try {
       if (widget.config.member.isSuperAdmin) {
-        final clubs = await _api.listCustomers();
+        // Only show clubs this member has a local account for (= clubs they are in).
+        final accounts = loadAllAccounts();
+        final clubs = <Map<String, dynamic>>[];
+        for (final account in accounts) {
+          try {
+            final club = await CustomersApi(account).getCustomer(account.applicationId);
+            clubs.add(club);
+          } catch (_) {
+            // Club might be unreachable or deleted; skip silently.
+          }
+        }
         if (!mounted) return;
         setState(() {
           _allClubs = clubs;
           isLoading = false;
         });
-        if (clubs.isNotEmpty) _applyClub(clubs.first);
+        // Pre-select the currently active club if present, otherwise the first.
+        final current = clubs.where(
+          (c) => c['application_id'] == widget.config.applicationId,
+        ).toList();
+        if (current.isNotEmpty) {
+          _applyClub(current.first);
+        } else if (clubs.isNotEmpty) {
+          _applyClub(clubs.first);
+        }
       } else {
         final club = await _api.getCustomer(widget.config.applicationId);
         if (!mounted) return;
