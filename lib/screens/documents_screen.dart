@@ -133,17 +133,17 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
   Future<void> previewOrDownload(String category, String shortName) async {
     final full = _fullName(category, shortName);
     try {
-      final bytes = await api.downloadDocument(full);
       final isPdf = shortName.toLowerCase().endsWith('.pdf');
 
       if (kIsWeb) {
+        // Open tab before await — popup blockers block window.open after async ops
+        final newTab = isPdf ? html.window.open('', '_blank') : null;
+        final bytes = await api.downloadDocument(full);
         if (isPdf) {
-          // PDF im Browser-Tab öffnen (in-Browser-Viewer)
           final blob = html.Blob([bytes], 'application/pdf');
           final url = html.Url.createObjectUrlFromBlob(blob);
-          html.window.open(url, '_blank');
+          newTab?.location.href = url;
         } else {
-          // Andere Dateien herunterladen
           final base64Data = base64Encode(bytes);
           final blobUrl = 'data:application/octet-stream;base64,$base64Data';
           (html.AnchorElement(href: blobUrl)
@@ -151,6 +151,7 @@ class _DocumentScreenState extends DefaultScreenState<DocumentScreen> {
             .click();
         }
       } else {
+        final bytes = await api.downloadDocument(full);
         final dir = await getTemporaryDirectory();
         final file = io.File('${dir.path}/$shortName');
         await file.writeAsBytes(bytes);
