@@ -21,7 +21,13 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      // Push notifications won't work, but the rest of the app should still start.
+      print('Firebase init failed: $e');
+    }
   }
   bool debugging = false;
   try {
