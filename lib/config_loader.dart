@@ -285,10 +285,12 @@ class Member extends ChangeNotifier {
   Future<void> fetchMember() async {
     final http.Response response;
     try {
-      response = await http.get(
-        Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
-        headers: headers(config),
-      );
+      response = await http
+          .get(
+            Uri.parse('${config.apiBaseUrl}/members/${config.memberId}'),
+            headers: headers(config),
+          )
+          .timeout(const Duration(seconds: 10));
     } catch (e) {
       throw Exception('Netzwerkfehler: $e');
     }
