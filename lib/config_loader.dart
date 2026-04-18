@@ -242,9 +242,7 @@ class Member extends ChangeNotifier {
   bool _reminderEnabled = true;
   int _reminderHoursBefore = 24;
 
-  Member({required this.config}) {
-    fetchMember();
-  }
+  Member({required this.config});
 
   // Getter
   String get name => _name;
