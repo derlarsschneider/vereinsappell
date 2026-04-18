@@ -51,23 +51,21 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     _allAccounts = loadAllAccounts();
     _activeAccountIndex = getActiveAccountIndex();
 
-    try {
-      if (kIsWeb) {
-        Future<void> futureResponse = widget.config.member.fetchMember();
-        futureResponse.whenComplete(() {
-          widget.config.member.registerPushSubscriptionWeb();
-          _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-            showNotification('${message.data['title']}: ${message.data['body']}');
-            if (message.data['type'] == 'fine') {
-              showFineOverlay(context);
-            } else {
-              showPigOverlay(context);
-            }
-          });
+    if (kIsWeb) {
+      widget.config.member.fetchMember().then((_) {
+        if (!mounted) return;
+        widget.config.member.registerPushSubscriptionWeb();
+        _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          showNotification('${message.data['title']}: ${message.data['body']}');
+          if (message.data['type'] == 'fine') {
+            showFineOverlay(context);
+          } else {
+            showPigOverlay(context);
+          }
         });
-      }
-    } catch (e) {
-      showError('Fehler beim Registrieren der Push-Subscriptions: $e');
+      }).catchError((e) {
+        if (mounted) showError('Fehler beim Laden der Mitgliedsdaten: $e');
+      });
     }
   }
 
