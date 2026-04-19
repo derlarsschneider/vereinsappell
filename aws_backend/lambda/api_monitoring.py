@@ -99,3 +99,45 @@ def handle_monitoring(event, context):
     except Exception as e:
         print(f"Error querying logs: {e}")
         return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+
+
+def handle_timing(event, context):
+    try:
+        body = json.loads(event['body']) if isinstance(event.get('body'), str) else event.get('body', {})
+
+        application_id = body.get('applicationId', '')
+        member_id = body.get('memberId', '')
+        phases = body.get('phases', {})
+        total_ms = body.get('totalMs', 0)
+
+        # Validate required fields
+        if not application_id or not member_id:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'applicationId and memberId required'})
+            }
+
+        # Write structured log to CloudWatch
+        print(json.dumps({
+            "log_type": "startup_timing",
+            "applicationId": application_id,
+            "memberId": member_id,
+            "firebase_ms": phases.get('firebase_ms', 0),
+            "config_ms": phases.get('config_ms', 0),
+            "first_frame_ms": phases.get('first_frame_ms', 0),
+            "fetch_member_ms": phases.get('fetch_member_ms', 0),
+            "get_customer_ms": phases.get('get_customer_ms', 0),
+            "total_ms": total_ms,
+            "timestamp": datetime.now().isoformat()
+        }))
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': 'Startup timing recorded'})
+        }
+    except Exception as e:
+        print(f"Error in handle_timing: {e}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
