@@ -97,6 +97,9 @@ def lambda_handler(event, context):
         elif method == 'GET' and path == '/monitoring/stats':
             import api_monitoring
             return {**headers, **api_monitoring.handle_monitoring(event, context)}
+        elif method == 'POST' and path == '/monitoring/timing':
+            import api_monitoring
+            return {**headers, **api_monitoring.handle_timing(event, context)}
         else:
             error_handler.handle_error(event, context)
             print(f'❌ Unknown API route: {method} {path}')
