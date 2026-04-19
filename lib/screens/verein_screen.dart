@@ -34,7 +34,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   Map<String, dynamic>? _selectedClub;
 
   final _nameController = TextEditingController();
-  final _donationGoalController = TextEditingController();
   final _paypalAccountController = TextEditingController();
   String _logoBase64 = '';
   List<String> _activeScreens =
@@ -52,7 +51,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _donationGoalController.dispose();
     _paypalAccountController.dispose();
     super.dispose();
   }
@@ -102,7 +100,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     setState(() {
       _selectedClub = club;
       _nameController.text = club['application_name'] ?? '';
-      _donationGoalController.text = club['donation_goal'] ?? '';
       _paypalAccountController.text = club['paypal_account'] ?? '';
       _logoBase64 = club['application_logo'] ?? '';
       final screens = club['active_screens'];
@@ -158,7 +155,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     try {
       await _api.updateCustomer(clubId, {
         'application_name': _nameController.text.trim(),
-        'donation_goal': _donationGoalController.text.trim(),
         'paypal_account': _paypalAccountController.text.trim(),
         'application_logo': _logoBase64,
         'active_screens': _activeScreens,
@@ -247,8 +243,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   };
                   final url = urlCtrl.text.trim();
                   if (url.isNotEmpty) payload['api_url'] = url;
-                  final goal = goalCtrl.text.trim();
-                  if (goal.isNotEmpty) payload['donation_goal'] = goal;
                   final paypal = paypalCtrl.text.trim();
                   if (paypal.isNotEmpty) payload['paypal_account'] = paypal;
                   if (dialogLogo.isNotEmpty) {
@@ -335,14 +329,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _donationGoalController,
-                    decoration: const InputDecoration(
-                      labelText: 'Spendenziel (z.B. 1000 €)',
-                      helperText: 'Dieses Ziel wird auf dem Home-Screen angezeigt.',
-                    ),
                   ),
                   const SizedBox(height: 16),
                   TextField(

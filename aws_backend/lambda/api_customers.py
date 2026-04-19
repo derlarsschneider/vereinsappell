@@ -48,11 +48,6 @@ def update_customer(event):
         update_expr += ', application_logo = :logo'
         expr_values[':logo'] = logo
 
-    donation_goal = body.get('donation_goal', '')
-    if donation_goal:
-        update_expr += ', donation_goal = :goal'
-        expr_values[':goal'] = donation_goal
-
     paypal_account = body.get('paypal_account', '')
     if paypal_account:
         update_expr += ', paypal_account = :paypal'
@@ -85,8 +80,7 @@ def create_customer(event):
         'api_url': api_url,
         'application_logo': application_logo,
         'active_screens': active_screens,
-        'donation_goal': body.get('donation_goal', '10'),
-        'paypal_account': body.get('paypal_account', 'derlarsschiller@gmail.com'),
+        'paypal_account': body.get('paypal_account', 'LarsSchiller1911'),
     }
     table().put_item(Item=item)
 
