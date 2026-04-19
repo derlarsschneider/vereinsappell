@@ -17,18 +17,24 @@ import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
 import 'firebase_options.dart';
+import 'package:vereinsappell/utils/startup_timer.dart';
 
 void main() async {
+  StartupTimer.instance; // Initialize singleton
   WidgetsFlutterBinding.ensureInitialized();
+  StartupTimer.instance.mark('app_start');
+
   if (kIsWeb) {
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
           .timeout(const Duration(seconds: 10));
+      StartupTimer.instance.mark('firebase');
     } catch (e) {
-      // Push notifications won't work, but the rest of the app should still start.
+      StartupTimer.instance.mark('firebase');
       print('Firebase init failed: $e');
     }
   }
+
   bool debugging = false;
   try {
     if (debugging) {
@@ -56,6 +62,7 @@ void main() async {
   };
 
   AppConfig? config = await loadConfig();
+  StartupTimer.instance.mark('config');
 
   if (kIsWeb) {
     final url = Uri.base;
