@@ -14,6 +14,7 @@ class MonitoringScreen extends DefaultScreen {
 class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   late final MonitoringApi _api;
   Map<String, dynamic>? _stats;
+  Map<String, dynamic>? _startupStats;
   String _timeframe = 'day';
 
   @override
@@ -27,8 +28,10 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     setState(() => isLoading = true);
     try {
       final data = await _api.getStats(_timeframe);
+      final startupData = await _api.getStartupStats(_timeframe);
       setState(() {
         _stats = data;
+        _startupStats = startupData;
         isLoading = false;
       });
     } catch (e) {
