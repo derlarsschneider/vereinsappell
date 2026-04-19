@@ -14,7 +14,10 @@ def _build_name_maps(app_ids):
                   for c in club_resp.get('Items', [])}
 
     member_table = dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
-    member_resp = member_table.scan(ProjectionExpression='memberId, name')
+    member_resp = member_table.scan(
+        ProjectionExpression='memberId, #n',
+        ExpressionAttributeNames={'#n': 'name'},
+    )
     member_names = {c['memberId']: c.get('name', c['memberId'])
                   for c in member_resp.get('Items', [])}
 
