@@ -53,9 +53,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     _activeAccountIndex = getActiveAccountIndex();
 
     if (kIsWeb) {
-      widget.config.member.fetchMember().then((_) {
+      widget.config.member.fetchMember().then((_) async {
         if (!mounted) return;
-        widget.config.member.registerPushSubscriptionWeb();
+        await widget.config.member.registerPushSubscriptionWeb();
         _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           showNotification('${message.data['title']}: ${message.data['body']}');
           if (message.data['type'] == 'fine') {
@@ -158,9 +158,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     );
   }
 
-  void _updateApplication() {
+  Future<void> _updateApplication() {
     CustomersApi customersApi = CustomersApi(widget.config);
-    customersApi.getCustomer(widget.config.applicationId).then((customer) {
+    return customersApi.getCustomer(widget.config.applicationId).then((customer) {
       setState(() {
         _applicationName = customer['application_name'] ?? "... Lädt...";
         _applicationLogoBase64 = customer['application_logo'] ?? '';
@@ -189,7 +189,6 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     if (remainder != 0) base64String += '=' * (4 - remainder);
     return base64Decode(base64String);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +245,26 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             if (kDebugMode) _buildDebugButtons(context),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Spenden'),
+              content: const Text('Vielen Dank für dein Interesse! Diese Funktion wird bald verfügbar sein.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Schließen'),
+                ),
+              ],
+            ),
+          );
+        },
+        backgroundColor: Colors.pinkAccent,
+        tooltip: 'Spenden',
+        child: const Icon(Icons.favorite, color: Colors.white),
       ),
     );
   }
@@ -429,7 +448,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       child: GestureDetector(
         onLongPress: () async {
           try {
-            _updateApplication();
+            await _updateApplication();
             await member.fetchMember();
             if (kIsWeb) {
               await _jsHardReload().toDart;
