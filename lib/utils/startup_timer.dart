@@ -1,9 +1,7 @@
 // lib/utils/startup_timer.dart
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import '../config_loader.dart';
-import '../api/headers.dart';
+import '../api/monitoring_api.dart';
 
 /// Measures elapsed time since app startup for performance monitoring.
 ///
@@ -76,21 +74,14 @@ class StartupTimer {
   /// that timing data collection does not disrupt the app's normal operation.
   Future<void> send(AppConfig config) async {
     try {
+      final api = MonitoringApi(config);
       final payload = toPayload(
         applicationId: config.applicationId,
         memberId: config.memberId,
       );
-      final response = await http.post(
-        Uri.parse('${config.apiBaseUrl}/startup-timing'),
-        headers: headers(config),
-        body: jsonEncode(payload),
-      );
+      await api.sendStartupTiming(payload);
       if (kDebugMode) {
-        if (response.statusCode == 200) {
-          print('[STARTUP] Timing data sent successfully');
-        } else {
-          print('[STARTUP] Failed to send timing data: ${response.statusCode}');
-        }
+        print('📊 Startup timing sent: ${payload['total_ms']}ms');
       }
     } catch (e) {
       if (kDebugMode) {
