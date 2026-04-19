@@ -74,3 +74,6 @@ test.json
 /aws_backend/sample_data/marschbefehl*.json
 /.claude/TODOS.md
 /aws_backend/migration/*.json
+
+# Git worktrees
+.worktrees/
