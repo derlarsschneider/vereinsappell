@@ -9,13 +9,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:vereinsappell/screens/schere_stein_papier_screen.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
 import '../api/customers_api.dart';
+import '../utils/startup_timer.dart';
 import '../config_loader.dart';
 import '../version.dart';
 import '../widgets/pig_overlay.dart';
@@ -41,8 +41,6 @@ class HomeScreen extends DefaultScreen {
 class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationName = "Vereins Appell";
   String _applicationLogoBase64 = "";
-  String _donationGoal = "";
-  String _paypalAccount = "";
   List<String>? _activeScreens; // null = show all (backwards compatible)
   StreamSubscription? _messageSubscription;
   List<AppConfig> _allAccounts = [];
@@ -51,14 +49,24 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _updateApplication();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StartupTimer.instance.mark('first_frame');
+    });
     _allAccounts = loadAllAccounts();
     _activeAccountIndex = getActiveAccountIndex();
 
     if (kIsWeb) {
-      widget.config.member.fetchMember().then((_) async {
+      Future.wait([
+        widget.config.member.fetchMember().then((_) {
+          if (!mounted) return Future.value();
+          StartupTimer.instance.mark('fetch_member');
+          return widget.config.member.registerPushSubscriptionWeb();
+        }),
+        _updateApplication().then((_) {
+          StartupTimer.instance.mark('get_customer');
+        }),
+      ]).then((_) {
         if (!mounted) return;
-        await widget.config.member.registerPushSubscriptionWeb();
         _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           showNotification('${message.data['title']}: ${message.data['body']}');
           if (message.data['type'] == 'fine') {
@@ -67,8 +75,10 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             showPigOverlay(context);
           }
         });
+        StartupTimer.instance.send(widget.config);
       }).catchError((e) {
         if (mounted) showError('Fehler beim Laden der Mitgliedsdaten: $e');
+        StartupTimer.instance.send(widget.config);
       });
     }
   }
@@ -161,23 +171,22 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     );
   }
 
-  Future<void> _updateApplication() {
-    CustomersApi customersApi = CustomersApi(widget.config);
-    return customersApi.getCustomer(widget.config.applicationId).then((customer) {
+  Future<void> _updateApplication() async {
+    try {
+      CustomersApi customersApi = CustomersApi(widget.config);
+      final customer = await customersApi.getCustomer(widget.config.applicationId);
       setState(() {
-        _applicationName = customer['application_name'] ?? "... Lädt...";
+        _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
-        _donationGoal = customer['donation_goal'] ?? '';
-        _paypalAccount = customer['paypal_account'] ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
           _activeScreens = List<String>.from(screens);
         }
       });
       updateActiveAccountLabel(customer['application_name'] as String? ?? '');
-    }).catchError((error) {
+    } catch (error) {
       showError("Fehler beim Laden des Vereins: $error");
-    });
+    }
   }
 
   bool _isScreenActive(String key) {
@@ -194,6 +203,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     if (remainder != 0) base64String += '=' * (4 - remainder);
     return base64Decode(base64String);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -242,7 +252,6 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            if (_donationGoal.isNotEmpty) _buildDonationGoalCard(),
             if (member.isActive || member.isSuperAdmin) ...[
               _buildGridMenu(context, member),
               const SizedBox(height: 16),
@@ -251,22 +260,6 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             if (kDebugMode) _buildDebugButtons(context),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final Uri url = Uri.parse(
-              'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=$_paypalAccount&item_name=Spende%20(Freunde%20und%20Familie)&currency_code=EUR');
-          try {
-            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-              showError('PayPal konnte nicht geöffnet werden');
-            }
-          } catch (e) {
-            showError('Fehler beim Öffnen von PayPal: $e');
-          }
-        },
-        backgroundColor: Colors.pinkAccent,
-        tooltip: 'Spenden',
-        child: const Icon(Icons.favorite, color: Colors.white),
       ),
     );
   }
@@ -488,13 +481,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                       IconButton(
                         icon: const Icon(Icons.refresh, size: 20),
                         tooltip: 'App hart neu laden',
-                        onPressed: () async {
-                          try {
-                            await _jsHardReload().toDart;
-                          } catch (e) {
-                            showError('Fehler beim Neuladen: $e');
-                          }
-                        },
+                        onPressed: () => _jsHardReload(),
                       ),
                   ],
                 ),
@@ -530,49 +517,6 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDonationGoalCard() {
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Card(
-        elevation: 4,
-        color: Colors.pink.shade50,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Row(
-            children: [
-              const Icon(Icons.stars, color: Colors.pinkAccent, size: 32),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Unser Spendenziel',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.pink,
-                      ),
-                    ),
-                    Text(
-                      _donationGoal,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../api/monitoring_api.dart';
+import '../config_loader.dart';
 import 'default_screen.dart';
 
 class MonitoringScreen extends DefaultScreen {
@@ -27,9 +28,10 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     setState(() => isLoading = true);
     try {
       final data = await _api.getStats(_timeframe);
+      final startupData = await _api.getStartupStats(_timeframe);
       setState(() {
         _stats = data;
-        _startupStats = data;
+        _startupStats = startupData;
         isLoading = false;
       });
     } catch (e) {
@@ -63,10 +65,6 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                     _buildCallsChart(),
                     const SizedBox(height: 32),
                     _buildActiveMembersSection(),
-                    if (_startupStats != null) ...[
-                      const SizedBox(height: 32),
-                      _buildStartupStats(),
-                    ],
                   ],
                 ],
               ),
@@ -147,7 +145,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
 
   Widget _buildActiveMembersSection() {
     final clubs = _stats?['active_members'] as List? ?? [];
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,61 +168,13 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                   title: Text(memberId),
                   trailing: Chip(
                     label: Text('$activity Requests'),
-                    backgroundColor: Colors.green.withValues(alpha: 0.1),
+                    backgroundColor: Colors.green.withOpacity(0.1),
                   ),
                 );
               }).toList(),
             ),
           );
         }),
-      ],
-    );
-  }
-
-  Widget _buildStartupStats() {
-    final stats = _startupStats?['startup_stats'] as List? ?? [];
-    if (stats.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('Keine Startup-Daten für diesen Zeitraum'),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Startup-Zeiten pro Mitglied',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: const [
-              DataColumn(label: Text('Mitglied')),
-              DataColumn(label: Text('Verein')),
-              DataColumn(label: Text('p50 (ms)')),
-              DataColumn(label: Text('p95 (ms)')),
-              DataColumn(label: Text('p99 (ms)')),
-              DataColumn(label: Text('Messungen')),
-            ],
-            rows: stats.map((stat) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(stat['memberId'] ?? '-')),
-                  DataCell(Text(stat['applicationId'] ?? '-')),
-                  DataCell(Text((stat['p50'] ?? 0).toString())),
-                  DataCell(Text((stat['p95'] ?? 0).toString())),
-                  DataCell(Text((stat['p99'] ?? 0).toString())),
-                  DataCell(Text((stat['count'] ?? 0).toString())),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
       ],
     );
   }
