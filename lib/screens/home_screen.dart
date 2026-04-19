@@ -443,7 +443,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       child: GestureDetector(
         onLongPress: () async {
           try {
-            _updateApplication();
+            await _updateApplication();
             await member.fetchMember();
             if (kIsWeb) {
               await _jsHardReload().toDart;
