@@ -42,8 +42,7 @@ Future<AppConfig> makeConfig(
         memberId: 'user-1',
         sessionPassword: sessionPassword,
       );
-      // Give Member.fetchMember() time to complete via MockClient
-      await Future.delayed(const Duration(milliseconds: 100));
+      await config.member.fetchMember();
     }, () => client);
 
     return config;
