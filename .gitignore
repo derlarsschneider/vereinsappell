@@ -77,3 +77,4 @@ test.json
 
 # Git worktrees
 .worktrees/
+/.superpowers/
