@@ -51,7 +51,11 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
   Future<void> fetchMitglieder() async {
     setState(() => isLoading = true);
     try {
-      mitglieder = await api.fetchMembers();
+      final List<dynamic> data = await api.fetchMembers();
+      setState(() {
+        mitglieder = data
+          ..sort((a, b) => (a['name'] ?? '').toLowerCase().compareTo((b['name'] ?? '').toLowerCase()));
+      });
     } catch (e) {
       showError('$e');
     } finally {
