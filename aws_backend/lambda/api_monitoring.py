@@ -36,7 +36,7 @@ def handle_monitoring(event, context):
     # We use a combined query to get both calls per club and active members if possible, 
     # or just fetch raw structured logs and aggregate here for simplicity/speed in this demo.
     query = f"""
-    fields applicationId, memberId, @timestamp
+    fields applicationId, memberId, path, @timestamp
     | filter log_type = "api_access"
     | sort @timestamp desc
     """
@@ -68,31 +68,37 @@ def handle_monitoring(event, context):
         
         calls_per_club = {}
         active_members = {}
-        
+        calls_per_endpoint = {}  # (app_id, path) -> count
+        calls_per_member = {}    # (app_id, mem_id) -> count
+
         for row in results:
             app_id = next((item['value'] for item in row if item['field'] == 'applicationId'), 'unknown')
             mem_id = next((item['value'] for item in row if item['field'] == 'memberId'), 'unknown')
-            
-            # Aggregate calls per club
+            path   = next((item['value'] for item in row if item['field'] == 'path'), 'unknown')
+
             calls_per_club[app_id] = calls_per_club.get(app_id, 0) + 1
-            
-            # Aggregate member activity
+
             if app_id not in active_members:
                 active_members[app_id] = {}
             active_members[app_id][mem_id] = active_members[app_id].get(mem_id, 0) + 1
+
+            ep_key = (app_id, path)
+            calls_per_endpoint[ep_key] = calls_per_endpoint.get(ep_key, 0) + 1
+
+            mem_key = (app_id, mem_id)
+            calls_per_member[mem_key] = calls_per_member.get(mem_key, 0) + 1
 
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'calls_per_club': [{'applicationId': k, 'count': v} for k, v in calls_per_club.items()],
                 'active_members': [
-                    {
-                        'applicationId': app_id, 
-                        'members': [{'memberId': k, 'activity': v} for k, v in mems.items()]
-                    } 
+                    {'applicationId': app_id, 'members': [{'memberId': k, 'activity': v} for k, v in mems.items()]}
                     for app_id, mems in active_members.items()
                 ],
-                'timeframe': timeframe
+                'calls_per_endpoint': [{'applicationId': k[0], 'path': k[1], 'count': v} for k, v in calls_per_endpoint.items()],
+                'calls_per_member':   [{'applicationId': k[0], 'memberId': k[1], 'count': v} for k, v in calls_per_member.items()],
+                'timeframe': timeframe,
             })
         }
 
