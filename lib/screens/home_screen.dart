@@ -14,6 +14,8 @@ import 'package:vereinsappell/screens/schere_stein_papier_screen.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../api/customers_api.dart';
 import '../utils/startup_timer.dart';
 import '../config_loader.dart';
@@ -42,6 +44,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationName = "Vereins Appell";
   String _applicationLogoBase64 = "";
   List<String>? _activeScreens; // null = show all (backwards compatible)
+  String _paypalAccount = "";
+  String _donationGoal = "";
   StreamSubscription? _messageSubscription;
   List<AppConfig> _allAccounts = [];
   int _activeAccountIndex = 0;
@@ -171,6 +175,15 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     );
   }
 
+  Future<void> _openDonation() async {
+    final uri = Uri.parse(
+      'https://www.paypal.com/donate?business=${Uri.encodeComponent(_paypalAccount)}&currency_code=EUR',
+    );
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      showError('PayPal konnte nicht geöffnet werden.');
+    }
+  }
+
   Future<void> _updateApplication() async {
     try {
       CustomersApi customersApi = CustomersApi(widget.config);
@@ -178,6 +191,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       setState(() {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
+        _paypalAccount = customer['paypal_account'] ?? '';
+        _donationGoal = customer['donation_goal'] ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
           _activeScreens = List<String>.from(screens);
@@ -249,6 +264,15 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: _paypalAccount.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: _openDonation,
+              icon: const Icon(Icons.volunteer_activism),
+              label: Text(_donationGoal.isNotEmpty ? 'Spenden · $_donationGoal' : 'Spenden'),
+              backgroundColor: Colors.blue.shade700,
+              foregroundColor: Colors.white,
+            )
+          : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
