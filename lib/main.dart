@@ -13,11 +13,11 @@ import 'package:vereinsappell/screens/home_screen.dart';
 import 'package:vereinsappell/screens/marschbefehl_screen.dart';
 import 'package:vereinsappell/screens/mitglieder_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
+import 'package:vereinsappell/utils/startup_timer.dart';
 import 'package:window_size/window_size.dart';
 
 import 'config_loader.dart';
 import 'firebase_options.dart';
-import 'package:vereinsappell/utils/startup_timer.dart';
 
 void main() async {
   StartupTimer.instance; // Initialize singleton
