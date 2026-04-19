@@ -24,6 +24,7 @@ import 'documents_screen.dart';
 import 'galerie_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
+import 'monitoring_screen.dart';
 import 'verein_screen.dart';
 
 @JS('hardReload')
@@ -347,6 +348,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => VereinScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (member.isSuperAdmin)
+        _buildMenuTile(
+          context,
+          '📈 Monitoring',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MonitoringScreen(config: widget.config),
             ),
           ),
         ),

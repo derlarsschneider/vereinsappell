@@ -39,10 +39,22 @@ def lambda_handler(event, context):
         path = event.get('requestContext', {}).get('http', {}).get('path')
         origin = event.get('headers', {}).get('origin', 'https://vereinsappell.web.app')
         application_id = event.get('headers', {}).get('applicationid', '')
+        member_id = event.get('headers', {}).get('memberid', '')
+
+        # Structured logging for API monitoring
+        print(json.dumps({
+            "log_type": "api_access",
+            "applicationId": application_id,
+            "memberId": member_id,
+            "path": path,
+            "httpMethod": method,
+            "timestamp": datetime.now().isoformat()
+        }))
+
         headers = {
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Headers': 'Content-Type,applicationId,memberId,password',
-            'Access-Control-Allow-Methods': 'OPTIONS,GET,POST,DELETE',
+            'Access-Control-Allow-Methods': 'OPTIONS,GET,POST,DELETE,PUT',
         }
 
         if method == 'OPTIONS':
@@ -78,6 +90,9 @@ def lambda_handler(event, context):
         elif method == 'GET' and path.startswith('/calendar'):
             import api_calendar
             return {**headers, **api_calendar.get_calendar(event, context)}
+        elif method == 'GET' and path == '/monitoring/stats':
+            import api_monitoring
+            return {**headers, **api_monitoring.handle_monitoring(event, context)}
         else:
             error_handler.handle_error(event, context)
             print(f'❌ Unknown API route: {method} {path}')
