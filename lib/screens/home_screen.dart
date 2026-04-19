@@ -480,7 +480,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                     if (kIsWeb)
                       IconButton(
                         icon: const Icon(Icons.refresh, size: 20),
-                        tooltip: 'App hart neu laden',
+                        tooltip: 'App neu laden',
                         onPressed: () => _jsHardReload(),
                       ),
                   ],

@@ -55,7 +55,12 @@
     } catch (e) {
       console.error('Hard reload failed:', e);
     }
-    window.location.replace(window.location.origin + '/');
+    // Wait a brief moment to ensure cache deletion and unregistration are processed
+    setTimeout(() => {
+      // Use window.location.reload() to force a browser reload.
+      // This avoids the Flutter router intercepting a URL change.
+      window.location.reload();
+    }, 200);
   };
 </script>
 <script src="flutter_bootstrap.js" async></script>
