@@ -52,16 +52,15 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       StartupTimer.instance.mark('first_frame');
     });
-    _updateApplication();
     _allAccounts = loadAllAccounts();
     _activeAccountIndex = getActiveAccountIndex();
 
     if (kIsWeb) {
       Future.wait([
         widget.config.member.fetchMember().then((_) {
+          if (!mounted) return Future.value();
           StartupTimer.instance.mark('fetch_member');
-          if (!mounted) return;
-          widget.config.member.registerPushSubscriptionWeb();
+          return widget.config.member.registerPushSubscriptionWeb();
         }),
         _updateApplication().then((_) {
           StartupTimer.instance.mark('get_customer');
@@ -173,8 +172,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   }
 
   Future<void> _updateApplication() async {
-    CustomersApi customersApi = CustomersApi(widget.config);
-    return customersApi.getCustomer(widget.config.applicationId).then((customer) {
+    try {
+      CustomersApi customersApi = CustomersApi(widget.config);
+      final customer = await customersApi.getCustomer(widget.config.applicationId);
       setState(() {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
@@ -184,9 +184,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         }
       });
       updateActiveAccountLabel(customer['application_name'] as String? ?? '');
-    }).catchError((error) {
+    } catch (error) {
       showError("Fehler beim Laden des Vereins: $error");
-    });
+    }
   }
 
   bool _isScreenActive(String key) {
