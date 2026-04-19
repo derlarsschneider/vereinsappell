@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 
 def _build_name_maps(app_ids):
-    from boto3.dynamodb.conditions import Key as DKey
     dynamodb = boto3.resource('dynamodb')
 
     club_table = dynamodb.Table(os.environ.get('CUSTOMERS_TABLE_NAME', ''))
@@ -17,7 +16,7 @@ def _build_name_maps(app_ids):
     member_table = dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
     member_resp = member_table.scan(ProjectionExpression='memberId, name')
     member_names = {c['memberId']: c.get('name', c['memberId'])
-                  for c in set(member_resp.get('Items', []))}
+                  for c in member_resp.get('Items', [])}
 
     return club_names, member_names
 
@@ -209,8 +208,8 @@ def handle_startup_stats(event, context):
     else:
         start_time = now - timedelta(days=1)
 
-    start_timestamp = int(start_time.timestamp() * 1000)
-    end_timestamp = int(now.timestamp() * 1000)
+    start_timestamp = int(start_time.timestamp())
+    end_timestamp = int(now.timestamp())
 
     per_member_query = """
     fields memberId, applicationId, total_ms
