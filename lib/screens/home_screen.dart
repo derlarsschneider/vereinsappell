@@ -9,6 +9,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:vereinsappell/screens/schere_stein_papier_screen.dart';
 import 'package:vereinsappell/screens/spiess_screen.dart';
@@ -40,6 +41,8 @@ class HomeScreen extends DefaultScreen {
 class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationName = "Vereins Appell";
   String _applicationLogoBase64 = "";
+  String _donationGoal = "";
+  String _paypalAccount = "";
   List<String>? _activeScreens; // null = show all (backwards compatible)
   StreamSubscription? _messageSubscription;
   List<AppConfig> _allAccounts = [];
@@ -164,6 +167,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       setState(() {
         _applicationName = customer['application_name'] ?? "... Lädt...";
         _applicationLogoBase64 = customer['application_logo'] ?? '';
+        _donationGoal = customer['donation_goal'] ?? '';
+        _paypalAccount = customer['paypal_account'] ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
           _activeScreens = List<String>.from(screens);
@@ -237,6 +242,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            if (_donationGoal.isNotEmpty) _buildDonationGoalCard(),
             if (member.isActive || member.isSuperAdmin) ...[
               _buildGridMenu(context, member),
               const SizedBox(height: 16),
@@ -247,20 +253,16 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Spenden'),
-              content: const Text('Vielen Dank für dein Interesse! Diese Funktion wird bald verfügbar sein.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Schließen'),
-                ),
-              ],
-            ),
-          );
+        onPressed: () async {
+          final Uri url = Uri.parse(
+              'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=$_paypalAccount&item_name=Spende%20(Freunde%20und%20Familie)&currency_code=EUR');
+          try {
+            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+              showError('PayPal konnte nicht geöffnet werden');
+            }
+          } catch (e) {
+            showError('Fehler beim Öffnen von PayPal: $e');
+          }
         },
         backgroundColor: Colors.pinkAccent,
         tooltip: 'Spenden',
@@ -528,6 +530,49 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDonationGoalCard() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Card(
+        elevation: 4,
+        color: Colors.pink.shade50,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Row(
+            children: [
+              const Icon(Icons.stars, color: Colors.pinkAccent, size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Unser Spendenziel',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.pink,
+                      ),
+                    ),
+                    Text(
+                      _donationGoal,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
