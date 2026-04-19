@@ -15,6 +15,7 @@ import 'package:vereinsappell/screens/spiess_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
 
 import '../api/customers_api.dart';
+import '../utils/startup_timer.dart';
 import '../config_loader.dart';
 import '../version.dart';
 import '../widgets/pig_overlay.dart';
@@ -48,14 +49,25 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StartupTimer.instance.mark('first_frame');
+    });
     _updateApplication();
     _allAccounts = loadAllAccounts();
     _activeAccountIndex = getActiveAccountIndex();
 
     if (kIsWeb) {
-      widget.config.member.fetchMember().then((_) {
+      Future.wait([
+        widget.config.member.fetchMember().then((_) {
+          StartupTimer.instance.mark('fetch_member');
+          if (!mounted) return;
+          widget.config.member.registerPushSubscriptionWeb();
+        }),
+        _updateApplication().then((_) {
+          StartupTimer.instance.mark('get_customer');
+        }),
+      ]).then((_) {
         if (!mounted) return;
-        widget.config.member.registerPushSubscriptionWeb();
         _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           showNotification('${message.data['title']}: ${message.data['body']}');
           if (message.data['type'] == 'fine') {
@@ -64,8 +76,10 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             showPigOverlay(context);
           }
         });
+        StartupTimer.instance.send(widget.config);
       }).catchError((e) {
         if (mounted) showError('Fehler beim Laden der Mitgliedsdaten: $e');
+        StartupTimer.instance.send(widget.config);
       });
     }
   }
@@ -158,9 +172,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     );
   }
 
-  void _updateApplication() {
+  Future<void> _updateApplication() async {
     CustomersApi customersApi = CustomersApi(widget.config);
-    customersApi.getCustomer(widget.config.applicationId).then((customer) {
+    return customersApi.getCustomer(widget.config.applicationId).then((customer) {
       setState(() {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
