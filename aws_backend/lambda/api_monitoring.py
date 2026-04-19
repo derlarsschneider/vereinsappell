@@ -180,6 +180,16 @@ def handle_timing(event, context):
         }
 
 
+def _wait_for_query(logs, query_id):
+    response = None
+    for _ in range(10):
+        response = logs.get_query_results(queryId=query_id)
+        if response['status'] in ['Complete', 'Failed', 'Cancelled']:
+            break
+        time.sleep(0.5)
+    return response
+
+
 def handle_startup_stats(event, context):
     params = event.get('queryStringParameters') or {}
     timeframe = params.get('timeframe', 'day')
@@ -202,38 +212,52 @@ def handle_startup_stats(event, context):
     start_timestamp = int(start_time.timestamp() * 1000)
     end_timestamp = int(now.timestamp() * 1000)
 
-    query = """
+    per_member_query = """
     fields memberId, applicationId, total_ms
     | filter log_type = "startup_timing"
     | stats pct(total_ms, 50) as p50, pct(total_ms, 95) as p95, pct(total_ms, 99) as p99, count() as count by memberId, applicationId
     """
 
+    phase_query = """
+    fields firebase_ms, config_ms, first_frame_ms, fetch_member_ms, get_customer_ms, total_ms
+    | filter log_type = "startup_timing"
+    | stats
+        pct(firebase_ms, 50) as firebase_p50, pct(firebase_ms, 95) as firebase_p95, pct(firebase_ms, 99) as firebase_p99,
+        pct(config_ms, 50) as config_p50, pct(config_ms, 95) as config_p95, pct(config_ms, 99) as config_p99,
+        pct(first_frame_ms, 50) as first_frame_p50, pct(first_frame_ms, 95) as first_frame_p95, pct(first_frame_ms, 99) as first_frame_p99,
+        pct(fetch_member_ms, 50) as fetch_member_p50, pct(fetch_member_ms, 95) as fetch_member_p95, pct(fetch_member_ms, 99) as fetch_member_p99,
+        pct(get_customer_ms, 50) as get_customer_p50, pct(get_customer_ms, 95) as get_customer_p95, pct(get_customer_ms, 99) as get_customer_p99,
+        pct(total_ms, 50) as total_p50, pct(total_ms, 95) as total_p95, pct(total_ms, 99) as total_p99,
+        count() as count
+    """
+
     try:
-        start_query_response = logs.start_query(
+        per_member_id = logs.start_query(
             logGroupName=log_group_name,
             startTime=start_timestamp,
             endTime=end_timestamp,
-            queryString=query,
+            queryString=per_member_query,
             limit=1000
-        )
+        )['queryId']
 
-        query_id = start_query_response['queryId']
-        response = None
+        phase_id = logs.start_query(
+            logGroupName=log_group_name,
+            startTime=start_timestamp,
+            endTime=end_timestamp,
+            queryString=phase_query,
+            limit=1
+        )['queryId']
 
-        for _ in range(10):
-            response = logs.get_query_results(queryId=query_id)
-            if response['status'] in ['Complete', 'Failed', 'Cancelled']:
-                break
-            time.sleep(0.5)
+        per_member_resp = _wait_for_query(logs, per_member_id)
+        phase_resp = _wait_for_query(logs, phase_id)
 
-        if response['status'] != 'Complete':
-            return {
-                'statusCode': 500,
-                'body': json.dumps({'error': f'Query failed: {response["status"]}'})
-            }
+        if per_member_resp['status'] != 'Complete':
+            return {'statusCode': 500, 'body': json.dumps({'error': f'Per-member query failed: {per_member_resp["status"]}'})}
+        if phase_resp['status'] != 'Complete':
+            return {'statusCode': 500, 'body': json.dumps({'error': f'Phase query failed: {phase_resp["status"]}'})}
 
         startup_stats = []
-        for row in response['results']:
+        for row in per_member_resp['results']:
             stat = {}
             for item in row:
                 field = item['field']
@@ -253,10 +277,32 @@ def handle_startup_stats(event, context):
             stat['clubName'] = club_names.get(stat.get('applicationId', ''), stat.get('applicationId', ''))
             stat['memberName'] = member_names.get(stat.get('memberId', ''), stat.get('memberId', ''))
 
+        phase_stats = {}
+        if phase_resp['results']:
+            int_fields = {
+                'firebase_p50', 'firebase_p95', 'firebase_p99',
+                'config_p50', 'config_p95', 'config_p99',
+                'first_frame_p50', 'first_frame_p95', 'first_frame_p99',
+                'fetch_member_p50', 'fetch_member_p95', 'fetch_member_p99',
+                'get_customer_p50', 'get_customer_p95', 'get_customer_p99',
+                'total_p50', 'total_p95', 'total_p99', 'count',
+            }
+            for item in phase_resp['results'][0]:
+                field = item['field']
+                value = item['value']
+                if field in int_fields:
+                    try:
+                        phase_stats[field] = int(value) if value else 0
+                    except:
+                        phase_stats[field] = value
+                else:
+                    phase_stats[field] = value
+
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'startup_stats': startup_stats,
+                'phase_stats': phase_stats,
                 'timeframe': timeframe
             })
         }

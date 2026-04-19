@@ -85,6 +85,8 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                     _buildMemberChart(),
                     const SizedBox(height: 16),
                   ],
+                  _buildPhaseBreakdown(),
+                  const SizedBox(height: 16),
                   _buildStartupTable(),
                 ],
               ),
@@ -308,6 +310,101 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                 '← Anzahl Aufrufe →',
                 style: TextStyle(fontSize: 10, color: Colors.grey),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhaseBreakdown() {
+    final ps = _startupStats?['phase_stats'] as Map?;
+    if (ps == null || ps.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final phases = [
+      ('Firebase Init', 'firebase'),
+      ('Config Load', 'config'),
+      ('First Frame', 'first_frame'),
+      ('Fetch Member', 'fetch_member'),
+      ('Get Customer', 'get_customer'),
+      ('Total', 'total'),
+    ];
+
+    int? maxP50 = phases
+        .map((p) => ps['${p.$2}_p50'] as int? ?? 0)
+        .reduce((a, b) => a > b ? a : b);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Startup-Phasen (ms)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text('Kumulativ ab App-Start', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(3),
+                1: FlexColumnWidth(1),
+                2: FlexColumnWidth(1),
+                3: FlexColumnWidth(1),
+              },
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                  children: ['Phase', 'p50', 'p95', 'p99']
+                      .map((h) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(h,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: Colors.grey)),
+                          ))
+                      .toList(),
+                ),
+                ...phases.map((phase) {
+                  final p50 = ps['${phase.$2}_p50'] as int? ?? 0;
+                  final p95 = ps['${phase.$2}_p95'] as int? ?? 0;
+                  final p99 = ps['${phase.$2}_p99'] as int? ?? 0;
+                  final isSlowest = phase.$2 != 'total' && p50 == maxP50;
+                  return TableRow(children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        phase.$1,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSlowest ? FontWeight.bold : FontWeight.normal,
+                          color: isSlowest ? Colors.red : null,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('$p50',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: isSlowest ? Colors.red : Colors.green,
+                              fontWeight: isSlowest ? FontWeight.bold : FontWeight.normal)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('$p95', style: const TextStyle(fontSize: 11, color: Colors.orange)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('$p99', style: const TextStyle(fontSize: 11, color: Colors.red)),
+                    ),
+                  ]);
+                }),
+              ],
             ),
           ],
         ),
