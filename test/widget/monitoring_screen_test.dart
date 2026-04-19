@@ -16,16 +16,16 @@ Map<String, dynamic> _statsPayload({
 }) =>
     {
       'calls_per_club': callsPerClub ?? [
-        {'applicationId': 'TZG', 'count': 100},
-        {'applicationId': 'BSV', 'count': 50},
+        {'applicationId': 'TZG', 'clubName': 'Turnzug Glarus', 'count': 100},
+        {'applicationId': 'BSV', 'clubName': 'Bogensport Verein', 'count': 50},
       ],
       'calls_per_endpoint': callsPerEndpoint ?? [
-        {'applicationId': 'TZG', 'path': '/members', 'count': 60},
-        {'applicationId': 'BSV', 'path': '/members', 'count': 20},
+        {'applicationId': 'TZG', 'clubName': 'Turnzug Glarus', 'path': '/members', 'count': 60},
+        {'applicationId': 'BSV', 'clubName': 'Bogensport Verein', 'path': '/members', 'count': 20},
       ],
       'calls_per_member': callsPerMember ?? [
-        {'applicationId': 'TZG', 'memberId': 'm1', 'count': 80},
-        {'applicationId': 'BSV', 'memberId': 'm2', 'count': 30},
+        {'applicationId': 'TZG', 'clubName': 'Turnzug Glarus', 'memberId': 'm1', 'memberName': 'Max Mustermann', 'count': 80},
+        {'applicationId': 'BSV', 'clubName': 'Bogensport Verein', 'memberId': 'm2', 'memberName': 'Moritz Müller', 'count': 30},
       ],
       'active_members': [],
       'timeframe': 'day',
@@ -33,7 +33,16 @@ Map<String, dynamic> _statsPayload({
 
 Map<String, dynamic> _startupPayload() => {
       'startup_stats': [
-        {'applicationId': 'TZG', 'memberId': 'm1', 'p50': 312, 'p95': 580, 'p99': 920, 'count': 14},
+        {
+          'applicationId': 'TZG',
+          'clubName': 'Turnzug Glarus',
+          'memberId': 'm1',
+          'memberName': 'Max Mustermann',
+          'p50': 312,
+          'p95': 580,
+          'p99': 920,
+          'count': 14,
+        },
       ],
       'timeframe': 'day',
     };
@@ -43,7 +52,10 @@ Future<MonitoringApi> _makeApi(WidgetTester tester) async {
     if (request.url.path.contains('/monitoring/startup')) {
       return http.Response(jsonEncode(_startupPayload()), 200);
     }
-    return http.Response(jsonEncode(_statsPayload()), 200);
+    if (request.url.path.contains('/monitoring')) {
+      return http.Response(jsonEncode(_statsPayload()), 200);
+    }
+    return http.Response('{}', 200);
   });
   final config = await makeConfig(tester);
   return MonitoringApi(config, client: client);
@@ -88,7 +100,7 @@ void main() {
       expect(find.text('920'), findsOneWidget);
     });
 
-    testWidgets('calls per club chart shows club labels', (tester) async {
+    testWidgets('calls per club chart shows resolved club names', (tester) async {
       final api = await _makeApi(tester);
       final config = await makeConfig(tester);
       await tester.pumpWidget(
@@ -96,11 +108,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('TZG'), findsWidgets);
-      expect(find.text('BSV'), findsWidgets);
+      expect(find.text('Turnzug Glarus'), findsWidgets);
+      expect(find.text('Bogensport Verein'), findsWidgets);
     });
 
-    testWidgets('endpoint chart shows path labels', (tester) async {
+    testWidgets('endpoint chart shows path labels and resolved club name in subtitle', (tester) async {
       final api = await _makeApi(tester);
       final config = await makeConfig(tester);
       await tester.pumpWidget(
@@ -111,7 +123,7 @@ void main() {
       expect(find.text('/members'), findsWidgets);
     });
 
-    testWidgets('member chart shows member labels', (tester) async {
+    testWidgets('member chart shows resolved member names', (tester) async {
       final api = await _makeApi(tester);
       final config = await makeConfig(tester);
       await tester.pumpWidget(
@@ -119,11 +131,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('m1'), findsWidgets);
-      expect(find.text('m2'), findsWidgets);
+      expect(find.text('Max Mustermann'), findsWidgets);
+      expect(find.text('Moritz Müller'), findsWidgets);
     });
 
-    testWidgets('club filter dropdown contains all club options', (tester) async {
+    testWidgets('club filter dropdown contains resolved club names', (tester) async {
       final api = await _makeApi(tester);
       final config = await makeConfig(tester);
       await tester.pumpWidget(
@@ -131,12 +143,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Open the dropdown
       await tester.tap(find.text('Alle Vereine').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('TZG'), findsWidgets);
-      expect(find.text('BSV'), findsWidgets);
+      expect(find.text('Turnzug Glarus'), findsWidgets);
+      expect(find.text('Bogensport Verein'), findsWidgets);
     });
 
     testWidgets('old active members expansion tiles are gone', (tester) async {

@@ -4,6 +4,24 @@ import os
 import time
 from datetime import datetime, timedelta
 
+
+def _build_name_maps(app_ids):
+    from boto3.dynamodb.conditions import Key as DKey
+    dynamodb = boto3.resource('dynamodb')
+
+    club_table = dynamodb.Table(os.environ.get('CUSTOMERS_TABLE_NAME', ''))
+    club_resp = club_table.scan(ProjectionExpression='application_id, application_name')
+    club_names = {c['application_id']: c.get('application_name', c['application_id'])
+                  for c in club_resp.get('Items', [])}
+
+    member_table = dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+    member_resp = member_table.scan(ProjectionExpression='memberId, name')
+    member_names = {c['memberId']: c.get('name', c['memberId'])
+                  for c in set(member_resp.get('Items', []))}
+
+    return club_names, member_names
+
+
 def handle_monitoring(event, context):
     params = event.get('queryStringParameters') or {}
     timeframe = params.get('timeframe', 'day')
@@ -88,16 +106,29 @@ def handle_monitoring(event, context):
             mem_key = (app_id, mem_id)
             calls_per_member[mem_key] = calls_per_member.get(mem_key, 0) + 1
 
+        app_ids = set(calls_per_club.keys())
+        club_names, member_names = _build_name_maps(app_ids)
+
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'calls_per_club': [{'applicationId': k, 'count': v} for k, v in calls_per_club.items()],
+                'calls_per_club': [
+                    {'applicationId': k, 'clubName': club_names.get(k, k), 'count': v}
+                    for k, v in calls_per_club.items()
+                ],
                 'active_members': [
                     {'applicationId': app_id, 'members': [{'memberId': k, 'activity': v} for k, v in mems.items()]}
                     for app_id, mems in active_members.items()
                 ],
-                'calls_per_endpoint': [{'applicationId': k[0], 'path': k[1], 'count': v} for k, v in calls_per_endpoint.items()],
-                'calls_per_member':   [{'applicationId': k[0], 'memberId': k[1], 'count': v} for k, v in calls_per_member.items()],
+                'calls_per_endpoint': [
+                    {'applicationId': k[0], 'clubName': club_names.get(k[0], k[0]), 'path': k[1], 'count': v}
+                    for k, v in calls_per_endpoint.items()
+                ],
+                'calls_per_member': [
+                    {'applicationId': k[0], 'clubName': club_names.get(k[0], k[0]),
+                     'memberId': k[1], 'memberName': member_names.get(k[1], k[1]), 'count': v}
+                    for k, v in calls_per_member.items()
+                ],
                 'timeframe': timeframe,
             })
         }
@@ -215,6 +246,12 @@ def handle_startup_stats(event, context):
                 else:
                     stat[field] = value
             startup_stats.append(stat)
+
+        app_ids = {s.get('applicationId', '') for s in startup_stats if s.get('applicationId')}
+        club_names, member_names = _build_name_maps(app_ids)
+        for stat in startup_stats:
+            stat['clubName'] = club_names.get(stat.get('applicationId', ''), stat.get('applicationId', ''))
+            stat['memberName'] = member_names.get(stat.get('memberId', ''), stat.get('memberId', ''))
 
         return {
             'statusCode': 200,

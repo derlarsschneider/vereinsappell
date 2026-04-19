@@ -6,8 +6,11 @@ import 'default_screen.dart';
 class MonitoringScreen extends DefaultScreen {
   final MonitoringApi? monitoringApi;
 
-  const MonitoringScreen({super.key, required super.config, this.monitoringApi})
-      : super(title: 'Monitoring');
+  const MonitoringScreen({
+    super.key,
+    required super.config,
+    this.monitoringApi,
+  }) : super(title: 'Monitoring');
 
   @override
   DefaultScreenState<MonitoringScreen> createState() => _MonitoringScreenState();
@@ -18,7 +21,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   Map<String, dynamic>? _stats;
   Map<String, dynamic>? _startupStats;
   String _timeframe = 'day';
-  String? _selectedClub; // null = all clubs
+  String? _selectedClub;
 
   @override
   void initState() {
@@ -41,6 +44,12 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
       showError('Fehler beim Laden: $e');
       setState(() => isLoading = false);
     }
+  }
+
+  String _clubName(String appId) {
+    final clubs = _stats?['calls_per_club'] as List? ?? [];
+    final match = clubs.cast<Map>().where((c) => c['applicationId'] == appId).firstOrNull;
+    return match?['clubName'] as String? ?? appId;
   }
 
   @override
@@ -100,10 +109,8 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   }
 
   Widget _buildClubFilter() {
-    final clubs = (_stats?['calls_per_club'] as List? ?? [])
-        .map((e) => (e as Map)['applicationId'] as String)
-        .toList()
-      ..sort();
+    final clubs = (_stats?['calls_per_club'] as List? ?? []).cast<Map>().toList()
+      ..sort((a, b) => (a['applicationId'] as String).compareTo(b['applicationId'] as String));
 
     return DropdownButtonFormField<String?>(
       value: _selectedClub,
@@ -114,7 +121,10 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
       ),
       items: [
         const DropdownMenuItem<String?>(value: null, child: Text('Alle Vereine')),
-        ...clubs.map((c) => DropdownMenuItem<String?>(value: c, child: Text(c))),
+        ...clubs.map((c) => DropdownMenuItem<String?>(
+              value: c['applicationId'] as String,
+              child: Text(c['clubName'] as String? ?? c['applicationId'] as String),
+            )),
       ],
       onChanged: (value) => setState(() => _selectedClub = value),
     );
@@ -137,7 +147,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
 
     return _buildHorizontalBarChart(
       title: 'API Calls pro Endpunkt',
-      subtitle: _selectedClub == null ? '(Alle Vereine)' : '($_selectedClub)',
+      subtitle: _selectedClub == null ? '(Alle Vereine)' : '(${_clubName(_selectedClub!)})',
       entries: entries,
       barColor: Colors.purple,
     );
@@ -151,19 +161,17 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
 
     final counts = <String, int>{};
     for (final item in filtered) {
-      final memberId = (item as Map)['memberId'] as String? ?? 'unknown';
+      final name = (item as Map)['memberName'] as String? ?? item['memberId'] as String? ?? 'unknown';
       final count = (item['count'] as int?) ?? 0;
-      counts[memberId] = (counts[memberId] ?? 0) + count;
+      counts[name] = (counts[name] ?? 0) + count;
     }
 
     final entries = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
-    // Limit to top 15 for readability
     final topEntries = entries.take(15).toList();
 
     return _buildHorizontalBarChart(
       title: 'Top Mitglieder (Requests)',
-      subtitle: _selectedClub == null ? '(Alle Vereine)' : '($_selectedClub)',
+      subtitle: _selectedClub == null ? '(Alle Vereine)' : '(${_clubName(_selectedClub!)})',
       entries: topEntries,
       barColor: Colors.orange,
     );
@@ -218,7 +226,10 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   Widget _buildClubChart() {
     final clubs = _stats?['calls_per_club'] as List? ?? [];
     final entries = clubs
-        .map((e) => MapEntry((e as Map)['applicationId'] as String, e['count'] as int))
+        .map((e) => MapEntry(
+              (e as Map)['clubName'] as String? ?? e['applicationId'] as String,
+              e['count'] as int,
+            ))
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
@@ -350,11 +361,11 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                 ),
                 ...rows.map((row) {
                   final r = row as Map;
+                  final name = r['memberName'] as String? ?? r['memberId'] as String? ?? '';
                   return TableRow(children: [
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(r['memberId'] as String? ?? '',
-                            style: const TextStyle(fontSize: 11))),
+                        child: Text(name, style: const TextStyle(fontSize: 11))),
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text('${r['p50'] ?? '—'}',
