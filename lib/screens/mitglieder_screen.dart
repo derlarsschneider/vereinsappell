@@ -1,5 +1,6 @@
 // lib/screens/mitglieder_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
 import 'package:vereinsappell/api/members_api.dart';
@@ -253,10 +254,16 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
             Text('QR Code:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Center(
-              child: QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 180.0,
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: qrData));
+                  showInfo('QR-Code Inhalt in Zwischenablage kopiert');
+                },
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 180.0,
+                ),
               ),
             ),
 
