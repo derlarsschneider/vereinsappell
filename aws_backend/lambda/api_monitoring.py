@@ -128,7 +128,7 @@ def handle_timing(event, context):
             "fetch_member_ms": phases.get('fetch_member_ms', 0),
             "get_customer_ms": phases.get('get_customer_ms', 0),
             "total_ms": total_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.utcnow().isoformat()
         }))
 
         return {

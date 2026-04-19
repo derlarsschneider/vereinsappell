@@ -62,7 +62,7 @@ class StartupTimer {
     return {
       'applicationId': applicationId,
       'memberId': memberId,
-      'phases': Map.from(_phases),
+      'phases': Map.from(_phases).map((k, v) => MapEntry('${k}_ms', v)),
       'totalMs': totalMs,
     };
   }
@@ -81,7 +81,7 @@ class StartupTimer {
       );
       await api.sendStartupTiming(payload);
       if (kDebugMode) {
-        print('📊 Startup timing sent: ${payload['total_ms']}ms');
+        print('📊 Startup timing sent: ${payload['totalMs']}ms');
       }
     } catch (e) {
       if (kDebugMode) {
