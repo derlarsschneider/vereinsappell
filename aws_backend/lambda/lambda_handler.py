@@ -71,6 +71,10 @@ def lambda_handler(event, context):
             return {**headers, **delete_fine(event, application_id)}
         elif method == 'GET' and path == '/marschbefehl':
             return {**headers, **get_marschbefehl(event, application_id)}
+        elif method == 'POST' and path == '/marschbefehl':
+            return {**headers, **add_marschbefehl(event, application_id)}
+        elif method == 'DELETE' and path == '/marschbefehl':
+            return {**headers, **delete_marschbefehl(event, application_id)}
         elif method == 'GET' and path.startswith('/photos'):
             return {**headers, **get_photos(event, application_id)}
         elif method == 'POST' and path.startswith('/photos'):
@@ -202,6 +206,29 @@ def get_marschbefehl(event, application_id):
         items.extend(response['Items'])
 
     return {'statusCode': 200, 'body': json.dumps(items)}
+
+
+def add_marschbefehl(event, application_id):
+    data = json.loads(event['body'])
+    item = {
+        'applicationId': application_id,
+        'datetime': data['datetime'],
+        'text': data['text'],
+    }
+    marschbefehl_table.put_item(Item=item)
+    return {'statusCode': 200, 'body': json.dumps({'message': 'Marschbefehl gespeichert'})}
+
+
+def delete_marschbefehl(event, application_id):
+    params = event.get('queryStringParameters') or {}
+    datetime_val = params.get('datetime')
+    if not datetime_val:
+        return {'statusCode': 400, 'body': json.dumps({'error': 'datetime fehlt'})}
+
+    marschbefehl_table.delete_item(
+        Key={'applicationId': application_id, 'datetime': datetime_val}
+    )
+    return {'statusCode': 200, 'body': json.dumps({'message': 'Marschbefehl gelöscht'})}
 
 
 def get_photos(event, application_id):
