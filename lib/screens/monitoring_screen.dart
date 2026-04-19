@@ -262,17 +262,18 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      SizedBox(
-                        width: 80,
+                      Expanded(
+                        flex: 1,
                         child: Text(
                           e.key,
-                          style: const TextStyle(fontSize: 11),
-                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 10),
+                          textAlign: TextAlign.left,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
+                        flex: 1,
                         child: LinearProgressIndicator(
                           value: maxCount > 0 ? e.value / maxCount : 0,
                           backgroundColor: Colors.grey.withOpacity(0.2),
@@ -282,9 +283,10 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                       ),
                       const SizedBox(width: 8),
                       SizedBox(
-                        width: 36,
+                        width: 40,
                         child: Text('${e.value}',
-                            style: const TextStyle(fontSize: 11), textAlign: TextAlign.right),
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.right),
                       ),
                     ],
                   ),
@@ -327,7 +329,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
             const SizedBox(height: 12),
             Table(
               columnWidths: const {
-                0: FlexColumnWidth(2),
+                0: FlexColumnWidth(4),
                 1: FlexColumnWidth(1),
                 2: FlexColumnWidth(1),
                 3: FlexColumnWidth(1),
