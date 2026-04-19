@@ -6,13 +6,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JSON_FILE="${SCRIPT_DIR}/marschbefehl2026.json"
 TABLE_NAME="vereins-app-beta-marschbefehl"
 ITEM_FILE="${SCRIPT_DIR}/temp_item.json"
+APPLICATION_ID="dac83a80-5e87-406d-b24f-43b190a2e83f"
 
 function add_marschbefehl() {
+    datetime="${1}" && shift
+    text="${1}" && shift
+
     jq -nc \
-       --arg type "marschbefehl" \
-       --arg datetime "$1" \
-       --arg text "$2" \
-       '{type: {S: $type}, datetime: {S: $datetime}, text: {S: $text}}' | tee "$ITEM_FILE"
+      --arg applicationId "${APPLICATION_ID}" \
+      --arg type "marschbefehl" \
+      --arg datetime "${datetime}" \
+      --arg text "${text}" \
+      '{applicationId: {S: $applicationId}, type: {S: $type}, datetime: {S: $datetime}, text: {S: $text}}' | tee "$ITEM_FILE"
 
     aws dynamodb put-item \
         --table-name "$TABLE_NAME" \
