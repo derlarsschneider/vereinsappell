@@ -486,7 +486,13 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                       IconButton(
                         icon: const Icon(Icons.refresh, size: 20),
                         tooltip: 'App hart neu laden',
-                        onPressed: () => _jsHardReload(),
+                        onPressed: () async {
+                          try {
+                            await _jsHardReload().toDart;
+                          } catch (e) {
+                            showError('Fehler beim Neuladen: $e');
+                          }
+                        },
                       ),
                   ],
                 ),
