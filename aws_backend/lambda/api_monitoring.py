@@ -14,12 +14,20 @@ def _build_name_maps(app_ids):
                   for c in club_resp.get('Items', [])}
 
     member_table = dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
-    member_resp = member_table.scan(
-        ProjectionExpression='memberId, #n',
-        ExpressionAttributeNames={'#n': 'name'},
-    )
-    member_names = {c['memberId']: c.get('name', c['memberId'])
-                  for c in member_resp.get('Items', [])}
+    member_names = {}
+    scan_kwargs = {
+        'ProjectionExpression': 'applicationId, memberId, #n',
+        'ExpressionAttributeNames': {'#n': 'name'},
+    }
+    while True:
+        member_resp = member_table.scan(**scan_kwargs)
+        for c in member_resp.get('Items', []):
+            key = (c['applicationId'], c['memberId'])
+            member_names[key] = c.get('name', c['memberId'])
+        last = member_resp.get('LastEvaluatedKey')
+        if not last:
+            break
+        scan_kwargs['ExclusiveStartKey'] = last
 
     return club_names, member_names
 
@@ -128,7 +136,7 @@ def handle_monitoring(event, context):
                 ],
                 'calls_per_member': [
                     {'applicationId': k[0], 'clubName': club_names.get(k[0], k[0]),
-                     'memberId': k[1], 'memberName': member_names.get(k[1], k[1]), 'count': v}
+                     'memberId': k[1], 'memberName': member_names.get((k[0], k[1]), k[1]), 'count': v}
                     for k, v in calls_per_member.items()
                 ],
                 'timeframe': timeframe,
@@ -277,7 +285,10 @@ def handle_startup_stats(event, context):
         club_names, member_names = _build_name_maps(app_ids)
         for stat in startup_stats:
             stat['clubName'] = club_names.get(stat.get('applicationId', ''), stat.get('applicationId', ''))
-            stat['memberName'] = member_names.get(stat.get('memberId', ''), stat.get('memberId', ''))
+            stat['memberName'] = member_names.get(
+                (stat.get('applicationId', ''), stat.get('memberId', '')),
+                stat.get('memberId', '')
+            )
 
         phase_stats = {}
         if phase_resp['results']:
