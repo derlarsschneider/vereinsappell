@@ -1,5 +1,4 @@
 import base64
-import decimal
 import json
 import os
 import uuid
@@ -8,13 +7,7 @@ from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from push_notifications import send_push_notification
-
-
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            return str(o)
-        return super().default(o)
+from utils import DecimalEncoder
 
 
 import error_handler

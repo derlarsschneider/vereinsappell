@@ -1,6 +1,7 @@
 import json
 import os
 import boto3
+from utils import DecimalEncoder
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -91,7 +92,7 @@ def get_member(application_id, member_id, all_details, cached_item=None):
         'isActive': item.get('isActive', True),
         'token': item.get('token', ''),
     }
-    return {'statusCode': 200, 'body': json.dumps(result)}
+    return {'statusCode': 200, 'body': json.dumps(result, cls=DecimalEncoder)}
 
 
 def list_members(application_id):
@@ -107,7 +108,7 @@ def list_members(application_id):
             ExclusiveStartKey=response['LastEvaluatedKey'],
         )
         items.extend(response['Items'])
-    return {'statusCode': 200, 'body': json.dumps(items)}
+    return {'statusCode': 200, 'body': json.dumps(items, cls=DecimalEncoder)}
 
 
 def update_own_token(data, application_id):
