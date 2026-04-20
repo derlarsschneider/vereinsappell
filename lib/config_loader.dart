@@ -242,6 +242,8 @@ class Member extends ChangeNotifier {
   bool _reminderEnabled = true;
   int _reminderHoursBefore = 24;
 
+  Future<void>? _prefetchFuture;
+
   Member({required this.config});
 
   // Getter
@@ -279,6 +281,12 @@ class Member extends ChangeNotifier {
 
   set reminderEnabled(bool v) => _reminderEnabled = v;
   set reminderHoursBefore(int v) => _reminderHoursBefore = v;
+
+  void prefetch() {
+    _prefetchFuture ??= fetchMember();
+  }
+
+  Future<void> ensureFetched() => _prefetchFuture ?? fetchMember();
 
   Future<void> fetchMember() async {
     final http.Response response;

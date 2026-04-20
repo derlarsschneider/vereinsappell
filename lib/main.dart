@@ -24,17 +24,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   StartupTimer.instance.mark('app_start');
 
-  if (kIsWeb) {
-    try {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
-          .timeout(const Duration(seconds: 10));
-      StartupTimer.instance.mark('firebase');
-    } catch (e) {
-      StartupTimer.instance.mark('firebase');
-      print('Firebase init failed: $e');
-    }
-  }
-
   bool debugging = false;
   try {
     if (debugging) {
@@ -63,6 +52,22 @@ void main() async {
 
   AppConfig? config = await loadConfig();
   StartupTimer.instance.mark('config');
+
+  // Kick off member fetch immediately — no Firebase dependency, overlaps with Firebase init.
+  if (config != null && kIsWeb) {
+    config.member.prefetch();
+  }
+
+  if (kIsWeb) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
+          .timeout(const Duration(seconds: 10));
+      StartupTimer.instance.mark('firebase');
+    } catch (e) {
+      StartupTimer.instance.mark('firebase');
+      print('Firebase init failed: $e');
+    }
+  }
 
   if (kIsWeb) {
     final url = Uri.base;

@@ -61,7 +61,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
     if (kIsWeb) {
       Future.wait([
-        widget.config.member.fetchMember().then((_) {
+        widget.config.member.ensureFetched().then((_) {
           if (!mounted) return Future.value();
           StartupTimer.instance.mark('fetch_member');
           return widget.config.member.registerPushSubscriptionWeb();
