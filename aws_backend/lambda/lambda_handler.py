@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
@@ -148,6 +149,8 @@ def add_fine(event, application_id):
     member_id = data['memberId']
     reason = data['reason']
     amount = data['amount']
+    now = datetime.now(ZoneInfo("Europe/Berlin"))
+    date = now.strftime("%Y-%m-%d %H:%M:%S")
     fine_id = str(uuid.uuid4())
 
     item = {
@@ -156,6 +159,7 @@ def add_fine(event, application_id):
         'fineId': fine_id,
         'reason': reason,
         'amount': amount,
+        'date': date,
     }
     fines_table.put_item(Item=item)
 

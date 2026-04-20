@@ -44,7 +44,7 @@ void main() {
         'name': 'Max',
         'fines': [
           {'fineId': 'f1', 'reason': 'Zu spät', 'amount': '5.00'},
-          {'fineId': 'f2', 'reason': 'Handy', 'amount': '10.00'},
+          {'fineId': 'f2', 'reason': 'Handy', 'amount': '10.00' , 'date': '2026-04-19 10:00:00'},
         ],
       };
       final client = MockClient((_) async => http.Response(jsonEncode(payload), 200));
@@ -55,8 +55,8 @@ void main() {
         wrapScreen(StrafenScreen(config: config, finesApi: api), config),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Zu spät'), findsOneWidget);
-      expect(find.text('Handy'), findsOneWidget);
+      expect(find.text('Zu spät ()'), findsOneWidget);
+      expect(find.text('Handy (2026-04-19 10:00:00)'), findsOneWidget);
       expect(find.textContaining('5.00'), findsWidgets);
     });
 

@@ -57,7 +57,7 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
   Widget _buildStrafeItem(dynamic strafe) {
     return ListTile(
       // leading: Icon(Icons.warning, color: Colors.red),
-      title: Text(strafe['reason'] ?? 'Unbekannter Grund'),
+      title: Text('${strafe['reason'] ?? 'Unbekannter Grund'} (${strafe['date'] ?? ''})'),
       subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €'),
     );
   }
