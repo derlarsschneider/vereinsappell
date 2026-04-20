@@ -41,14 +41,20 @@ def handle_members(event, context):
             cached = executing_member if is_myself else None
             return add_headers(get_member(application_id, member_id, False, cached), event=event)
     elif method == 'POST':
-        if not is_admin:
+        body_data = json.loads(event.get('body', '{}'))
+        posting_own_id = body_data.get('memberId') == executing_member_id
+        if not is_admin and not posting_own_id:
             return ERROR_403
-        return add_headers(add_member(event['body'], application_id), event=event)
+        if is_admin:
+            return add_headers(add_member(event['body'], application_id), event=event)
+        else:
+            return add_headers(update_own_token(body_data, application_id), event=event)
     elif method == 'DELETE':
         if not is_admin:
             return ERROR_403
         return add_headers(delete_member(application_id, member_id), event=event)
-
+    else:
+        return ERROR_403
 
 def add_headers(response, more_fields={}, event=None):
     origin = (event or {}).get('headers', {}).get('origin', 'https://vereinsappell.web.app')
@@ -102,6 +108,21 @@ def list_members(application_id):
         )
         items.extend(response['Items'])
     return {'statusCode': 200, 'body': json.dumps(items)}
+
+
+def update_own_token(data, application_id):
+    member_id = data['memberId']
+    members_table.update_item(
+        Key={'applicationId': application_id, 'memberId': member_id},
+        UpdateExpression='SET #token = :token, reminderEnabled = :reminderEnabled, reminderHoursBefore = :reminderHoursBefore',
+        ExpressionAttributeNames={'#token': 'token'},
+        ExpressionAttributeValues={
+            ':token': data.get('token', ''),
+            ':reminderEnabled': data.get('reminderEnabled', True),
+            ':reminderHoursBefore': data.get('reminderHoursBefore', 24),
+        },
+    )
+    return {'statusCode': 200, 'body': json.dumps({'memberId': member_id})}
 
 
 def add_member(body, application_id):
