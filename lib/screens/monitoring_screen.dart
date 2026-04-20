@@ -105,7 +105,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   Widget _buildTimeframeSelector() {
     return SegmentedButton<String>(
       segments: const [
-        ButtonSegment(value: 'minute', label: Text('Min')),
+        ButtonSegment(value: '15minutes', label: Text('15 Min')),
         ButtonSegment(value: 'hour', label: Text('Std')),
         ButtonSegment(value: 'day', label: Text('Tag')),
         ButtonSegment(value: 'week', label: Text('Woche')),

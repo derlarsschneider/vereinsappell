@@ -3,6 +3,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
+from utils import parse_timeframe
 
 
 def _build_name_maps(app_ids):
@@ -42,20 +43,8 @@ def handle_monitoring(event, context):
     
     # Calculate start time
     now = datetime.utcnow()
-    if timeframe == 'minute':
-        start_time = now - timedelta(minutes=1)
-    elif timeframe == 'hour':
-        start_time = now - timedelta(hours=1)
-    elif timeframe == 'day':
-        start_time = now - timedelta(days=1)
-    elif timeframe == 'week':
-        start_time = now - timedelta(weeks=1)
-    elif timeframe == 'month':
-        start_time = now - timedelta(days=30)
-    elif timeframe == 'year':
-        start_time = now - timedelta(days=365)
-    else:
-        start_time = now - timedelta(days=1)
+    delta = parse_timeframe(timeframe)
+    start_time = now - delta
 
     start_timestamp = int(start_time.timestamp())
     end_timestamp = int(now.timestamp())
@@ -208,16 +197,8 @@ def handle_startup_stats(event, context):
     log_group_name = os.environ.get('LAMBDA_LOG_GROUP_NAME') or context.log_group_name
 
     now = datetime.utcnow()
-    if timeframe == 'minute':
-        start_time = now - timedelta(minutes=1)
-    elif timeframe == 'hour':
-        start_time = now - timedelta(hours=1)
-    elif timeframe == 'day':
-        start_time = now - timedelta(days=1)
-    elif timeframe == 'week':
-        start_time = now - timedelta(weeks=1)
-    else:
-        start_time = now - timedelta(days=1)
+    delta = parse_timeframe(timeframe)
+    start_time = now - delta
 
     start_timestamp = int(start_time.timestamp())
     end_timestamp = int(now.timestamp())
