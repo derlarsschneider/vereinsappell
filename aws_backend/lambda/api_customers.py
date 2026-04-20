@@ -74,6 +74,7 @@ def create_customer(event):
     application_logo = body.get('application_logo', '')
     active_screens = body.get('active_screens', ALL_SCREEN_KEYS)
     requesting_member_id = event.get('headers', {}).get('memberid', '')
+    requesting_member_name = f'Lars ({application_name})'
 
     item = {
         'application_id': application_id,
@@ -92,7 +93,7 @@ def create_customer(event):
             'isAdmin': True,
             'isSuperAdmin': True,
             'isActive': True,
-            'name': '',
+            'name': requesting_member_name,
         })
 
     return {
