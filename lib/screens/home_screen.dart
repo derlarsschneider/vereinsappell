@@ -352,12 +352,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         ],
       ),
       floatingActionButton: _paypalAccount.isNotEmpty
-          ? FloatingActionButton.extended(
-              onPressed: _openDonation,
-              icon: const Icon(Icons.volunteer_activism),
-              label: Text('Spenden'),
-              backgroundColor: Colors.blue.shade700,
-              foregroundColor: Colors.white,
+          ? GestureDetector(
+              onTap: _openDonation,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🍺', style: TextStyle(fontSize: 32)),
+                  const SizedBox(height: 2),
+                  Text('spenden',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                ],
+              ),
             )
           : null,
       body: SingleChildScrollView(
