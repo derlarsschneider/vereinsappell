@@ -52,6 +52,14 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     return match?['clubName'] as String? ?? appId;
   }
 
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return double.tryParse(value)?.toInt() ?? 0;
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +149,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     final counts = <String, int>{};
     for (final item in filtered) {
       final path = (item as Map)['path'] as String? ?? 'unknown';
-      final count = (item['count'] as int?) ?? 0;
+      final count = _toInt(item['count']);
       counts[path] = (counts[path] ?? 0) + count;
     }
 
@@ -164,7 +172,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     final counts = <String, int>{};
     for (final item in filtered) {
       final name = (item as Map)['memberName'] as String? ?? item['memberId'] as String? ?? 'unknown';
-      final count = (item['count'] as int?) ?? 0;
+      final count = _toInt(item['count']);
       counts[name] = (counts[name] ?? 0) + count;
     }
 
@@ -181,13 +189,13 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
 
   Widget _buildSummaryTiles() {
     final clubs = _stats?['calls_per_club'] as List? ?? [];
-    final totalCalls = clubs.fold<int>(0, (sum, e) => sum + ((e as Map)['count'] as int? ?? 0));
+    final totalCalls = clubs.fold<int>(0, (sum, e) => sum + _toInt((e as Map)['count']));
     final activeClubs = clubs.length;
 
     final startupList = _startupStats?['startup_stats'] as List? ?? [];
     final avgP50 = startupList.isEmpty
         ? null
-        : startupList.fold<int>(0, (sum, e) => sum + ((e as Map)['p50'] as int? ?? 0)) ~/
+        : startupList.fold<int>(0, (sum, e) => sum + _toInt((e as Map)['p50'])) ~/
             startupList.length;
 
     return Row(
@@ -230,7 +238,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     final entries = clubs
         .map((e) => MapEntry(
               (e as Map)['clubName'] as String? ?? e['applicationId'] as String,
-              e['count'] as int,
+              _toInt(e['count']),
             ))
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -333,7 +341,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     ];
 
     int? maxP50 = phases
-        .map((p) => ps['${p.$2}_p50'] as int? ?? 0)
+        .map((p) => _toInt(ps['${p.$2}_p50']))
         .reduce((a, b) => a > b ? a : b);
 
     return Card(
@@ -370,9 +378,9 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                       .toList(),
                 ),
                 ...phases.map((phase) {
-                  final p50 = ps['${phase.$2}_p50'] as int? ?? 0;
-                  final p95 = ps['${phase.$2}_p95'] as int? ?? 0;
-                  final p99 = ps['${phase.$2}_p99'] as int? ?? 0;
+                  final p50 = _toInt(ps['${phase.$2}_p50']);
+                  final p95 = _toInt(ps['${phase.$2}_p95']);
+                  final p99 = _toInt(ps['${phase.$2}_p99']);
                   final isSlowest = phase.$2 != 'total' && p50 == maxP50;
                   return TableRow(children: [
                     Padding(
@@ -424,7 +432,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     }
 
     final rows = (stats as List<dynamic>)
-      ..sort((a, b) => ((a as Map)['p50'] as int? ?? 0).compareTo((b as Map)['p50'] as int? ?? 0));
+      ..sort((a, b) => _toInt((a as Map)['p50']).compareTo(_toInt((b as Map)['p50'])));
 
     return Card(
       child: Padding(
