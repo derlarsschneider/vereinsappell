@@ -78,6 +78,10 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
 
   Future<void> saveMember() async {
     if (selectedMember == null) return;
+    if ((selectedMember!['name'] ?? '').trim().isEmpty) {
+      showError('Name darf nicht leer sein');
+      return;
+    }
     try {
       await api.saveMember(selectedMember!);
 
@@ -152,7 +156,8 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
               border: OutlineInputBorder(),
             ),
             onSubmitted: (value) {
-              createMember(value);
+              if (value.trim().isEmpty) return;
+              createMember(value.trim());
               _newNameController.clear();
             },
           ),
