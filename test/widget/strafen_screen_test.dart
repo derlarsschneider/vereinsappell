@@ -55,8 +55,8 @@ void main() {
         wrapScreen(StrafenScreen(config: config, finesApi: api), config),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Zu spät ()'), findsOneWidget);
-      expect(find.text('Handy (2026-04-19 10:00:00)'), findsOneWidget);
+      expect(find.text('Zu spät'), findsOneWidget);
+      expect(find.text('Handy (19.04. um 10:00)'), findsOneWidget);
       expect(find.textContaining('5.00'), findsWidgets);
     });
 

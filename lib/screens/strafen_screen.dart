@@ -1,6 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:vereinsappell/api/fines_api.dart';
 import 'dart:convert';
 
@@ -54,10 +55,23 @@ class _StrafenScreenState extends DefaultScreenState<StrafenScreen> {
     }
   }
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(raw.replaceFirst(' ', 'T'));
+      return DateFormat("dd.MM. 'um' HH:mm").format(dt);
+    } catch (_) {
+      return raw;
+    }
+  }
+
   Widget _buildStrafeItem(dynamic strafe) {
+    final formatted = _formatDate(strafe['date'] as String?);
     return ListTile(
       // leading: Icon(Icons.warning, color: Colors.red),
-      title: Text('${strafe['reason'] ?? 'Unbekannter Grund'} (${strafe['date'] ?? ''})'),
+      title: Text(formatted.isNotEmpty
+          ? '${strafe['reason'] ?? 'Unbekannter Grund'} ($formatted)'
+          : '${strafe['reason'] ?? 'Unbekannter Grund'}'),
       subtitle: Text('Betrag: ${strafe['amount'] ?? '-'} €'),
     );
   }
