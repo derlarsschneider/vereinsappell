@@ -37,6 +37,12 @@ class TestHandleMonitoringNewFields(unittest.TestCase):
         self.mock_logs.start_query.return_value = {'queryId': 'q1'}
         _boto3_mock.client.return_value = self.mock_logs
 
+        mock_table = MagicMock()
+        mock_table.scan.return_value = {'Items': []}
+        mock_dynamodb = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        _boto3_mock.resource.return_value = mock_dynamodb
+
     def test_calls_per_endpoint_aggregated_by_app_and_path(self):
         rows = [
             {'applicationId': 'TZG', 'memberId': 'm1', 'path': '/members'},
