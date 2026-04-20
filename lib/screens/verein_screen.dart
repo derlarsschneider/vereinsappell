@@ -323,8 +323,9 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _paypalAccountController,
+                    enabled: member.isSuperAdmin,
                     decoration: const InputDecoration(
-                      labelText: 'PayPal Konto (E-Mail)',
+                      labelText: 'PayPal Me',
                       helperText: 'Das PayPal-Konto für Spenden.',
                     ),
                   ),
