@@ -33,11 +33,13 @@ def handle_members(event, context):
         if path.endswith('/all'):
             if not is_admin:
                 return ERROR_403
-            return add_headers(get_member(application_id, member_id, True), event=event)
+            cached = executing_member if is_myself else None
+            return add_headers(get_member(application_id, member_id, True, cached), event=event)
         else:
             if not is_admin and not is_spiess and not is_myself:
                 return ERROR_403
-            return add_headers(get_member(application_id, member_id, False), event=event)
+            cached = executing_member if is_myself else None
+            return add_headers(get_member(application_id, member_id, False, cached), event=event)
     elif method == 'POST':
         if not is_admin:
             return ERROR_403
@@ -67,8 +69,8 @@ def _get_member_by_id(application_id, member_id):
     return response.get('Item')
 
 
-def get_member(application_id, member_id, all_details):
-    item = _get_member_by_id(application_id, member_id)
+def get_member(application_id, member_id, all_details, cached_item=None):
+    item = cached_item or _get_member_by_id(application_id, member_id)
     if not item:
         return {
             'statusCode': 404,

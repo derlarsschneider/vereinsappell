@@ -3,16 +3,17 @@ import os
 import uuid
 import boto3
 
+_dynamodb = boto3.resource('dynamodb')
+_customers_table = _dynamodb.Table(os.environ.get('CUSTOMERS_TABLE_NAME', ''))
+_members_table_ref = _dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+
+
 def table():
-    dynamodb = boto3.resource('dynamodb')
-    customers_table_name = os.environ.get('CUSTOMERS_TABLE_NAME')
-    customers_table = dynamodb.Table(customers_table_name)
-    return customers_table
+    return _customers_table
 
 
 def _members_table():
-    dynamodb = boto3.resource('dynamodb')
-    return dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+    return _members_table_ref
 
 
 ALL_SCREEN_KEYS = ['termine', 'marschbefehl', 'strafen', 'dokumente', 'galerie', 'schere_stein_papier']
