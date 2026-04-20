@@ -57,9 +57,9 @@
     }
     // Wait a brief moment to ensure cache deletion and unregistration are processed
     setTimeout(() => {
-      // Use window.location.reload() to force a browser reload.
-      // This avoids the Flutter router intercepting a URL change.
-      window.location.reload();
+      // Navigate to the origin without query params so startup doesn't
+      // re-apply URL-based account params and undo any account switch.
+      window.location.href = window.location.origin + '/';
     }, 200);
   };
 </script>
