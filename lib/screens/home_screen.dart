@@ -48,6 +48,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   StreamSubscription? _messageSubscription;
   List<AppConfig> _allAccounts = [];
   int _activeAccountIndex = 0;
+  List<Map<String, dynamic>> _allApiClubs = [];
 
   @override
   void initState() {
@@ -70,6 +71,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         }),
       ]).then((_) {
         if (!mounted) return;
+        if (widget.config.member.isSuperAdmin) {
+          _loadAllClubs();
+        }
         _messageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           showNotification('${message.data['title']}: ${message.data['body']}');
           if (message.data['type'] == 'fine') {
@@ -99,7 +103,30 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
     });
   }
 
+  Future<void> _loadAllClubs() async {
+    try {
+      final clubs = await CustomersApi(widget.config).listCustomers();
+      if (!mounted) return;
+      setState(() => _allApiClubs = clubs);
+    } catch (_) {}
+  }
+
+  void _switchToAccount(int index, BuildContext ctx) {
+    Navigator.pop(ctx);
+    if (index == _activeAccountIndex) return;
+    setActiveAccount(index);
+    if (kIsWeb) {
+      _jsHardReload();
+    } else {
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
   void _showAccountSwitcher() {
+    final useSuperAdminList =
+        widget.config.member.isSuperAdmin && _allApiClubs.isNotEmpty;
+
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => Column(
@@ -112,62 +139,124 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-          ..._allAccounts.asMap().entries.map((entry) {
-            final i = entry.key;
-            final account = entry.value;
-            final displayLabel =
-                account.label.isNotEmpty ? account.label : account.applicationId;
-            return ListTile(
-              title: Text(displayLabel),
-              leading: i == _activeAccountIndex
-                  ? const Icon(Icons.check, color: Colors.green)
-                  : null,
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx2) => AlertDialog(
-                      title: const Text('Account löschen'),
-                      content: Text('Möchtest du "$displayLabel" wirklich entfernen?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx2),
-                          child: const Text('Abbrechen'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(ctx2); // close dialog
-                            Navigator.pop(ctx);  // close bottom sheet
-                            removeAccount(i);
-                            if (kIsWeb) {
-                              _jsHardReload();
-                            } else {
-                              Navigator.of(context)
-                                  .pushNamedAndRemoveUntil('/', (route) => false);
-                            }
-                          },
-                          child: const Text('Löschen', style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    ),
-                  );
+          if (useSuperAdminList)
+            ..._allApiClubs.map((club) {
+              final appId = club['application_id'] as String? ?? '';
+              final label = club['application_name'] as String? ?? appId;
+              final localIndex = _allAccounts.indexWhere(
+                (a) => a.applicationId == appId,
+              );
+              final isActive = localIndex != -1 &&
+                  localIndex == _activeAccountIndex;
+              return ListTile(
+                title: Text(label),
+                leading: isActive
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                trailing: localIndex != -1
+                    ? IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx2) => AlertDialog(
+                              title: const Text('Account löschen'),
+                              content: Text('Möchtest du "$label" wirklich entfernen?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx2),
+                                  child: const Text('Abbrechen'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx2);
+                                    Navigator.pop(ctx);
+                                    removeAccount(localIndex);
+                                    if (kIsWeb) {
+                                      _jsHardReload();
+                                    } else {
+                                      Navigator.of(context)
+                                          .pushNamedAndRemoveUntil('/', (route) => false);
+                                    }
+                                  },
+                                  child: const Text('Löschen', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    : null,
+                onTap: () async {
+                  if (localIndex != -1) {
+                    _switchToAccount(localIndex, ctx);
+                  } else {
+                    // Add as new local account using the SuperAdmin's credentials.
+                    Navigator.pop(ctx);
+                    final newConfig = AppConfig(
+                      apiBaseUrl: widget.config.apiBaseUrl,
+                      applicationId: appId,
+                      memberId: widget.config.memberId,
+                      label: label,
+                    );
+                    await addOrActivateAccount(newConfig);
+                    if (kIsWeb) {
+                      _jsHardReload();
+                    } else {
+                      if (!mounted) return;
+                      Navigator.of(context)
+                          .pushNamedAndRemoveUntil('/', (route) => false);
+                    }
+                  }
                 },
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                if (i == _activeAccountIndex) return;
-                setActiveAccount(i);
-                if (kIsWeb) {
-                  _jsHardReload();
-                } else {
-                  if (!mounted) return;
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
-                }
-              },
-            );
-          }),
+              );
+            })
+          else
+            ..._allAccounts.asMap().entries.map((entry) {
+              final i = entry.key;
+              final account = entry.value;
+              final displayLabel =
+                  account.label.isNotEmpty ? account.label : account.applicationId;
+              return ListTile(
+                title: Text(displayLabel),
+                leading: i == _activeAccountIndex
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx2) => AlertDialog(
+                        title: const Text('Account löschen'),
+                        content: Text('Möchtest du "$displayLabel" wirklich entfernen?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx2),
+                            child: const Text('Abbrechen'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx2);
+                              Navigator.pop(ctx);
+                              removeAccount(i);
+                              if (kIsWeb) {
+                                _jsHardReload();
+                              } else {
+                                Navigator.of(context)
+                                    .pushNamedAndRemoveUntil('/', (route) => false);
+                              }
+                            },
+                            child: const Text('Löschen', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                onTap: () => _switchToAccount(i, ctx),
+              );
+            }),
           const SizedBox(height: 16),
         ],
       ),
@@ -224,7 +313,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: _allAccounts.length > 1
+        title: (_allAccounts.length > 1 || member.isSuperAdmin)
             ? TextButton(
                 onPressed: _showAccountSwitcher,
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
