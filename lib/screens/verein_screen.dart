@@ -160,7 +160,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   void _showCreateDialog() {
     final nameCtrl = TextEditingController();
     final urlCtrl = TextEditingController();
-    final goalCtrl = TextEditingController();
     final paypalCtrl = TextEditingController();
     String dialogLogo = '';
 
@@ -181,10 +180,6 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   controller: urlCtrl,
                   decoration:
                       const InputDecoration(labelText: 'API URL (optional)'),
-                ),
-                TextField(
-                  controller: goalCtrl,
-                  decoration: const InputDecoration(labelText: 'Spendenziel (optional)'),
                 ),
                 TextField(
                   controller: paypalCtrl,
