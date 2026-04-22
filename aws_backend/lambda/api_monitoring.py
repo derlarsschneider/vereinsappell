@@ -189,6 +189,72 @@ def _wait_for_query(logs, query_id):
     return response
 
 
+def handle_perf_stats(event, context):
+    params = event.get('queryStringParameters') or {}
+    timeframe = params.get('timeframe', 'day')
+
+    logs = boto3.client('logs')
+    log_group_name = os.environ.get('LAMBDA_LOG_GROUP_NAME') or context.log_group_name
+
+    now = datetime.utcnow()
+    delta = parse_timeframe(timeframe)
+    start_time = now - delta
+    start_timestamp = int(start_time.timestamp())
+    end_timestamp = int(now.timestamp())
+
+    query = """
+    fields path, applicationId, duration_ms
+    | filter log_type = "perf_timing"
+    | stats pct(duration_ms, 50) as p50, pct(duration_ms, 95) as p95, pct(duration_ms, 99) as p99, count() as count by path, applicationId
+    | sort p50 desc
+    """
+
+    try:
+        query_id = logs.start_query(
+            logGroupName=log_group_name,
+            startTime=start_timestamp,
+            endTime=end_timestamp,
+            queryString=query,
+            limit=500,
+        )['queryId']
+
+        response = _wait_for_query(logs, query_id)
+        if response['status'] != 'Complete':
+            return {'statusCode': 500, 'body': json.dumps({'error': f'Query failed: {response["status"]}'})}
+
+        app_ids = {
+            next((i['value'] for i in row if i['field'] == 'applicationId'), '')
+            for row in response['results']
+        }
+        club_names, _ = _build_name_maps(app_ids - {''})
+
+        int_fields = {'p50', 'p95', 'p99', 'count'}
+        perf_stats = []
+        for row in response['results']:
+            stat = {}
+            for item in row:
+                field = item['field']
+                value = item['value']
+                if field in int_fields:
+                    try:
+                        stat[field] = int(float(value)) if value else 0
+                    except Exception:
+                        stat[field] = value
+                else:
+                    stat[field] = value
+            app_id = stat.get('applicationId', '')
+            stat['clubName'] = club_names.get(app_id, app_id)
+            perf_stats.append(stat)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'perf_stats': perf_stats, 'timeframe': timeframe})
+        }
+    except Exception as e:
+        print(f"Error querying perf stats: {e}")
+        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+
+
 def handle_startup_stats(event, context):
     params = event.get('queryStringParameters') or {}
     timeframe = params.get('timeframe', 'day')

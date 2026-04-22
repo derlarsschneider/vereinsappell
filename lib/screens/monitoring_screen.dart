@@ -20,6 +20,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   late final MonitoringApi _api;
   Map<String, dynamic>? _stats;
   Map<String, dynamic>? _startupStats;
+  Map<String, dynamic>? _perfStats;
   String _timeframe = 'day';
   String? _selectedClub;
 
@@ -35,9 +36,14 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
     try {
       final data = await _api.getStats(_timeframe);
       final startupData = await _api.getStartupStats(_timeframe);
+      Map<String, dynamic>? perfData;
+      try {
+        perfData = await _api.getPerfStats(_timeframe);
+      } catch (_) {}
       setState(() {
         _stats = data;
         _startupStats = startupData;
+        _perfStats = perfData;
         isLoading = false;
       });
     } catch (e) {
@@ -93,6 +99,8 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                     _buildMemberChart(),
                     const SizedBox(height: 16),
                   ],
+                  _buildPerfTable(),
+                  const SizedBox(height: 16),
                   _buildPhaseBreakdown(),
                   const SizedBox(height: 16),
                   _buildStartupTable(),
@@ -318,6 +326,99 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                 '← Anzahl Aufrufe →',
                 style: TextStyle(fontSize: 10, color: Colors.grey),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPerfTable() {
+    final stats = _perfStats?['perf_stats'] as List? ?? [];
+    final filtered = _selectedClub == null
+        ? stats
+        : stats.where((e) => (e as Map)['applicationId'] == _selectedClub).toList();
+
+    if (filtered.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _perfStats == null
+                ? 'Performance-Logging nicht aktiviert (PERF_LOGGING_ENABLED=true setzen)'
+                : 'Keine Performance-Daten für diesen Zeitraum',
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    final rows = filtered.cast<Map>().toList()
+      ..sort((a, b) => _toInt(b['p50']).compareTo(_toInt(a['p50'])));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('API Response-Zeiten (ms)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            if (_selectedClub != null) ...[
+              const SizedBox(height: 4),
+              Text('(${_clubName(_selectedClub!)})',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+            const SizedBox(height: 12),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(4),
+                1: FlexColumnWidth(1),
+                2: FlexColumnWidth(1),
+                3: FlexColumnWidth(1),
+                4: FlexColumnWidth(1),
+              },
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                  children: ['Endpoint', 'p50', 'p95', 'p99', 'Calls']
+                      .map((h) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(h,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: Colors.grey)),
+                          ))
+                      .toList(),
+                ),
+                ...rows.map((row) => TableRow(children: [
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            row['path'] as String? ?? '—',
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          )),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text('${row['p50'] ?? '—'}',
+                              style: const TextStyle(fontSize: 11, color: Colors.green))),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text('${row['p95'] ?? '—'}',
+                              style: const TextStyle(fontSize: 11, color: Colors.orange))),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text('${row['p99'] ?? '—'}',
+                              style: const TextStyle(fontSize: 11, color: Colors.red))),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text('${row['count'] ?? '—'}',
+                              style: const TextStyle(fontSize: 11, color: Colors.grey))),
+                    ])),
+              ],
             ),
           ],
         ),

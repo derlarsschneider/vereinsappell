@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import time
 import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -26,6 +27,8 @@ fines_table = dynamodb.Table(fines_table_name)
 marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
+_PERF_ENABLED = os.environ.get('PERF_LOGGING_ENABLED', '').lower() == 'true'
+
 
 def lambda_handler(event, context):
     if event.get('source') == 'aws.events':
@@ -37,7 +40,6 @@ def lambda_handler(event, context):
         application_id = event.get('headers', {}).get('applicationid', '')
         member_id = event.get('headers', {}).get('memberid', '')
 
-        # Structured logging for API monitoring
         print(json.dumps({
             "log_type": "api_access",
             "applicationId": application_id,
@@ -55,57 +57,24 @@ def lambda_handler(event, context):
 
         if method == 'OPTIONS':
             return {'statusCode': 204, 'headers': headers}
-        elif path.startswith('/members'):
-            return handle_members(event, context)
-        elif path.startswith('/docs'):
-            return handle_docs(event, context)
-        elif method == 'GET' and path == '/fines':
-            return {**headers, **get_fines(event, application_id)}
-        elif method == 'POST' and path == '/fines':
-            return {**headers, **add_fine(event, application_id)}
-        elif method == 'DELETE' and path.startswith('/fines/'):
-            return {**headers, **delete_fine(event, application_id)}
-        elif method == 'GET' and path == '/marschbefehl':
-            return {**headers, **get_marschbefehl(event, application_id)}
-        elif method == 'POST' and path == '/marschbefehl':
-            return {**headers, **add_marschbefehl(event, application_id)}
-        elif method == 'DELETE' and path == '/marschbefehl':
-            return {**headers, **delete_marschbefehl(event, application_id)}
-        elif method == 'GET' and path.startswith('/photos'):
-            return {**headers, **get_photos(event, application_id)}
-        elif method == 'POST' and path.startswith('/photos'):
-            return {**headers, **add_photo(event, application_id)}
-        elif method == 'GET' and path.startswith('/customers/'):
-            import api_customers
-            return {**headers, **api_customers.get_customer_by_id(event, context)}
-        elif method == 'GET' and path == '/customers':
-            import api_customers
-            return {**headers, **api_customers.list_customers()}
-        elif method == 'POST' and path == '/customers':
-            import api_customers
-            return {**headers, **api_customers.create_customer(event)}
-        elif method == 'PUT' and path.startswith('/customers/'):
-            import api_customers
-            return {**headers, **api_customers.update_customer(event)}
-        elif method == 'GET' and path.startswith('/calendar'):
-            import api_calendar
-            return {**headers, **api_calendar.get_calendar(event, context)}
-        elif method == 'GET' and path == '/monitoring/stats':
-            import api_monitoring
-            return {**headers, **api_monitoring.handle_monitoring(event, context)}
-        elif method == 'POST' and path == '/monitoring/timing':
-            import api_monitoring
-            return {**headers, **api_monitoring.handle_timing(event, context)}
-        elif method == 'GET' and path == '/monitoring/startup':
-            import api_monitoring
-            return {**headers, **api_monitoring.handle_startup_stats(event, context)}
-        else:
-            error_handler.handle_error(event, context)
-            print(f'❌ Unknown API route: {method} {path}')
-            return {
-                'statusCode': 404,
-                'body': json.dumps({'error': 'Nicht gefunden'})
-            }
+
+        start = time.monotonic()
+        result = _dispatch(event, context, method, path, application_id, headers)
+
+        if result is not None:
+            if _PERF_ENABLED:
+                print(json.dumps({
+                    "log_type": "perf_timing",
+                    "path": path,
+                    "method": method,
+                    "applicationId": application_id,
+                    "duration_ms": int((time.monotonic() - start) * 1000),
+                }))
+            return result
+
+        error_handler.handle_error(event, context)
+        print(f'❌ Unknown API route: {method} {path}')
+        return {'statusCode': 404, 'body': json.dumps({'error': 'Nicht gefunden'})}
     except Exception as exception:
         error_handler.handle_error(event, context, exception)
         print(f'❌ Exception in lambda_handler: {exception}')
@@ -113,6 +82,57 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(exception)})
         }
+
+
+def _dispatch(event, context, method, path, application_id, headers):
+    if path.startswith('/members'):
+        return handle_members(event, context)
+    elif path.startswith('/docs'):
+        return handle_docs(event, context)
+    elif method == 'GET' and path == '/fines':
+        return {**headers, **get_fines(event, application_id)}
+    elif method == 'POST' and path == '/fines':
+        return {**headers, **add_fine(event, application_id)}
+    elif method == 'DELETE' and path.startswith('/fines/'):
+        return {**headers, **delete_fine(event, application_id)}
+    elif method == 'GET' and path == '/marschbefehl':
+        return {**headers, **get_marschbefehl(event, application_id)}
+    elif method == 'POST' and path == '/marschbefehl':
+        return {**headers, **add_marschbefehl(event, application_id)}
+    elif method == 'DELETE' and path == '/marschbefehl':
+        return {**headers, **delete_marschbefehl(event, application_id)}
+    elif method == 'GET' and path.startswith('/photos'):
+        return {**headers, **get_photos(event, application_id)}
+    elif method == 'POST' and path.startswith('/photos'):
+        return {**headers, **add_photo(event, application_id)}
+    elif method == 'GET' and path.startswith('/customers/'):
+        import api_customers
+        return {**headers, **api_customers.get_customer_by_id(event, context)}
+    elif method == 'GET' and path == '/customers':
+        import api_customers
+        return {**headers, **api_customers.list_customers()}
+    elif method == 'POST' and path == '/customers':
+        import api_customers
+        return {**headers, **api_customers.create_customer(event)}
+    elif method == 'PUT' and path.startswith('/customers/'):
+        import api_customers
+        return {**headers, **api_customers.update_customer(event)}
+    elif method == 'GET' and path.startswith('/calendar'):
+        import api_calendar
+        return {**headers, **api_calendar.get_calendar(event, context)}
+    elif method == 'GET' and path == '/monitoring/stats':
+        import api_monitoring
+        return {**headers, **api_monitoring.handle_monitoring(event, context)}
+    elif method == 'POST' and path == '/monitoring/timing':
+        import api_monitoring
+        return {**headers, **api_monitoring.handle_timing(event, context)}
+    elif method == 'GET' and path == '/monitoring/startup':
+        import api_monitoring
+        return {**headers, **api_monitoring.handle_startup_stats(event, context)}
+    elif method == 'GET' and path == '/monitoring/perf':
+        import api_monitoring
+        return {**headers, **api_monitoring.handle_perf_stats(event, context)}
+    return None
 
 
 def get_fines(event, application_id):
