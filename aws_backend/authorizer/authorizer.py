@@ -1,6 +1,8 @@
 import boto3
 
 def lambda_authorizer(event, context):
+    if event.get('source') == 'aws.events':
+        return {'isAuthorized': True}
     headers = event.get("headers", {})
     application_id = headers.get("applicationid", "")
     member_id = headers.get("memberid", "")
