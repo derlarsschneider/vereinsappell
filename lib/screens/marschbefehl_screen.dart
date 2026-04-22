@@ -49,7 +49,7 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
   Future<void> _saveEntry(DateTime dt, String text, {String? oldDatetime}) async {
     setState(() => _isLoading = true);
     try {
-      final iso = dt.toIso8601String();
+      final iso = DateFormat('yyyy-MM-dd HH:mm').format(dt);
       if (oldDatetime != null && oldDatetime != iso) {
         await api.deleteMarschbefehl(oldDatetime);
       }
@@ -147,7 +147,7 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
                       );
                       if (confirm == true) {
                         Navigator.pop(context); // Close edit dialog
-                        await _deleteEntry(entry.datetime.toIso8601String());
+                        await _deleteEntry(DateFormat('yyyy-MM-dd HH:mm').format(entry.datetime));
                       }
                     },
                     child: Text('Löschen', style: TextStyle(color: Colors.red)),
@@ -157,7 +157,7 @@ class _MarschbefehlScreenState extends DefaultScreenState<MarschbefehlScreen> {
                   onPressed: () async {
                     if (textController.text.isNotEmpty) {
                       Navigator.pop(context);
-                      await _saveEntry(selectedDateTime, textController.text, oldDatetime: isEdit ? entry.datetime.toIso8601String() : null);
+                      await _saveEntry(selectedDateTime, textController.text, oldDatetime: isEdit ? DateFormat('yyyy-MM-dd HH:mm').format(entry.datetime) : null);
                     }
                   },
                   child: Text('Speichern'),
