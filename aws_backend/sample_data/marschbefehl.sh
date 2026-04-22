@@ -14,10 +14,9 @@ function add_marschbefehl() {
 
     jq -nc \
       --arg applicationId "${APPLICATION_ID}" \
-      --arg type "marschbefehl" \
       --arg datetime "${datetime}" \
       --arg text "${text}" \
-      '{applicationId: {S: $applicationId}, type: {S: $type}, datetime: {S: $datetime}, text: {S: $text}}' | tee "$ITEM_FILE"
+      '{applicationId: {S: $applicationId}, datetime: {S: $datetime}, text: {S: $text}}' | tee "$ITEM_FILE"
 
     aws dynamodb put-item \
         --table-name "$TABLE_NAME" \
