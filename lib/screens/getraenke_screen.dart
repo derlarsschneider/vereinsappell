@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // ignore: unused_import
+import 'package:provider/provider.dart';
 import '../api/getraenke_api.dart';
-import '../config_loader.dart'; // ignore: unused_import
-import 'default_screen.dart'; // ignore: unused_import
+import '../config_loader.dart';
+import 'default_screen.dart';
 
 class DrinkDef {
   final String id;
@@ -230,6 +230,97 @@ class _TallyButton extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(1, 2))],
         ),
         child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+      ),
+    );
+  }
+}
+
+// ── GetraenkeScreen ───────────────────────────────────────────────────────────
+
+class GetraenkeScreen extends DefaultScreen {
+  const GetraenkeScreen({super.key, required super.config})
+      : super(title: 'Getränke');
+
+  @override
+  DefaultScreenState createState() => _GetraenkeScreenState();
+}
+
+class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
+  late final GetraenkeApi _api;
+  List<TallyEntry> _entries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _api = GetraenkeApi(widget.config);
+    _api.watchTallies().listen(
+      (entries) { if (mounted) setState(() => _entries = entries); },
+      onError: (e) { if (mounted) showError('Firebase-Fehler: $e'); },
+    );
+  }
+
+  Future<void> _confirmReset() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Alle Striche löschen?'),
+        content: const Text('Alle Striche und Flaschen für alle Getränke werden gelöscht.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Löschen', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      try {
+        await _api.clearAll();
+      } catch (e) {
+        if (mounted) showError('Fehler beim Löschen: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final member = Provider.of<Member>(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('🍺 Getränke')),
+      body: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          if (member.isSaftschubse) ...[
+            ElevatedButton.icon(
+              onPressed: _confirmReset,
+              icon: const Icon(Icons.delete_sweep, color: Colors.white),
+              label: const Text('Alle Striche löschen', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            ),
+            const SizedBox(height: 12),
+          ],
+          ...kDrinks.map((drink) {
+            final drinkEntries = _entries.where((e) => e.drinkId == drink.id).toList();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: BierdeckelCard(
+                drink: drink,
+                entries: drinkEntries,
+                myMemberId: widget.config.memberId,
+                onStrich: () => _api.addMark(drink.id, 'strich').catchError(
+                  (e) { if (mounted) showError('Fehler: $e'); },
+                ),
+                onFlasche: drink.hasBottle
+                    ? () => _api.addMark(drink.id, 'flasche').catchError(
+                          (e) { if (mounted) showError('Fehler: $e'); },
+                        )
+                    : null,
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
