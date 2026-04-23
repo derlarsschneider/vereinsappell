@@ -19,7 +19,7 @@
 | Modify | `lib/screens/mitglieder_screen.dart` | Admin toggle for `isSaftschubse` |
 | Create | `lib/api/getraenke_api.dart` | Firebase I/O + `TallyEntry` model |
 | Create | `lib/screens/getraenke_screen.dart` | Screen + `BierdeckelCard` widget |
-| Modify | `lib/screens/home_screen.dart` | Add "🍺 Getränke" tile |
+| Modify | `lib/screens/home_screen.dart` | Add "🍻 Getränke" tile |
 | Modify | `test/unit/config_loader_test.dart` | Tests for `isSaftschubse` |
 | Create | `test/unit/getraenke_api_test.dart` | Tests for `TallyEntry` + grouping |
 | Create | `test/widget/getraenke_screen_test.dart` | Widget tests for `BierdeckelCard` |
@@ -804,7 +804,7 @@ class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
     final member = Provider.of<Member>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('🍺 Getränke')),
+      appBar: AppBar(title: const Text('🍻 Getränke')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -877,7 +877,7 @@ import 'getraenke_screen.dart';
 if (_isScreenActive('getraenke'))
   _buildMenuTile(
     context,
-    '🍺 Getränke',
+    '🍻 Getränke',
     () => Navigator.push(
       context,
       MaterialPageRoute(

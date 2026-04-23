@@ -496,7 +496,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       if (_isScreenActive('getraenke'))
         _buildMenuTile(
           context,
-          '🍺 Getränke',
+          '🍻 Getränke',
           () => Navigator.push(
             context,
             MaterialPageRoute(

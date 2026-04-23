@@ -296,7 +296,7 @@ class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
     final member = Provider.of<Member>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('🍺 Getränke')),
+      appBar: AppBar(title: const Text('🍻 Getränke')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [

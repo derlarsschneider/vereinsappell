@@ -72,7 +72,7 @@ Add `firebase_database` to `pubspec.yaml`. Firebase is already configured in the
 - Two buttons (or one for beer): equal size, filled + outlined style
 
 ### Home Screen
-- New tile `🍺 Getränke` in `_buildGridMenu`
+- New tile `🍻 Getränke` in `_buildGridMenu`
 - Controlled via `active_screens` key `"getraenke"`
 
 ## Member Model Changes
