@@ -31,6 +31,7 @@ class MembersApi {
       'memberId': memberId,
       'isAdmin': false,
       'isSpiess': false,
+      'isSaftschubse': false,
       'street': '',
       'houseNumber': '',
       'postalCode': '',
