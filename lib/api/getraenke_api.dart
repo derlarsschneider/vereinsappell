@@ -22,14 +22,15 @@ class TallyEntry {
 }
 
 List<TallyEntry> parseTallies(Object? data) {
-  if (data == null) return [];
-  final drinksMap = Map<dynamic, dynamic>.from(data as Map);
+  if (data == null || data is! Map) return [];
   final entries = <TallyEntry>[];
-  for (final drinkEntry in drinksMap.entries) {
+  for (final drinkEntry in Map<dynamic, dynamic>.from(data).entries) {
     final drinkId = drinkEntry.key as String;
+    if (drinkEntry.value is! Map) continue;
     final marksMap = Map<dynamic, dynamic>.from(drinkEntry.value as Map);
     for (final mark in marksMap.values) {
-      entries.add(TallyEntry.fromMap(drinkId, Map<dynamic, dynamic>.from(mark as Map)));
+      if (mark is! Map) continue;
+      entries.add(TallyEntry.fromMap(drinkId, Map<dynamic, dynamic>.from(mark)));
     }
   }
   return entries;

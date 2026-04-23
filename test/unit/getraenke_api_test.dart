@@ -48,5 +48,9 @@ void main() {
     test('returns empty list when top-level value is empty map', () {
       expect(parseTallies({}), isEmpty);
     });
+
+    test('returns empty list when data is not a Map', () {
+      expect(parseTallies('unexpected'), isEmpty);
+    });
   });
 }
