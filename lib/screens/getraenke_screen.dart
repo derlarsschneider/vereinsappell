@@ -328,6 +328,14 @@ class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
     super.dispose();
   }
 
+  Future<void> _deleteMark(String drinkId, String entryId) async {
+    try {
+      await _api.deleteMark(drinkId, entryId);
+    } catch (e) {
+      if (mounted) showError('Fehler beim Löschen: $e');
+    }
+  }
+
   Future<void> _confirmReset() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -386,13 +394,7 @@ class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
                           (e) { if (mounted) showError('Fehler: $e'); },
                         )
                     : null,
-                onDeleteMark: (entryId) async {
-                  try {
-                    await _api.deleteMark(drink.id, entryId);
-                  } catch (e) {
-                    if (mounted) showError('Fehler beim Löschen: $e');
-                  }
-                },
+                onDeleteMark: (entryId) => _deleteMark(drink.id, entryId),
               ),
             );
           }),
