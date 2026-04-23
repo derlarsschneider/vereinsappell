@@ -25,6 +25,7 @@ import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'documents_screen.dart';
 import 'galerie_screen.dart';
+import 'getraenke_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
 import 'monitoring_screen.dart';
@@ -489,6 +490,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => MonitoringScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (_isScreenActive('getraenke'))
+        _buildMenuTile(
+          context,
+          '🍺 Getränke',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GetraenkeScreen(config: widget.config),
             ),
           ),
         ),
