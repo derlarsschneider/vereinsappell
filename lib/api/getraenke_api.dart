@@ -59,4 +59,9 @@ class GetraenkeApi {
   Future<void> clearAll() async {
     await _ref.remove();
   }
+
+  Future<void> deleteMark(String drinkId, String entryId) async {
+    final ref = _ref.child(drinkId).child(entryId);
+    await ref.remove();
+  }
 }

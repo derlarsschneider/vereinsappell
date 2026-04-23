@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vereinsappell/api/getraenke_api.dart';
+import 'package:vereinsappell/config_loader.dart';
 
 void main() {
   group('TallyEntry.fromMap', () {
@@ -51,6 +52,21 @@ void main() {
 
     test('returns empty list when data is not a Map', () {
       expect(parseTallies('unexpected'), isEmpty);
+    });
+  });
+
+  group('GetraenkeApi', () {
+    test('deleteMark method exists and is callable', () {
+      final mockConfig = AppConfig(
+        apiBaseUrl: 'http://localhost:8080',
+        applicationId: 'test-app',
+        memberId: 'test-member',
+      );
+      final api = GetraenkeApi(mockConfig);
+
+      // Verify the method exists on the GetraenkeApi instance
+      expect(api.deleteMark, isNotNull);
+      expect(api.deleteMark, isA<Function>());
     });
   });
 }
