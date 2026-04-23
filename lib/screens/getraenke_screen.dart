@@ -85,6 +85,19 @@ class BierdeckelCard extends StatelessWidget {
                 othersStriche: othersStriche,
                 myFlaschen: myFlaschen,
                 othersFlaschen: othersFlaschen,
+                myMemberId: myMemberId,
+                entries: entries,
+                onDeleteMark: (entryId) async {
+                  try {
+                    await Provider.of<GetraenkeApi>(context, listen: false).deleteMark(drink.id, entryId);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Fehler beim Löschen: $e')),
+                      );
+                    }
+                  }
+                },
               ),
             ],
           ),
@@ -109,12 +122,18 @@ class _TallyRow extends StatelessWidget {
   final int othersStriche;
   final int myFlaschen;
   final int othersFlaschen;
+  final String myMemberId;
+  final List<TallyEntry> entries;
+  final Function(String entryId) onDeleteMark;
 
   const _TallyRow({
     required this.myStriche,
     required this.othersStriche,
     required this.myFlaschen,
     required this.othersFlaschen,
+    required this.myMemberId,
+    required this.entries,
+    required this.onDeleteMark,
   });
 
   @override
@@ -124,43 +143,82 @@ class _TallyRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        ..._strichWidgets(myStriche, const Color(0xFFE53935)),
-        ..._flascheWidgets(myFlaschen),
-        ..._strichWidgets(othersStriche, const Color(0xFF2C2C2C)),
-        ..._flascheWidgets(othersFlaschen),
+        ..._strichWidgets(myStriche, const Color(0xFFE53935), true),
+        ..._flascheWidgets(myFlaschen, true),
+        ..._strichWidgets(othersStriche, const Color(0xFF2C2C2C), false),
+        ..._flascheWidgets(othersFlaschen, false),
       ],
     );
   }
 
-  List<Widget> _strichWidgets(int count, Color color) {
+  void _deleteOwnMark(String type, int index) {
+    final myEntries = entries.where((e) => e.memberId == myMemberId && e.type == type).toList();
+    if (index < myEntries.length) {
+      onDeleteMark(myEntries[index].id);
+    }
+  }
+
+  Function()? _createDeleteCallback(bool isOwn, String type, int index) {
+    if (!isOwn) return null;
+    return () => _deleteOwnMark(type, index);
+  }
+
+  List<Widget> _strichWidgets(int count, Color color, bool isOwn) {
     final widgets = <Widget>[];
     final groups = count ~/ 5;
     final remainder = count % 5;
+
+    int stickIndex = 0;
     for (int i = 0; i < groups; i++) {
-      widgets.add(_TallyGroup(color: color));
+      widgets.add(_TallyGroup(
+        color: color,
+        isOwn: isOwn,
+        onDelete: _createDeleteCallback(isOwn, 'strich', stickIndex),
+      ));
+      stickIndex += 5;
       widgets.add(const SizedBox(width: 6));
     }
     for (int i = 0; i < remainder; i++) {
-      widgets.add(_Stick(color: color));
+      widgets.add(
+        GestureDetector(
+          onTap: isOwn ? () => _deleteOwnMark('strich', stickIndex) : null,
+          child: _Stick(color: color),
+        ),
+      );
+      stickIndex++;
     }
     return widgets;
   }
 
-  List<Widget> _flascheWidgets(int count) {
-    return List.generate(
-      count,
-      (_) => const Text('🍾', style: TextStyle(fontSize: 14)),
-    );
+  List<Widget> _flascheWidgets(int count, bool isOwn) {
+    final ownBottles = entries.where((e) => e.memberId == myMemberId && e.type == 'flasche').toList();
+
+    return List.generate(count, (index) {
+      final bottleWidget = Text(
+        '🍾',
+        style: TextStyle(fontSize: 14, color: isOwn ? Colors.red : Colors.black),
+      );
+
+      return isOwn && index < ownBottles.length
+          ? GestureDetector(
+              onTap: () => onDeleteMark(ownBottles[index].id),
+              child: bottleWidget,
+            )
+          : bottleWidget;
+    });
   }
 }
 
 class _TallyGroup extends StatelessWidget {
   final Color color;
-  const _TallyGroup({required this.color});
+  final bool isOwn;
+  final Function()? onDelete;
+
+  const _TallyGroup({required this.color, required this.isOwn, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final group = SizedBox(
       width: 30,
       height: 26,
       child: Stack(
@@ -191,6 +249,10 @@ class _TallyGroup extends StatelessWidget {
         ],
       ),
     );
+
+    return isOwn && onDelete != null
+        ? GestureDetector(onTap: onDelete, child: group)
+        : group;
   }
 }
 

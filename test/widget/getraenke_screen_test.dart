@@ -5,11 +5,11 @@ import 'package:vereinsappell/screens/getraenke_screen.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
-TallyEntry _strich(String drinkId, String memberId) =>
-    TallyEntry(drinkId: drinkId, memberId: memberId, type: 'strich');
+TallyEntry _strich(String drinkId, String memberId, {String id = 'entry-1', int timestamp = 0}) =>
+    TallyEntry(id: id, drinkId: drinkId, memberId: memberId, type: 'strich', timestamp: timestamp);
 
-TallyEntry _flasche(String drinkId, String memberId) =>
-    TallyEntry(drinkId: drinkId, memberId: memberId, type: 'flasche');
+TallyEntry _flasche(String drinkId, String memberId, {String id = 'entry-1', int timestamp = 0}) =>
+    TallyEntry(id: id, drinkId: drinkId, memberId: memberId, type: 'flasche', timestamp: timestamp);
 
 void main() {
   group('BierdeckelCard', () {
@@ -79,6 +79,28 @@ void main() {
         onFlasche: () {},
       )));
       expect(find.text('🍾'), findsWidgets);
+    });
+
+    testWidgets('own bottles are shown in red and tappable', (tester) async {
+      await tester.pumpWidget(_wrap(BierdeckelCard(
+        drink: kDrinks.firstWhere((d) => d.id == 'cola'),
+        entries: [
+          _flasche('cola', 'mem-1', id: 'entry-1'),
+          _flasche('cola', 'mem-2', id: 'entry-2'),
+        ],
+        myMemberId: 'mem-1',
+        onStrich: () {},
+        onFlasche: () {},
+      )));
+
+      final textWidgets = tester.widgetList<Text>(find.text('🍾')).toList();
+      expect(textWidgets.length, greaterThanOrEqualTo(2));
+
+      final ownBottleStyle = textWidgets[0].style;
+      expect(ownBottleStyle?.color, Colors.red);
+
+      final othersBottleStyle = textWidgets[1].style;
+      expect(othersBottleStyle?.color, Colors.black);
     });
   });
 }

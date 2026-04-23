@@ -5,22 +5,25 @@ import 'package:vereinsappell/config_loader.dart';
 void main() {
   group('TallyEntry.fromMap', () {
     test('parses strich entry', () {
-      final entry = TallyEntry.fromMap('alt', {
+      final entry = TallyEntry.fromMap('alt', 'entry-1', {
         'memberId': 'mem-1',
         'type': 'strich',
         'timestamp': 1000,
       });
+      expect(entry.id, 'entry-1');
       expect(entry.drinkId, 'alt');
       expect(entry.memberId, 'mem-1');
       expect(entry.type, 'strich');
+      expect(entry.timestamp, 1000);
     });
 
     test('parses flasche entry', () {
-      final entry = TallyEntry.fromMap('cola', {
+      final entry = TallyEntry.fromMap('cola', 'entry-2', {
         'memberId': 'mem-2',
         'type': 'flasche',
         'timestamp': 2000,
       });
+      expect(entry.id, 'entry-2');
       expect(entry.type, 'flasche');
     });
   });
