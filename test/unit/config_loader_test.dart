@@ -138,6 +138,31 @@ void main() {
         expect(json['reminderHoursBefore'], 48);
       });
     });
+
+    test('isSaftschubse defaults to false when absent', () async {
+      await withStubHttp(() async {
+        final config = _makeConfig();
+        config.member.updateMember({'name': 'Max'});
+        expect(config.member.isSaftschubse, isFalse);
+      });
+    });
+
+    test('isSaftschubse is set from JSON', () async {
+      await withStubHttp(() async {
+        final config = _makeConfig();
+        config.member.updateMember({'name': 'Max', 'isSaftschubse': true});
+        expect(config.member.isSaftschubse, isTrue);
+      });
+    });
+
+    test('encodeMember includes isSaftschubse', () async {
+      await withStubHttp(() async {
+        final config = _makeConfig();
+        config.member.updateMember({'name': 'Max', 'isSaftschubse': true});
+        final decoded = jsonDecode(config.member.encodeMember()) as Map<String, dynamic>;
+        expect(decoded['isSaftschubse'], isTrue);
+      });
+    });
   });
 
   group('AppConfig label', () {
