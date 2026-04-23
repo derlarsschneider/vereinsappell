@@ -15,6 +15,7 @@ resource "aws_lambda_function" "lambda_backend" {
             S3_BUCKET_NAME = aws_s3_bucket.s3_bucket.bucket,
             API_BASE_URL             = aws_apigatewayv2_api.http_api.api_endpoint,
             LAMBDA_LOG_GROUP_NAME    = "/aws/lambda/${local.name_prefix}-lambda_backend",
+            PERF_LOGGING_ENABLED     = "true",
         }
     }
 }
