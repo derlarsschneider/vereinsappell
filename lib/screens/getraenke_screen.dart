@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../api/getraenke_api.dart';
@@ -247,16 +248,23 @@ class GetraenkeScreen extends DefaultScreen {
 
 class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
   late final GetraenkeApi _api;
+  late final StreamSubscription<List<TallyEntry>> _sub;
   List<TallyEntry> _entries = [];
 
   @override
   void initState() {
     super.initState();
     _api = GetraenkeApi(widget.config);
-    _api.watchTallies().listen(
+    _sub = _api.watchTallies().listen(
       (entries) { if (mounted) setState(() => _entries = entries); },
       onError: (e) { if (mounted) showError('Firebase-Fehler: $e'); },
     );
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 
   Future<void> _confirmReset() async {
