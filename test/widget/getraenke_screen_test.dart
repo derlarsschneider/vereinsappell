@@ -20,6 +20,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: null,
+        onDeleteMark: (_) {},
       )));
       expect(find.text('🍾'), findsNothing);
     });
@@ -31,6 +32,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: () {},
+        onDeleteMark: (_) {},
       )));
       expect(find.text('🍾'), findsOneWidget);
     });
@@ -42,6 +44,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: null,
+        onDeleteMark: (_) {},
       )));
       final redContainers = tester.widgetList<Container>(find.byType(Container)).where((c) {
         final decoration = c.decoration;
@@ -58,6 +61,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: null,
+        onDeleteMark: (_) {},
       )));
       final stickContainers = tester.widgetList<Container>(find.byType(Container)).where((c) {
         final decoration = c.decoration;
@@ -77,6 +81,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: () {},
+        onDeleteMark: (_) {},
       )));
       expect(find.text('🍾'), findsWidgets);
     });
@@ -91,6 +96,7 @@ void main() {
         myMemberId: 'mem-1',
         onStrich: () {},
         onFlasche: () {},
+        onDeleteMark: (_) {},
       )));
 
       final textWidgets = tester.widgetList<Text>(find.text('🍾')).toList();

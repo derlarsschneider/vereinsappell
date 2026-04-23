@@ -39,6 +39,7 @@ class BierdeckelCard extends StatelessWidget {
   final String myMemberId;
   final VoidCallback onStrich;
   final VoidCallback? onFlasche;
+  final Function(String) onDeleteMark;
 
   const BierdeckelCard({
     super.key,
@@ -47,6 +48,7 @@ class BierdeckelCard extends StatelessWidget {
     required this.myMemberId,
     required this.onStrich,
     required this.onFlasche,
+    required this.onDeleteMark,
   });
 
   @override
@@ -68,48 +70,45 @@ class BierdeckelCard extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(2, 3))],
       ),
       padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            children: [
-              Text(drink.headerEmoji, style: const TextStyle(fontSize: 20)),
-              Text(
-                drink.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4A2C00)),
-              ),
-              _TallyRow(
-                myStriche: myStriche,
-                othersStriche: othersStriche,
-                myFlaschen: myFlaschen,
-                othersFlaschen: othersFlaschen,
-                myMemberId: myMemberId,
-                entries: entries,
-                onDeleteMark: (entryId) async {
-                  try {
-                    await Provider.of<GetraenkeApi>(context, listen: false).deleteMark(drink.id, entryId);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Fehler beim Löschen: $e')),
-                      );
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _TallyButton(emoji: drink.buttonEmoji, filled: true, onTap: onStrich)),
-              if (drink.hasBottle && onFlasche != null) ...[
-                const SizedBox(width: 8),
-                Expanded(child: _TallyButton(emoji: '🍾', filled: false, onTap: onFlasche!)),
+          // Left section: drink emoji, name, and tally marks
+          Expanded(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                Text(drink.headerEmoji, style: const TextStyle(fontSize: 20)),
+                Text(
+                  drink.name,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4A2C00)),
+                ),
+                _TallyRow(
+                  myStriche: myStriche,
+                  othersStriche: othersStriche,
+                  myFlaschen: myFlaschen,
+                  othersFlaschen: othersFlaschen,
+                  myMemberId: myMemberId,
+                  entries: entries,
+                  onDeleteMark: onDeleteMark,
+                ),
               ],
-            ],
+            ),
+          ),
+          // Right section: buttons
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 80,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(child: _TallyButton(emoji: drink.buttonEmoji, filled: true, onTap: onStrich)),
+                if (drink.hasBottle && onFlasche != null) ...[
+                  const SizedBox(height: 8),
+                  Expanded(child: _TallyButton(emoji: '🍾', filled: false, onTap: onFlasche!)),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -285,14 +284,14 @@ class _TallyButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
           color: filled ? const Color(0xFF7A4F00) : Colors.white,
           border: Border.all(color: const Color(0xFF7A4F00), width: 2),
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(1, 2))],
         ),
-        child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+        child: Center(child: Text(emoji, style: const TextStyle(fontSize: 18))),
       ),
     );
   }
@@ -387,6 +386,13 @@ class _GetraenkeScreenState extends DefaultScreenState<GetraenkeScreen> {
                           (e) { if (mounted) showError('Fehler: $e'); },
                         )
                     : null,
+                onDeleteMark: (entryId) async {
+                  try {
+                    await _api.deleteMark(drink.id, entryId);
+                  } catch (e) {
+                    if (mounted) showError('Fehler beim Löschen: $e');
+                  }
+                },
               ),
             );
           }),
