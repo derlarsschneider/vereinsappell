@@ -1,17 +1,15 @@
 // lib/config_loader.dart
 import 'dart:convert';
 import 'dart:io' as io;
-import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:web/web.dart' as web;
 
 import 'api/headers.dart';
 import 'storage.dart';
+import 'web_platform_utils.dart';
 
 class AppConfig {
   final String apiBaseUrl;
@@ -340,16 +338,9 @@ class Member extends ChangeNotifier {
     }
   }
 
-  static bool _isIos() {
-    final ua = web.window.navigator.userAgent;
-    return ua.contains('iPhone') || ua.contains('iPad') || ua.contains('iPod');
-  }
+  static bool _isIos() => webIsIos();
 
-  static bool _isStandalone() {
-    final standaloneJs = (web.window.navigator as JSObject).getProperty('standalone'.toJS);
-    if (standaloneJs.isA<JSBoolean>() && (standaloneJs as JSBoolean).toDart) return true;
-    return web.window.matchMedia('(display-mode: standalone)').matches;
-  }
+  static bool _isStandalone() => webIsStandalone();
 
   // Returns null on success, or an error message to show the user.
   Future<String?> registerPushSubscriptionWeb() async {
