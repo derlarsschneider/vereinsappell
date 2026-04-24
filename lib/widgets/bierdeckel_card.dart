@@ -1,0 +1,384 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../models/tally_entry.dart';
+
+class DrinkDef {
+  final String id;
+  final String name;
+  final String headerEmoji;
+  final String buttonEmoji;
+  final bool hasBottle;
+  final String? svgAsset;
+
+  const DrinkDef({
+    required this.id,
+    required this.name,
+    required this.headerEmoji,
+    required this.buttonEmoji,
+    required this.hasBottle,
+    this.svgAsset,
+  });
+}
+
+const kDrinks = [
+  DrinkDef(id: 'alt',       name: 'Alt',       headerEmoji: '🍺', buttonEmoji: '🍺', hasBottle: false),
+  DrinkDef(id: 'pils',      name: 'Pils',      headerEmoji: '🍻', buttonEmoji: '🍻', hasBottle: false),
+  DrinkDef(id: 'cola',      name: 'Cola',      headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
+  DrinkDef(id: 'fanta',     name: 'Fanta',     headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
+  DrinkDef(id: 'sprite',    name: 'Sprite',    headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
+  DrinkDef(id: 'cola_zero', name: 'Cola Zero', headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
+  DrinkDef(id: 'wasser',    name: 'Wasser',    headerEmoji: '💧', buttonEmoji: '💧', hasBottle: true),
+];
+
+const _kBottleAsset = 'assets/icons/bottle.svg';
+
+class BierdeckelCard extends StatelessWidget {
+  final DrinkDef drink;
+  final List<TallyEntry> entries;
+  final String myMemberId;
+  final VoidCallback onStrich;
+  final VoidCallback? onFlasche;
+  final Function(String) onDeleteMark;
+
+  const BierdeckelCard({
+    super.key,
+    required this.drink,
+    required this.entries,
+    required this.myMemberId,
+    required this.onStrich,
+    required this.onFlasche,
+    required this.onDeleteMark,
+  });
+
+  void _decrementStrich() {
+    final own = entries
+        .where((e) => e.memberId == myMemberId && e.type == 'strich')
+        .toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    if (own.isNotEmpty) onDeleteMark(own.first.id);
+  }
+
+  void _decrementFlasche() {
+    final own = entries
+        .where((e) => e.memberId == myMemberId && e.type == 'flasche')
+        .toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    if (own.isNotEmpty) onDeleteMark(own.first.id);
+  }
+
+  Widget _buildBadge(int myStriche, int myFlaschen) {
+    final style = const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700);
+    final bottleIcon = SvgPicture.asset(
+      _kBottleAsset,
+      width: 14,
+      height: 14,
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+    );
+
+    Widget content;
+    if (!drink.hasBottle || myFlaschen == 0) {
+      content = Text('$myStriche', style: style);
+    } else if (myStriche == 0) {
+      content = Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('$myFlaschen', style: style),
+        const SizedBox(width: 2),
+        bottleIcon,
+      ]);
+    } else {
+      content = Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('$myStriche🥤  $myFlaschen', style: style),
+        const SizedBox(width: 2),
+        bottleIcon,
+      ]);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE53935),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1))],
+      ),
+      child: content,
+    );
+  }
+
+  Widget _buildButtons(int myStriche, int myFlaschen) {
+    final hasBottleButton = drink.hasBottle && onFlasche != null;
+    if (hasBottleButton) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _CounterRow(
+            emoji: drink.svgAsset != null ? null : drink.buttonEmoji,
+            svgAsset: drink.svgAsset,
+            onDecrement: myStriche > 0 ? _decrementStrich : null,
+            onIncrement: onStrich,
+            small: true,
+          ),
+          const SizedBox(height: 20),
+          _CounterRow(
+            key: const Key('bottle-counter-row'),
+            emoji: null,
+            svgAsset: _kBottleAsset,
+            onDecrement: myFlaschen > 0 ? _decrementFlasche : null,
+            onIncrement: onFlasche!,
+            small: true,
+          ),
+        ],
+      );
+    }
+    return _CounterRow(
+      emoji: drink.svgAsset != null ? null : drink.buttonEmoji,
+      svgAsset: drink.svgAsset,
+      onDecrement: myStriche > 0 ? _decrementStrich : null,
+      onIncrement: onStrich,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalStriche = entries.where((e) => e.type == 'strich').length;
+    final totalFlaschen = entries.where((e) => e.type == 'flasche').length;
+    final myStriche = entries.where((e) => e.memberId == myMemberId && e.type == 'strich').length;
+    final myFlaschen = entries.where((e) => e.memberId == myMemberId && e.type == 'flasche').length;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFDF8EE), Color(0xFFF0E8D0)],
+            ),
+            border: Border.all(color: const Color(0xFFC8A96E), width: 2),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(2, 3))],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  children: [
+                    drink.svgAsset != null
+                        ? SvgPicture.asset(drink.svgAsset!, width: 24, height: 24)
+                        : Text(drink.headerEmoji, style: const TextStyle(fontSize: 20)),
+                    Text(
+                      drink.name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4A2C00)),
+                    ),
+                    _TallyRow(totalStriche: totalStriche, totalFlaschen: totalFlaschen),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _buildButtons(myStriche, myFlaschen),
+            ],
+          ),
+        ),
+        if (myStriche > 0 || myFlaschen > 0)
+          Positioned(
+            top: -10,
+            right: 14,
+            child: _buildBadge(myStriche, myFlaschen),
+          ),
+      ],
+    );
+  }
+}
+
+class _TallyRow extends StatelessWidget {
+  final int totalStriche;
+  final int totalFlaschen;
+
+  const _TallyRow({required this.totalStriche, required this.totalFlaschen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 2,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ..._strichWidgets(),
+        const SizedBox(width: 20),
+        ..._flascheWidgets(),
+      ],
+    );
+  }
+
+  List<Widget> _strichWidgets() {
+    final widgets = <Widget>[];
+    final groups = totalStriche ~/ 5;
+    final remainder = totalStriche % 5;
+
+    for (int i = 0; i < groups; i++) {
+      widgets.add(const _TallyGroup());
+      widgets.add(const SizedBox(width: 6));
+    }
+    for (int i = 0; i < remainder; i++) {
+      widgets.add(const _Stick());
+    }
+    return widgets;
+  }
+
+  List<Widget> _flascheWidgets() {
+    return List.generate(
+      totalFlaschen,
+      (i) => SvgPicture.asset(
+        _kBottleAsset,
+        key: ValueKey('bottle-tally-$i'),
+        width: 24,
+        height: 24,
+      ),
+    );
+  }
+}
+
+class _TallyGroup extends StatelessWidget {
+  const _TallyGroup();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 30,
+      height: 26,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(4, (_) => const Padding(
+              padding: EdgeInsets.only(right: 2),
+              child: _Stick(),
+            )),
+          ),
+          Positioned(
+            top: 3,
+            left: -4,
+            child: Transform.rotate(
+              angle: -0.31,
+              child: Container(
+                width: 38,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2C),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Stick extends StatelessWidget {
+  const _Stick();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 5,
+      height: 24,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
+}
+
+class _CounterRow extends StatelessWidget {
+  final String? emoji;
+  final String? svgAsset;
+  final VoidCallback? onDecrement;
+  final VoidCallback onIncrement;
+  final bool small;
+
+  const _CounterRow({
+    super.key,
+    this.emoji,
+    this.svgAsset,
+    required this.onDecrement,
+    required this.onIncrement,
+    this.small = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = small ? 28.0 : 34.0;
+    final emojiSize = small ? 15.0 : 18.0;
+
+    final Widget icon;
+    if (svgAsset != null) {
+      icon = SvgPicture.asset(svgAsset!, width: emojiSize, height: emojiSize);
+    } else {
+      icon = Text(emoji!, style: TextStyle(fontSize: emojiSize));
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PmButton(size: size, filled: false, enabled: onDecrement != null, onTap: onDecrement ?? () {}),
+        SizedBox(
+          width: small ? 20 : 26,
+          child: icon,
+        ),
+        _PmButton(size: size, filled: true, enabled: true, onTap: onIncrement),
+      ],
+    );
+  }
+}
+
+class _PmButton extends StatelessWidget {
+  final double size;
+  final bool filled;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _PmButton({
+    required this.size,
+    required this.filled,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: filled ? const Color(0xFF7A4F00) : Colors.white,
+          border: Border.all(
+            color: enabled ? const Color(0xFF7A4F00) : const Color(0xFFCCCCCC),
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(size / 2),
+        ),
+        child: Center(
+          child: Text(
+            filled ? '+' : '−',
+            style: TextStyle(
+              fontSize: size * 0.57,
+              fontWeight: FontWeight.w700,
+              color: filled
+                  ? Colors.white
+                  : (enabled ? const Color(0xFF7A4F00) : const Color(0xFFCCCCCC)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

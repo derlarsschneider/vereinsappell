@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vereinsappell/api/getraenke_api.dart';
-import 'package:vereinsappell/screens/getraenke_screen.dart';
+import 'package:vereinsappell/models/tally_entry.dart';
+import 'package:vereinsappell/widgets/bierdeckel_card.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
@@ -22,7 +23,7 @@ void main() {
         onFlasche: null,
         onDeleteMark: (_) {},
       )));
-      expect(find.text('🍾'), findsNothing);
+      expect(find.byKey(const Key('bottle-counter-row')), findsNothing);
     });
 
     testWidgets('shows bottle button for Cola', (tester) async {
@@ -34,7 +35,7 @@ void main() {
         onFlasche: () {},
         onDeleteMark: (_) {},
       )));
-      expect(find.text('🍾'), findsOneWidget);
+      expect(find.byKey(const Key('bottle-counter-row')), findsOneWidget);
     });
 
     testWidgets('own strich marks are rendered red', (tester) async {
@@ -74,7 +75,7 @@ void main() {
       expect(stickContainers, isEmpty);
     });
 
-    testWidgets('flasche entry shown as emoji in tally row', (tester) async {
+    testWidgets('flasche entry shown as svg icon in tally row', (tester) async {
       await tester.pumpWidget(_wrap(BierdeckelCard(
         drink: kDrinks.firstWhere((d) => d.id == 'cola'),
         entries: [_flasche('cola', 'mem-1')],
@@ -83,7 +84,7 @@ void main() {
         onFlasche: () {},
         onDeleteMark: (_) {},
       )));
-      expect(find.text('🍾'), findsWidgets);
+      expect(find.byKey(const ValueKey('bottle-tally-0')), findsOneWidget);
     });
 
     testWidgets('single-line layout: drink name, marks, and buttons in single row', (tester) async {
@@ -100,14 +101,11 @@ void main() {
         onDeleteMark: (_) {},
       )));
 
-      // Verify that the main layout is a Row (single line)
       final rows = tester.widgetList<Row>(find.byType(Row));
       expect(rows, isNotEmpty);
 
-      // Find the drink name
       expect(find.text('Cola'), findsWidgets);
 
-      // Verify button containers exist (search for GestureDetector widgets)
       final gestureDetectors = tester.widgetList<GestureDetector>(find.byType(GestureDetector));
       expect(gestureDetectors, isNotEmpty);
     });
@@ -147,7 +145,6 @@ void main() {
         onDeleteMark: (_) { callbackCalled = true; },
       )));
 
-      // Verify others' marks are visible (black color in containers and emojis)
       final stickContainers = tester.widgetList<Container>(find.byType(Container)).where((c) {
         final decoration = c.decoration;
         if (decoration is BoxDecoration) {
@@ -157,7 +154,6 @@ void main() {
       });
       expect(stickContainers, isNotEmpty);
 
-      // The callback should not be called for others' marks (they have no delete handler)
       expect(callbackCalled, isFalse);
     });
 
@@ -176,7 +172,6 @@ void main() {
         onDeleteMark: (_) {},
       )));
 
-      // Verify both red (own) and black (others) containers exist
       final stickContainers = tester.widgetList<Container>(find.byType(Container)).where((c) {
         final decoration = c.decoration;
         if (decoration is BoxDecoration) {
@@ -213,9 +208,8 @@ void main() {
         onDeleteMark: (_) {},
       )));
 
-      // Cola has bottle, so should show both strich and flasche buttons
-      expect(find.text('🥤'), findsWidgets); // drink button (Cola)
-      expect(find.text('🍾'), findsOneWidget); // bottle button
+      expect(find.text('🥤'), findsWidgets);
+      expect(find.byKey(const Key('bottle-counter-row')), findsOneWidget);
     });
 
     testWidgets('beers without bottles have only strich button', (tester) async {
@@ -228,9 +222,8 @@ void main() {
         onDeleteMark: (_) {},
       )));
 
-      // Alt has no bottle
-      expect(find.text('🍺'), findsWidgets); // drink button (Alt)
-      expect(find.text('🍾'), findsNothing); // no bottle button
+      expect(find.text('🍺'), findsWidgets); // drink button emoji (Alt has no svgAsset)
+      expect(find.byKey(const Key('bottle-counter-row')), findsNothing);
     });
   });
 }
