@@ -65,7 +65,9 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         widget.config.member.ensureFetched().then((_) {
           if (!mounted) return Future.value();
           StartupTimer.instance.mark('fetch_member');
-          return widget.config.member.registerPushSubscriptionWeb();
+          return widget.config.member.registerPushSubscriptionWeb().then((error) {
+            if (error != null && mounted) showError(error);
+          });
         }),
         _updateApplication().then((_) {
           StartupTimer.instance.mark('get_customer');

@@ -1,11 +1,14 @@
 // lib/config_loader.dart
 import 'dart:convert';
 import 'dart:io' as io;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:web/web.dart' as web;
 
 import 'api/headers.dart';
 import 'storage.dart';
@@ -337,23 +340,45 @@ class Member extends ChangeNotifier {
     }
   }
 
-  Future<void> registerPushSubscriptionWeb() async {
-    print('Web: Registriere Push-Subscription');
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    NotificationSettings settings = await messaging.requestPermission();
-    print('🔐 Berechtigungen: ${settings.authorizationStatus}');
+  static bool _isIos() {
+    final ua = web.window.navigator.userAgent;
+    return ua.contains('iPhone') || ua.contains('iPad') || ua.contains('iPod');
+  }
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('✅ Authorized. Getting token.');
-      String? token = await messaging.getToken(
-        vapidKey: 'BBSL8reEOfzpFNt1szHEaEyEBUCszCFTdeWL4jupUNfs5eF_Kw_uvfcIWQ10ZOPpzewMNSlYcQIcN1C3TKhKsbM',
-      );
-      print("📱 FCM Token: $token");
-      if (token != null && token != _token) {
-        _token = token;
-        print('🎯 Neuer WebPush-Token: $_token');
-        await saveMember();
+  static bool _isStandalone() {
+    final standaloneJs = (web.window.navigator as JSObject).getProperty('standalone'.toJS);
+    if (standaloneJs.isA<JSBoolean>() && (standaloneJs as JSBoolean).toDart) return true;
+    return web.window.matchMedia('(display-mode: standalone)').matches;
+  }
+
+  // Returns null on success, or an error message to show the user.
+  Future<String?> registerPushSubscriptionWeb() async {
+    print('Web: Registriere Push-Subscription');
+    if (_isIos() && !_isStandalone()) {
+      print('⚠️ iOS nicht im Standalone-Modus, Push nicht verfügbar');
+      return 'Push-Benachrichtigungen sind auf iOS aus technischen und finanziellen Gründen leider nicht verfügbar.';
+    }
+    try {
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      NotificationSettings settings = await messaging.requestPermission();
+      print('🔐 Berechtigungen: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('✅ Authorized. Getting token.');
+        String? token = await messaging.getToken(
+          vapidKey: 'BBSL8reEOfzpFNt1szHEaEyEBUCszCFTdeWL4jupUNfs5eF_Kw_uvfcIWQ10ZOPpzewMNSlYcQIcN1C3TKhKsbM',
+        );
+        print("📱 FCM Token: $token");
+        if (token != null && token != _token) {
+          _token = token;
+          print('🎯 Neuer WebPush-Token: $_token');
+          await saveMember();
+        }
       }
+      return null;
+    } catch (e) {
+      print('⚠️ Push-Subscription nicht möglich: $e');
+      return 'Push-Benachrichtigungen konnten nicht eingerichtet werden: $e';
     }
   }
 

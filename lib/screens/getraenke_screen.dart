@@ -23,12 +23,12 @@ class DrinkDef {
 
 const kDrinks = [
   DrinkDef(id: 'alt',       name: 'Alt',       headerEmoji: '🍺', buttonEmoji: '🍺', hasBottle: false),
-  DrinkDef(id: 'pils',      name: 'Pils',      headerEmoji: '🍻', buttonEmoji: '🍺', hasBottle: false),
+  DrinkDef(id: 'pils',      name: 'Pils',      headerEmoji: '🍻', buttonEmoji: '🍻', hasBottle: false),
   DrinkDef(id: 'cola',      name: 'Cola',      headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
   DrinkDef(id: 'fanta',     name: 'Fanta',     headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
   DrinkDef(id: 'sprite',    name: 'Sprite',    headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
   DrinkDef(id: 'cola_zero', name: 'Cola Zero', headerEmoji: '🥤', buttonEmoji: '🥤', hasBottle: true),
-  DrinkDef(id: 'wasser',    name: 'Wasser',    headerEmoji: '💧', buttonEmoji: '🫗', hasBottle: true),
+  DrinkDef(id: 'wasser',    name: 'Wasser',    headerEmoji: '💧', buttonEmoji: '💧', hasBottle: true),
 ];
 
 // ── BierdeckelCard ────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ class BierdeckelCard extends StatelessWidget {
     } else if (myStriche == 0) {
       label = '$myFlaschen🍾';
     } else {
-      label = '$myStriche🥤·$myFlaschen🍾';
+      label = '$myStriche🥤  $myFlaschen🍾';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
