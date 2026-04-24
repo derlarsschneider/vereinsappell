@@ -178,9 +178,10 @@ class _TallyRow extends StatelessWidget {
       widgets.add(const SizedBox(width: 6));
     }
     for (int i = 0; i < remainder; i++) {
+      final capturedIndex = stickIndex;
       widgets.add(
         GestureDetector(
-          onTap: isOwn ? () => _deleteOwnMark('strich', stickIndex) : null,
+          onTap: isOwn ? () => _deleteOwnMark('strich', capturedIndex) : null,
           child: _Stick(color: color),
         ),
       );
