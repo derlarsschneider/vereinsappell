@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../api/getraenke_api.dart';
 import '../config_loader.dart';
@@ -68,14 +69,31 @@ class BierdeckelCard extends StatelessWidget {
   }
 
   Widget _buildBadge(int myStriche, int myFlaschen) {
-    final String label;
+    final style = const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700);
+    final bottleIcon = SvgPicture.asset(
+      'assets/icons/bottle.svg',
+      width: 14,
+      height: 14,
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+    );
+
+    Widget content;
     if (!drink.hasBottle || myFlaschen == 0) {
-      label = '$myStriche';
+      content = Text('$myStriche', style: style);
     } else if (myStriche == 0) {
-      label = '$myFlaschen🍾';
+      content = Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('$myFlaschen', style: style),
+        const SizedBox(width: 2),
+        bottleIcon,
+      ]);
     } else {
-      label = '$myStriche🥤  $myFlaschen🍾';
+      content = Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('$myStriche🥤  $myFlaschen', style: style),
+        const SizedBox(width: 2),
+        bottleIcon,
+      ]);
     }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
@@ -84,10 +102,7 @@ class BierdeckelCard extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1))],
       ),
-      child: Text(
-        label,
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-      ),
+      child: content,
     );
   }
 
@@ -103,9 +118,10 @@ class BierdeckelCard extends StatelessWidget {
             onIncrement: onStrich,
             small: true,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 20),
           _CounterRow(
-            emoji: '🍾',
+            emoji: null,
+            svgAsset: 'assets/icons/bottle.svg',
             onDecrement: myFlaschen > 0 ? _decrementFlasche : null,
             onIncrement: onFlasche!,
             small: true,
@@ -188,6 +204,7 @@ class _TallyRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         ..._strichWidgets(),
+        const SizedBox(width: 20),
         ..._flascheWidgets(),
       ],
     );
@@ -211,7 +228,7 @@ class _TallyRow extends StatelessWidget {
   List<Widget> _flascheWidgets() {
     return List.generate(
       totalFlaschen,
-      (_) => const Text('🍾', style: TextStyle(fontSize: 14)),
+      (_) => SvgPicture.asset('assets/icons/bottle.svg', width: 24, height: 24),
     );
   }
 }
@@ -272,13 +289,15 @@ class _Stick extends StatelessWidget {
 }
 
 class _CounterRow extends StatelessWidget {
-  final String emoji;
+  final String? emoji;
+  final String? svgAsset;
   final VoidCallback? onDecrement;
   final VoidCallback onIncrement;
   final bool small;
 
   const _CounterRow({
-    required this.emoji,
+    this.emoji,
+    this.svgAsset,
     required this.onDecrement,
     required this.onIncrement,
     this.small = false,
@@ -286,15 +305,23 @@ class _CounterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = small ? 24.0 : 28.0;
+    final size = small ? 28.0 : 34.0;
     final emojiSize = small ? 15.0 : 18.0;
+
+    final Widget icon;
+    if (svgAsset != null) {
+      icon = SvgPicture.asset(svgAsset!, width: emojiSize, height: emojiSize);
+    } else {
+      icon = Text(emoji!, style: TextStyle(fontSize: emojiSize));
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _PmButton(size: size, filled: false, enabled: onDecrement != null, onTap: onDecrement ?? () {}),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(emoji, style: TextStyle(fontSize: emojiSize)),
+        SizedBox(
+          width: small ? 20 : 26,
+          child: icon,
         ),
         _PmButton(size: size, filled: true, enabled: true, onTap: onIncrement),
       ],
