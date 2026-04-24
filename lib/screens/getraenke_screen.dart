@@ -12,6 +12,7 @@ class DrinkDef {
   final String headerEmoji;
   final String buttonEmoji;
   final bool hasBottle;
+  final String? svgAsset;
 
   const DrinkDef({
     required this.id,
@@ -19,6 +20,7 @@ class DrinkDef {
     required this.headerEmoji,
     required this.buttonEmoji,
     required this.hasBottle,
+    this.svgAsset,
   });
 }
 
@@ -113,7 +115,8 @@ class BierdeckelCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CounterRow(
-            emoji: drink.buttonEmoji,
+            emoji: drink.svgAsset != null ? null : drink.buttonEmoji,
+            svgAsset: drink.svgAsset,
             onDecrement: myStriche > 0 ? _decrementStrich : null,
             onIncrement: onStrich,
             small: true,
@@ -130,7 +133,8 @@ class BierdeckelCard extends StatelessWidget {
       );
     }
     return _CounterRow(
-      emoji: drink.buttonEmoji,
+      emoji: drink.svgAsset != null ? null : drink.buttonEmoji,
+      svgAsset: drink.svgAsset,
       onDecrement: myStriche > 0 ? _decrementStrich : null,
       onIncrement: onStrich,
     );
@@ -165,7 +169,9 @@ class BierdeckelCard extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 8,
                   children: [
-                    Text(drink.headerEmoji, style: const TextStyle(fontSize: 20)),
+                    drink.svgAsset != null
+                        ? SvgPicture.asset(drink.svgAsset!, width: 24, height: 24)
+                        : Text(drink.headerEmoji, style: const TextStyle(fontSize: 20)),
                     Text(
                       drink.name,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4A2C00)),
