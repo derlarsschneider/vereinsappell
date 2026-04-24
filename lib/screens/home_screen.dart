@@ -616,12 +616,11 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text('🛡️ Spieß: ${member.isSpiess ? "Ja" : "Nein"}'),
-                Text('🛠️ Admin: ${member.isAdmin ? "Ja" : "Nein"}'),
+                Text('${member.isSpiess ? " 🛡️ " : ""}${member.isAdmin ? " 🛠️ " : ""}${member.isSaftschubse ? " 🍻 " : ""}${member.isSuperAdmin ? " 🦸‍♀️ " : ""}'),
                 if (!member.isActive) ...[
                   const SizedBox(height: 8),
                   const Text(
-                    '🚫 Dein Konto ist deaktiviert. Bitte wende dich an den Administrator.',
+                    '🚫 Dein Konto ist deaktiviert.',
                     style: TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
