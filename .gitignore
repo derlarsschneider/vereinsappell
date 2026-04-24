@@ -79,3 +79,4 @@ test.json
 .worktrees/
 /.superpowers/
 /docs/superpowers/
+coverage/
