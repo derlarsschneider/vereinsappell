@@ -460,6 +460,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             ),
           ),
         ),
+      if (_isScreenActive('getraenke'))
+        _buildMenuTile(
+          context,
+          '🍻 Getränke',
+              () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GetraenkeScreen(config: widget.config),
+            ),
+          ),
+        ),
       if (member.isAdmin)
         _buildMenuTile(
           context,
@@ -490,17 +501,6 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => MonitoringScreen(config: widget.config),
-            ),
-          ),
-        ),
-      if (_isScreenActive('getraenke'))
-        _buildMenuTile(
-          context,
-          '🍻 Getränke',
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => GetraenkeScreen(config: widget.config),
             ),
           ),
         ),
