@@ -86,29 +86,6 @@ void main() {
       expect(find.text('🍾'), findsWidgets);
     });
 
-    testWidgets('own bottles are shown in red and tappable', (tester) async {
-      await tester.pumpWidget(_wrap(BierdeckelCard(
-        drink: kDrinks.firstWhere((d) => d.id == 'cola'),
-        entries: [
-          _flasche('cola', 'mem-1', id: 'entry-1'),
-          _flasche('cola', 'mem-2', id: 'entry-2'),
-        ],
-        myMemberId: 'mem-1',
-        onStrich: () {},
-        onFlasche: () {},
-        onDeleteMark: (_) {},
-      )));
-
-      final textWidgets = tester.widgetList<Text>(find.text('🍾')).toList();
-      expect(textWidgets.length, greaterThanOrEqualTo(2));
-
-      final ownBottleStyle = textWidgets[0].style;
-      expect(ownBottleStyle?.color, Colors.red);
-
-      final othersBottleStyle = textWidgets[1].style;
-      expect(othersBottleStyle?.color, Colors.black);
-    });
-
     testWidgets('single-line layout: drink name, marks, and buttons in single row', (tester) async {
       await tester.pumpWidget(_wrap(BierdeckelCard(
         drink: kDrinks.firstWhere((d) => d.id == 'cola'),
@@ -146,11 +123,11 @@ void main() {
         onDeleteMark: (id) { deletedId = id; },
       )));
 
-      // Find and tap the red bottle emoji to delete it
-      final bottleTexts = find.text('🍾');
-      expect(bottleTexts, findsWidgets);
+      // Tap the flasche − button (second minus: strich row first, flasche row second)
+      final minusButtons = find.text('−');
+      expect(minusButtons, findsWidgets);
 
-      await tester.tap(bottleTexts.first);
+      await tester.tap(minusButtons.at(1));
       await tester.pumpAndSettle();
 
       expect(deletedId, equals('bottle-to-delete'));
@@ -221,11 +198,9 @@ void main() {
         onDeleteMark: (_) {},
       )));
 
-      // Find the SizedBox that wraps buttons (width: 80)
-      final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox)).toList();
-      final buttonContainers = sizedBoxes.where((s) => s.width == 80).toList();
-      expect(buttonContainers, isNotEmpty);
-      expect(buttonContainers.first.width, equals(80));
+      // Cola with bottle: two counter rows → two − and two + buttons
+      expect(find.text('−'), findsNWidgets(2));
+      expect(find.text('+'), findsNWidgets(2));
     });
 
     testWidgets('drinks with bottles have two buttons (strich + flasche)', (tester) async {
