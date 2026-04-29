@@ -310,6 +310,41 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   }
 
 
+  void _showLogoFullscreen() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Logo schließen',
+      barrierColor: Colors.black87,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, _a, _b) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, animation, _a, _b) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: Container(
+                color: Colors.transparent,
+                alignment: Alignment.center,
+                child: _applicationLogoBase64.isNotEmpty
+                    ? Image.memory(
+                        _decodeBase64(_applicationLogoBase64),
+                        fit: BoxFit.contain,
+                      )
+                    : Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                      ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final member = Provider.of<Member>(context);
@@ -342,14 +377,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
-            child: _applicationLogoBase64.isNotEmpty
-                ? Image.memory(
-              _decodeBase64(_applicationLogoBase64),
-              height: 32,
-            )
-                : Image.asset(
-              'assets/images/logo.png',
-              height: 32,
+            child: GestureDetector(
+              onTap: _showLogoFullscreen,
+              child: _applicationLogoBase64.isNotEmpty
+                  ? Image.memory(
+                      _decodeBase64(_applicationLogoBase64),
+                      height: 32,
+                    )
+                  : Image.asset(
+                      'assets/images/logo.png',
+                      height: 32,
+                    ),
             ),
           ),
         ],
