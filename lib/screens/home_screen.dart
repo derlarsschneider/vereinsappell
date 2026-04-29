@@ -5,6 +5,7 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -333,8 +334,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                         _decodeBase64(_applicationLogoBase64),
                         fit: BoxFit.contain,
                       )
-                    : Image.asset(
-                        'assets/images/logo.png',
+                    : SvgPicture.asset(
+                        'assets/images/logo.svg',
                         fit: BoxFit.contain,
                       ),
               ),
@@ -384,8 +385,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                       _decodeBase64(_applicationLogoBase64),
                       height: 32,
                     )
-                  : Image.asset(
-                      'assets/images/logo.png',
+                  : SvgPicture.asset(
+                      'assets/images/logo.svg',
                       height: 32,
                     ),
             ),
