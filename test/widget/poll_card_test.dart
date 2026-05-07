@@ -56,8 +56,8 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Option A'), findsOneWidget);
-    expect(find.text('Option B'), findsOneWidget);
+    expect(find.text('Option A'), findsAtLeastNWidgets(1));
+    expect(find.text('Option B'), findsAtLeastNWidgets(1));
     expect(find.text('Stimme abgeben'), findsOneWidget);
   });
 

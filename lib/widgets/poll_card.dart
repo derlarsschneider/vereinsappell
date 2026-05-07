@@ -107,7 +107,7 @@ class _PollCardState extends State<PollCard> {
               const SizedBox(height: 8),
               _buildSubmitButton(),
             ],
-            if (poll.showResults && !poll.isActive) ...[
+            if (poll.showResults) ...[
               const Divider(height: 20),
               PollResults(poll: poll, totalMembers: widget.totalMembers),
             ],
