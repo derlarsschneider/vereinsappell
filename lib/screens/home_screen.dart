@@ -22,6 +22,7 @@ import '../utils/startup_timer.dart';
 import '../config_loader.dart';
 import '../version.dart';
 import '../widgets/pig_overlay.dart';
+import 'abstimmungen_screen.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'documents_screen.dart';
@@ -443,6 +444,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => MarschbefehlScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (_isScreenActive('abstimmungen'))
+        _buildMenuTile(
+          context,
+          '📊 Abstimmungen',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AbstimmungenScreen(config: widget.config),
             ),
           ),
         ),
