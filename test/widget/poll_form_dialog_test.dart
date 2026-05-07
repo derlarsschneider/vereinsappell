@@ -32,9 +32,11 @@ void main() {
 
     final saveButton = find.text('Erstellen');
     expect(saveButton, findsOneWidget);
+    await tester.ensureVisible(saveButton);
     await tester.tap(saveButton);
     await tester.pump();
-    // Form validation prevents save — no callback called
+    // Form validation fired — error message appears
+    expect(find.text('Titel erforderlich'), findsOneWidget);
     expect(find.text('Neue Abstimmung'), findsOneWidget);
   });
 
