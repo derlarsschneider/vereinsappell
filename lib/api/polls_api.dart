@@ -1,10 +1,11 @@
 import 'package:firebase_database/firebase_database.dart';
 import '../config_loader.dart';
-import '../models/poll.dart';
+import 'polls_api_interface.dart';
 
 export '../models/poll.dart';
+export 'polls_api_interface.dart';
 
-class PollsApi {
+class PollsApi implements IPollsApi {
   final AppConfig config;
 
   PollsApi(this.config);
@@ -12,6 +13,7 @@ class PollsApi {
   DatabaseReference get _ref =>
       FirebaseDatabase.instance.ref('polls/${config.applicationId}');
 
+  @override
   Stream<List<Poll>> watchPolls() {
     return _ref.onValue.map((event) => _parsePolls(event.snapshot.value));
   }
@@ -29,6 +31,7 @@ class PollsApi {
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
+  @override
   Future<void> createPoll({
     required String title,
     required String description,
@@ -57,6 +60,7 @@ class PollsApi {
     });
   }
 
+  @override
   Future<void> updatePoll(
     String pollId, {
     required String title,
@@ -81,6 +85,7 @@ class PollsApi {
     });
   }
 
+  @override
   Future<void> vote(
     String pollId,
     String memberId,
@@ -93,6 +98,7 @@ class PollsApi {
     });
   }
 
+  @override
   Future<void> deletePoll(String pollId) async {
     await _ref.child(pollId).remove();
   }
