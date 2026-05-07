@@ -8,6 +8,10 @@ void main() {
       expect(opt.id, 'opt1');
       expect(opt.text, 'Option A');
     });
+
+    test('toMap round-trips text', () {
+      expect(PollOption(id: 'o1', text: 'Ja').toMap(), {'text': 'Ja'});
+    });
   });
 
   group('PollVote.fromMap', () {

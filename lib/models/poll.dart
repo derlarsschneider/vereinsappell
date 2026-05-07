@@ -24,8 +24,8 @@ class PollVote {
 
   factory PollVote.fromMap(String memberId, Map<dynamic, dynamic> map) {
     final sel = map['selections'];
-    final ids = sel is Map
-        ? (sel as Map<dynamic, dynamic>).keys.map((k) => k as String).toList()
+    final ids = sel is Map<dynamic, dynamic>
+        ? sel.keys.map((k) => k as String).toList()
         : <String>[];
     return PollVote(
       memberId: memberId,
@@ -64,8 +64,8 @@ class Poll {
 
   factory Poll.fromSnapshot(String id, Map<dynamic, dynamic> map) {
     final rawOptions = map['options'];
-    final options = rawOptions is Map
-        ? (rawOptions as Map<dynamic, dynamic>)
+    final options = rawOptions is Map<dynamic, dynamic>
+        ? rawOptions
             .entries
             .map((e) => PollOption.fromMap(e.key as String,
                 Map<dynamic, dynamic>.from(e.value as Map)))
@@ -73,9 +73,9 @@ class Poll {
         : <PollOption>[];
 
     final rawVotes = map['votes'];
-    final votes = rawVotes is Map
+    final votes = rawVotes is Map<dynamic, dynamic>
         ? {
-            for (final e in (rawVotes as Map<dynamic, dynamic>).entries)
+            for (final e in rawVotes.entries)
               e.key as String: PollVote.fromMap(
                 e.key as String,
                 Map<dynamic, dynamic>.from(e.value as Map),
