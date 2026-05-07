@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/poll.dart';
 import 'poll_results.dart';
@@ -41,10 +42,10 @@ class _PollCardState extends State<PollCard> {
   @override
   void didUpdateWidget(PollCard old) {
     super.didUpdateWidget(old);
-    if (old.poll.id != widget.poll.id) {
-      _pendingSelection = Set.from(
-        widget.poll.votes[widget.currentMemberId]?.selectedOptionIds ?? [],
-      );
+    final oldIds = old.poll.votes[widget.currentMemberId]?.selectedOptionIds;
+    final newIds = widget.poll.votes[widget.currentMemberId]?.selectedOptionIds;
+    if (old.poll.id != widget.poll.id || !listEquals(oldIds, newIds)) {
+      _pendingSelection = Set.from(newIds ?? []);
     }
   }
 
