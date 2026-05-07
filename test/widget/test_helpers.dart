@@ -16,6 +16,7 @@ import 'package:vereinsappell/config_loader.dart';
 Future<AppConfig> makeConfig(
   WidgetTester tester, {
   bool isAdmin = false,
+  bool isSuperAdmin = false,
   String? sessionPassword = 'testpw',
 }) async {
   final config = await tester.runAsync(() async {
@@ -23,6 +24,7 @@ Future<AppConfig> makeConfig(
       'memberId': 'user-1',
       'name': 'Test User',
       'isAdmin': isAdmin,
+      'isSuperAdmin': isSuperAdmin,
       'isSpiess': false,
       'token': '',
     });

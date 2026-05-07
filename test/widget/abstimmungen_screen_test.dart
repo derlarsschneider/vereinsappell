@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vereinsappell/api/polls_api_interface.dart';
-import 'package:vereinsappell/models/poll.dart';
 import 'package:vereinsappell/screens/abstimmungen_screen.dart';
 
 import 'test_helpers.dart';
@@ -136,5 +135,41 @@ void main() {
     api.emit([]);
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.add), findsNothing);
+  });
+
+  testWidgets('super admin sieht Löschen-Button im Edit-Dialog', (tester) async {
+    final api = FakePollsApi();
+    final config = await makeConfig(tester, isAdmin: true, isSuperAdmin: true);
+    final poll = _poll(id: 'p1');
+    await tester.pumpWidget(wrapScreen(
+      AbstimmungenScreen(config: config, pollsApi: api),
+      config,
+    ));
+    api.emit([poll]);
+    await tester.pumpAndSettle();
+
+    // Tap edit icon to open dialog
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Abstimmung löschen'), findsOneWidget);
+  });
+
+  testWidgets('admin (kein super admin) sieht keinen Löschen-Button', (tester) async {
+    final api = FakePollsApi();
+    final config = await makeConfig(tester, isAdmin: true, isSuperAdmin: false);
+    final poll = _poll(id: 'p1');
+    await tester.pumpWidget(wrapScreen(
+      AbstimmungenScreen(config: config, pollsApi: api),
+      config,
+    ));
+    api.emit([poll]);
+    await tester.pumpAndSettle();
+
+    // Tap edit icon to open dialog
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Abstimmung löschen'), findsNothing);
   });
 }
