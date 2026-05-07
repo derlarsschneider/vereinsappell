@@ -57,7 +57,7 @@ class _Bar extends StatelessWidget {
               value: fraction,
               minHeight: 12,
               backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation(Colors.green[400]),
+              valueColor: AlwaysStoppedAnimation(Colors.green[400]!),
             ),
           ),
         ),
