@@ -58,13 +58,28 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     if (qrHandled) return;
     qrHandled = true;
 
-    try {
-      final jsonData = jsonDecode(data);
-      final apiBaseUrl = jsonData['apiBaseUrl'];
-      final applicationId = jsonData['applicationId'];
-      final memberId = jsonData['memberId'];
+    String? apiBaseUrl;
+    String? applicationId;
+    String? memberId;
 
-      if (apiBaseUrl != null && applicationId != null && memberId != null) {
+    // Try URL format first (current QR code format)
+    final parsed = parseInviteLink(data);
+    if (parsed.isNotEmpty) {
+      apiBaseUrl = parsed['apiBaseUrl'];
+      applicationId = parsed['applicationId'];
+      memberId = parsed['memberId'];
+    } else {
+      // Fall back to legacy JSON format
+      try {
+        final jsonData = jsonDecode(data);
+        apiBaseUrl = jsonData['apiBaseUrl'];
+        applicationId = jsonData['applicationId'];
+        memberId = jsonData['memberId'];
+      } catch (_) {}
+    }
+
+    if (apiBaseUrl != null && applicationId != null && memberId != null) {
+      try {
         final config = AppConfig(
           apiBaseUrl: apiBaseUrl,
           applicationId: applicationId,
@@ -88,12 +103,13 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
         } else {
           showError("Konfiguration konnte nicht geladen werden.");
         }
-      } else {
-        showError("QR-Code unvollständig.");
+      } catch (e) {
+        qrHandled = false;
+        showError("Fehler beim Anmelden: $e");
       }
-    } catch (e) {
-      qrHandled = false; // Scan erneut erlauben nach ungültigem QR-Code
-      showError("Ungültiger QR-Code.");
+    } else {
+      qrHandled = false;
+      showError("QR-Code unvollständig.");
     }
   }
 
