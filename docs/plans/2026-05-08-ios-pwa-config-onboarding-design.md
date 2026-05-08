@@ -1,11 +1,12 @@
-# iOS PWA Config Onboarding — Design
+# PWA Config Onboarding — Design
 
 ## Problem
 
-iOS Safari and installed PWAs have separate `localStorage` contexts. When a user opens an
-invitation URL (containing `apiBaseUrl`, `applicationId`, `memberId`, `password` as query
-params) in Safari, the app saves the config — but that storage is invisible to the PWA once
-added to the home screen. The PWA launches into `ConfigMissingScreen` with empty fields.
+Mobile browsers and installed PWAs have separate `localStorage` contexts — this is standard
+PWA behaviour on both iOS (Safari) and Android (Chrome). When a user opens an invitation URL
+(containing `apiBaseUrl`, `applicationId`, `memberId`, `password` as query params) in the
+browser, the app saves the config — but that storage is invisible to the PWA once added to
+the home screen. The PWA launches into `ConfigMissingScreen` with empty fields.
 
 ## Solution
 
