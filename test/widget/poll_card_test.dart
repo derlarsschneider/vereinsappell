@@ -58,10 +58,10 @@ void main() {
     ));
     expect(find.text('Option A'), findsAtLeastNWidgets(1));
     expect(find.text('Option B'), findsAtLeastNWidgets(1));
-    expect(find.text('Stimme abgeben'), findsOneWidget);
+    expect(find.text('Stimme abgeben'), findsNothing);
   });
 
-  testWidgets('zeigt "Stimme ändern" wenn bereits abgestimmt', (tester) async {
+  testWidgets('zeigt Auswahl wenn bereits abgestimmt', (tester) async {
     final votes = {
       'm1': PollVote(memberId: 'm1', selectedOptionIds: ['o1'], updatedAt: 0),
     };
@@ -76,7 +76,8 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Stimme ändern'), findsOneWidget);
+    expect(find.text('Stimme ändern'), findsNothing);
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   testWidgets('zeigt keine Optionen wenn inaktiv', (tester) async {
