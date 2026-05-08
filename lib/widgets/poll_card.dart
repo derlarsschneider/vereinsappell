@@ -142,8 +142,12 @@ class _PollCardState extends State<PollCard> {
             child: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
           ),
         const SizedBox(width: 4),
+        if (widget.poll.isSecretBallot) ...[
+          const Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+          const SizedBox(width: 4),
+        ],
         Text(
-          widget.poll.isActive ? 'Aktiv' : 'Beendet',
+          widget.poll.isActive ? '● Aktiv' : '⏹ Beendet',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,

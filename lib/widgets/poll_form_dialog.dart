@@ -194,7 +194,7 @@ class _PollFormSheetState extends State<_PollFormSheet> {
                 onChanged: (v) => setState(() => _isSecretBallot = v),
               ),
               SwitchListTile(
-                title: const Text('Aktiv'),
+                title: Text(widget.poll != null ? 'Aktiv' : 'Sofort aktivieren'),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
               ),
