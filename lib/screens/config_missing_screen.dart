@@ -22,6 +22,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   final MobileScannerController cameraController = MobileScannerController();
   final ImagePicker _imagePicker = ImagePicker();
 
+  final _inviteLinkController = TextEditingController();
   final _apiBaseUrlController = TextEditingController();
   final _applicationIdController = TextEditingController();
   final _memberIdController = TextEditingController();
@@ -45,6 +46,7 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
   @override
   void dispose() {
     cameraController.dispose();
+    _inviteLinkController.dispose();
     _apiBaseUrlController.dispose();
     _applicationIdController.dispose();
     _memberIdController.dispose();
@@ -137,6 +139,17 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
     }
   }
 
+  void _applyInviteLink(String text) {
+    final parsed = parseInviteLink(text);
+    if (parsed.isEmpty) return;
+    setState(() {
+      _apiBaseUrlController.text = parsed['apiBaseUrl']!;
+      _applicationIdController.text = parsed['applicationId']!;
+      _memberIdController.text = parsed['memberId']!;
+      _passwordController.text = parsed['password'] ?? '';
+    });
+  }
+
   void handleLogin() async {
     final apiBaseUrl = _apiBaseUrlController.text.trim();
     final applicationId = _applicationIdController.text.trim();
@@ -174,59 +187,9 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return Scaffold(
-        appBar: AppBar(title: Text("Web-Anmeldung")),
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _apiBaseUrlController,
-                decoration: InputDecoration(labelText: 'API Base URL'),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _applicationIdController,
-                decoration: InputDecoration(labelText: 'Application ID'),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _memberIdController,
-                decoration: InputDecoration(labelText: 'Member ID'),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Passwort'),
-                obscureText: true,
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: handleLogin,
-                child: Text('🔐 Anmelden', style: TextStyle(fontSize: 18)),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 60),
-                ),
-              ),
-              SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: pickImageAndScanQR,
-                child: Text('📸 QR-Code aus Bild laden', style: TextStyle(fontSize: 18)),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 60),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (scanning) {
       return Scaffold(
-        appBar: AppBar(title: Text('QR-Code scannen')),
+        appBar: AppBar(title: const Text('QR-Code scannen')),
         body: MobileScanner(
           controller: cameraController,
           onDetect: (capture) {
@@ -241,42 +204,89 @@ class _ConfigMissingScreenState extends State<ConfigMissingScreen> {
       );
     }
 
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Web-Anmeldung')),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _inviteLinkController,
+                decoration: const InputDecoration(labelText: 'Einladungslink einfügen'),
+                onChanged: _applyInviteLink,
+              ),
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _apiBaseUrlController,
+                decoration: const InputDecoration(labelText: 'API Base URL'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _applicationIdController,
+                decoration: const InputDecoration(labelText: 'Application ID'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _memberIdController,
+                decoration: const InputDecoration(labelText: 'Member ID'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: 'Passwort'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: handleLogin,
+                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 60)),
+                child: const Text('🔐 Anmelden', style: TextStyle(fontSize: 18)),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: startQRScan,
+                style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 60)),
+                child: const Text('📷 QR-Code scannen', style: TextStyle(fontSize: 18)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text("Willkommen")),
+      appBar: AppBar(title: const Text('Willkommen')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('⚙️ Keine Konfiguration gefunden', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+            const Text('⚙️ Keine Konfiguration gefunden',
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => CreateVereinScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => CreateVereinScreen()));
               },
-              child: Text('🆕 Neuen Verein anlegen', style: TextStyle(fontSize: 20)),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 60),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 60)),
+              child: const Text('🆕 Neuen Verein anlegen', style: TextStyle(fontSize: 20)),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: startQRScan,
-              child: Text('📷 Einem Verein beitreten', style: TextStyle(fontSize: 20)),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 60),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 60)),
+              child: const Text('📷 Einem Verein beitreten', style: TextStyle(fontSize: 20)),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             OutlinedButton(
               onPressed: pickImageAndScanQR,
-              child: Text('🖼️ QR-Code aus Bild', style: TextStyle(fontSize: 18)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: Size(double.infinity, 60),
-              ),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 60)),
+              child: const Text('🖼️ QR-Code aus Bild', style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
