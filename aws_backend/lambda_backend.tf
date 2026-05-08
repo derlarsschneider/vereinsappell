@@ -44,14 +44,7 @@ resource "aws_apigatewayv2_api" "http_api" {
     protocol_type = "HTTP"
 
     cors_configuration {
-        allow_origins     = concat(
-            [
-                "https://vereinsappell.web.app",
-                "http://127.0.0.1:8080",
-                "http://localhost:8080",
-            ],
-            var.extra_cors_origins
-        )
+        allow_origins     = ["*"]
         allow_methods     = ["GET", "POST", "DELETE", "OPTIONS", "PUT"]
         allow_headers     = ["content-type", "applicationId", "memberId", "password"]
         allow_credentials = false
