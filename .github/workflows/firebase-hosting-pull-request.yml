@@ -34,8 +34,16 @@ jobs:
         run: flutter build web --release
 
       - name: 🚀 Deploy Preview to Firebase Hosting
+        id: deploy
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
           projectId: vereinsappell
+
+      - name: 📨 Notify Telegram
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="🔍 PR Preview bereit%0A${{ github.event.pull_request.title }}%0A${{ steps.deploy.outputs.details_url }}"
