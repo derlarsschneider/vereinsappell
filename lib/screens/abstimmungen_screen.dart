@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../api/members_api.dart';
 import '../api/polls_api.dart';
 import '../config_loader.dart';
 import '../widgets/poll_card.dart';
@@ -21,6 +22,7 @@ class _AbstimmungenScreenState extends DefaultScreenState<AbstimmungenScreen> {
   late final IPollsApi _api;
   late final StreamSubscription<List<Poll>> _sub;
   List<Poll>? _polls;
+  Map<String, String> _memberNames = {};
 
   @override
   void initState() {
@@ -34,6 +36,22 @@ class _AbstimmungenScreenState extends DefaultScreenState<AbstimmungenScreen> {
         if (mounted) showError('Firebase-Fehler: $e');
       },
     );
+    _loadMemberNames();
+  }
+
+  Future<void> _loadMemberNames() async {
+    try {
+      final members = await MembersApi(widget.config).fetchMembers();
+      final map = <String, String>{};
+      for (final m in members) {
+        final id = m['memberId'] as String?;
+        final name = m['name'] as String?;
+        if (id != null && name != null) map[id] = name;
+      }
+      if (mounted) setState(() => _memberNames = map);
+    } catch (_) {
+      // member names are best-effort; silently ignore errors
+    }
   }
 
   @override
@@ -156,6 +174,7 @@ class _AbstimmungenScreenState extends DefaultScreenState<AbstimmungenScreen> {
           onEdit: (member.isAdmin || member.isSuperAdmin)
               ? () => _openEdit(context, poll, member.isSuperAdmin)
               : null,
+          memberNames: _memberNames,
         );
       },
     );

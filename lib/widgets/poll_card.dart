@@ -11,6 +11,7 @@ class PollCard extends StatefulWidget {
   final Future<void> Function(String pollId, List<String> selectedIds) onVote;
   final VoidCallback? onEdit;
   final int? totalMembers;
+  final Map<String, String>? memberNames;
 
   const PollCard({
     super.key,
@@ -21,6 +22,7 @@ class PollCard extends StatefulWidget {
     required this.onVote,
     this.onEdit,
     this.totalMembers,
+    this.memberNames,
   });
 
   @override
@@ -50,7 +52,7 @@ class _PollCardState extends State<PollCard> {
   }
 
   void _toggleOption(String optionId) {
-    if (!widget.poll.isActive) return;
+    if (!widget.poll.isActive || _submitting) return;
     setState(() {
       if (widget.poll.allowMultiple) {
         if (_pendingSelection.contains(optionId)) {
@@ -62,6 +64,7 @@ class _PollCardState extends State<PollCard> {
         _pendingSelection = {optionId};
       }
     });
+    _submit();
   }
 
   Future<void> _submit() async {
@@ -73,8 +76,6 @@ class _PollCardState extends State<PollCard> {
       if (mounted) setState(() => _submitting = false);
     }
   }
-
-  bool get _hasVoted => widget.poll.votes.containsKey(widget.currentMemberId);
 
   Color get _borderColor {
     if (!widget.poll.isActive) return Colors.grey[300]!;
@@ -105,12 +106,14 @@ class _PollCardState extends State<PollCard> {
             if (poll.isActive) ...[
               const SizedBox(height: 12),
               _buildOptions(),
-              const SizedBox(height: 8),
-              _buildSubmitButton(),
+              if (_submitting)
+                const LinearProgressIndicator(),
             ],
             if (poll.showResults) ...[
               const Divider(height: 20),
               PollResults(poll: poll, totalMembers: widget.totalMembers),
+              if (!poll.isSecretBallot && poll.votes.isNotEmpty)
+                _buildVoterListButton(context),
             ],
             if (poll.isSecretBallot && poll.isActive) ...[
               const SizedBox(height: 8),
@@ -173,19 +176,72 @@ class _PollCardState extends State<PollCard> {
     );
   }
 
-  Widget _buildSubmitButton() {
-    final canSubmit = _pendingSelection.isNotEmpty && !_submitting;
+  Widget _buildVoterListButton(BuildContext context) {
     return Align(
-      alignment: Alignment.centerRight,
-      child: ElevatedButton(
-        onPressed: canSubmit ? _submit : null,
-        child: _submitting
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        icon: const Icon(Icons.people_outline, size: 16),
+        label: const Text('Wer hat wie abgestimmt?'),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.grey[600],
+          textStyle: const TextStyle(fontSize: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+        ),
+        onPressed: () => _showVoterList(context),
+      ),
+    );
+  }
+
+  void _showVoterList(BuildContext context) {
+    final poll = widget.poll;
+    final names = widget.memberNames ?? {};
+
+    final byOption = <String, List<String>>{};
+    for (final option in poll.options) {
+      byOption[option.id] = [];
+    }
+    for (final entry in poll.votes.entries) {
+      final memberId = entry.key;
+      final displayName = names[memberId] ?? memberId;
+      for (final optId in entry.value.selectedOptionIds) {
+        byOption[optId]?.add(displayName);
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shrinkWrap: true,
+        children: [
+          Text(
+            poll.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 12),
+          for (final option in poll.options) ...[
+            Text(
+              option.text,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+            const SizedBox(height: 4),
+            if ((byOption[option.id] ?? []).isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(left: 8, bottom: 8),
+                child: Text('–', style: TextStyle(color: Colors.grey)),
               )
-            : Text(_hasVoted ? 'Stimme ändern' : 'Stimme abgeben'),
+            else
+              for (final name in byOption[option.id]!)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 4),
+                  child: Text(name, style: const TextStyle(fontSize: 13)),
+                ),
+            const SizedBox(height: 8),
+          ],
+        ],
       ),
     );
   }
