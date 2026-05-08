@@ -18,6 +18,7 @@ const _allScreens = [
   {'key': 'galerie', 'label': '📸 Fotogalerie'},
   {'key': 'schere_stein_papier', 'label': '✂️ Schere Stein Papier'},
   {'key': 'getraenke', 'label': '🍻 Getränke'},
+  {'key': 'abstimmungen', 'label': '📊 Abstimmungen'},
 ];
 
 class VereinScreen extends DefaultScreen {
