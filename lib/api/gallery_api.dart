@@ -11,59 +11,43 @@ class GalleryApi {
   GalleryApi(this.config, {http.Client? client})
       : _client = client ?? http.Client();
 
-  Future<List<Map<String, dynamic>>> fetchThumbnails() async {
+  Future<List<Map<String, String>>> fetchThumbnails() async {
     final response = await _client.get(
       Uri.parse('${config.apiBaseUrl}/photos/thumbnails'),
       headers: headers(config),
     );
     if (response.statusCode == 200) {
       final List data = json.decode(response.body);
-      return data.cast<Map<String, dynamic>>();
+      return data.map((e) => {
+        'name': e['name'] as String,
+        'thumbnail_url': e['thumbnail_url'] as String,
+        'photo_url': e['photo_url'] as String,
+      }).toList();
     } else {
       throw Exception('Fehler beim Laden der Fotos: ${response.statusCode}');
     }
   }
 
-  Future<Uint8List> fetchPhoto(String name) async {
-    final response = await _client.get(
-      Uri.parse('${config.apiBaseUrl}/photos/img/$name'),
-      headers: headers(config),
-    );
-    if (response.statusCode == 200) {
-      return response.bodyBytes;
-    } else {
-      throw Exception('Fehler beim Laden des Fotos: ${response.statusCode}');
-    }
-  }
-
   Future<void> uploadPhoto({
     required Uint8List original,
-    required Uint8List thumbnail,
     required String filename,
   }) async {
-    final imgName = 'img/$filename';
-    final thumbName = 'thumbnails/$filename';
-
-    final responseImg = await _client.post(
+    final basename = filename.contains('.')
+        ? '${filename.substring(0, filename.lastIndexOf('.'))}.jpg'
+        : '$filename.jpg';
+    final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/photos'),
       headers: headers(config),
-      body: json.encode([{'file': base64Encode(original), 'name': imgName}]),
+      body: json.encode({'file': base64Encode(original), 'name': basename}),
     );
-    final responseThumb = await _client.post(
-      Uri.parse('${config.apiBaseUrl}/photos'),
-      headers: headers(config),
-      body: json.encode([{'file': base64Encode(thumbnail), 'name': thumbName}]),
-    );
-
-    if (responseImg.statusCode != 200 || responseThumb.statusCode != 200) {
-      print(responseThumb.body);
-      throw Exception('Fehler beim Hochladen. Img: ${responseImg.statusCode}, Thumb: ${responseThumb.statusCode}');
+    if (response.statusCode != 200) {
+      throw Exception('Fehler beim Hochladen: ${response.statusCode}');
     }
   }
 
-  Future<void> deletePhoto(String name) async {
+  Future<void> deletePhoto(String basename) async {
     final response = await _client.delete(
-      Uri.parse('${config.apiBaseUrl}/photos/$name'),
+      Uri.parse('${config.apiBaseUrl}/photos/$basename'),
       headers: headers(config),
     );
     if (response.statusCode != 200) {

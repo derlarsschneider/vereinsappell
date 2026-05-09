@@ -9,9 +9,13 @@ import 'api_test_helpers.dart';
 
 void main() {
   group('fetchThumbnails', () {
-    test('200 → returns list', () async {
+    test('200 → returns list with thumbnail_url and photo_url', () async {
       final payload = [
-        {'name': 'thumbnails/photo.jpg', 'file': 'abc'}
+        {
+          'name': 'photo.jpg',
+          'thumbnail_url': 'https://s3.example.com/thumb/photo.jpg',
+          'photo_url': 'https://s3.example.com/img/photo.jpg',
+        }
       ];
       final result = await withStubConfig(
         body: (config, client) =>
@@ -19,16 +23,28 @@ void main() {
         apiHandler: (_) async => http.Response(jsonEncode(payload), 200),
       );
       expect(result.length, 1);
+      expect(result[0]['thumbnail_url'], 'https://s3.example.com/thumb/photo.jpg');
+      expect(result[0]['photo_url'], 'https://s3.example.com/img/photo.jpg');
+    });
+
+    test('non-200 → throws', () async {
+      expect(
+        () => withStubConfig(
+          body: (config, client) =>
+              GalleryApi(config, client: client).fetchThumbnails(),
+          apiHandler: (_) async => http.Response('Error', 500),
+        ),
+        throwsA(isA<Exception>()),
+      );
     });
   });
 
   group('uploadPhoto', () {
-    test('makes exactly 2 POST requests', () async {
+    test('makes exactly 1 POST request', () async {
       int postCount = 0;
       await withStubConfig(
         body: (config, client) => GalleryApi(config, client: client).uploadPhoto(
           original: Uint8List.fromList([1, 2, 3]),
-          thumbnail: Uint8List.fromList([4, 5, 6]),
           filename: 'photo.jpg',
         ),
         apiHandler: (request) async {
@@ -36,23 +52,33 @@ void main() {
           return http.Response('{}', 200);
         },
       );
-      expect(postCount, 2);
+      expect(postCount, 1);
     });
 
-    test('first POST fails → throws, second POST is not made', () async {
-      int postCount = 0;
+    test('POST body contains name without prefix', () async {
+      Map<String, dynamic>? sentBody;
+      await withStubConfig(
+        body: (config, client) => GalleryApi(config, client: client).uploadPhoto(
+          original: Uint8List.fromList([1]),
+          filename: 'photo.png',
+        ),
+        apiHandler: (request) async {
+          sentBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response('{}', 200);
+        },
+      );
+      expect(sentBody!['name'], 'photo.jpg'); // extension normalized to .jpg
+      expect(sentBody!.containsKey('file'), isTrue);
+    });
+
+    test('non-200 → throws', () async {
       expect(
         () => withStubConfig(
           body: (config, client) => GalleryApi(config, client: client).uploadPhoto(
             original: Uint8List.fromList([1]),
-            thumbnail: Uint8List.fromList([2]),
             filename: 'photo.jpg',
           ),
-          apiHandler: (request) async {
-            postCount++;
-            if (postCount == 1) return http.Response('Error', 500);
-            return http.Response('{}', 200);
-          },
+          apiHandler: (_) async => http.Response('Error', 500),
         ),
         throwsA(isA<Exception>()),
       );
@@ -60,15 +86,26 @@ void main() {
   });
 
   group('deletePhoto', () {
-    test('DELETE to correct URL', () async {
+    test('DELETE to /photos/{basename}', () async {
       await withStubConfig(
         body: (config, client) =>
-            GalleryApi(config, client: client).deletePhoto('thumbnails/photo.jpg'),
+            GalleryApi(config, client: client).deletePhoto('photo.jpg'),
         apiHandler: (request) async {
           expect(request.method, 'DELETE');
-          expect(request.url.path, '/photos/thumbnails/photo.jpg');
+          expect(request.url.path, '/photos/photo.jpg');
           return http.Response('{}', 200);
         },
+      );
+    });
+
+    test('non-200 → throws', () async {
+      expect(
+        () => withStubConfig(
+          body: (config, client) =>
+              GalleryApi(config, client: client).deletePhoto('photo.jpg'),
+          apiHandler: (_) async => http.Response('Error', 500),
+        ),
+        throwsA(isA<Exception>()),
       );
     });
   });
