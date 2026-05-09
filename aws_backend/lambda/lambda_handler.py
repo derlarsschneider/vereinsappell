@@ -294,8 +294,8 @@ def add_photo(event, application_id):
     data = json.loads(body)
     raw_name = data['name']
     basename = raw_name.split('/')[-1]
-    if not basename.lower().endswith('.jpg'):
-        basename = basename.rsplit('.', 1)[0] + '.jpg' if '.' in basename else basename + '.jpg'
+    stem = basename.rsplit('.', 1)[0] if '.' in basename else basename
+    basename = stem.lower() + '.jpg'
 
     img_key = f'{application_id}/photos/img/{basename}'
     thumb_key = f'{application_id}/photos/thumbnails/{basename}'

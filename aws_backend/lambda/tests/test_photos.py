@@ -65,6 +65,16 @@ class TestAddPhoto(unittest.TestCase):
         self.assertEqual(response['statusCode'], 409)
         self.mock_s3.put_object.assert_not_called()
 
+    @patch('lambda_handler._generate_thumbnail', return_value=b'thumb')
+    def test_normalizes_uppercase_extension_to_lowercase_jpg(self, _mock_thumb):
+        image_bytes = b'fake-image'
+        event = _upload_event('photo.JPG', image_bytes)
+        response = lambda_handler.add_photo(event, APP_ID)
+        self.assertEqual(response['statusCode'], 200)
+        put_calls = self.mock_s3.put_object.call_args_list
+        keys = [c.kwargs['Key'] for c in put_calls]
+        self.assertIn(f'{APP_ID}/photos/img/photo.jpg', keys)
+
 
 if __name__ == '__main__':
     unittest.main()
