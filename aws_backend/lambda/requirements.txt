@@ -2,3 +2,4 @@ boto3
 requests
 google-auth
 cryptography<45
+pillow

@@ -292,18 +292,44 @@ def get_photos(event, application_id):
 def add_photo(event, application_id):
     body = base64.b64decode(event['body']) if event.get('isBase64Encoded') else event['body'].encode('utf-8')
     data = json.loads(body)
-    name = data['name']
-    file_base64 = data['file']
-    key = f'{application_id}/photos/{name}'
+    raw_name = data['name']
+    basename = raw_name.split('/')[-1]
+    if not basename.lower().endswith('.jpg'):
+        basename = basename.rsplit('.', 1)[0] + '.jpg' if '.' in basename else basename + '.jpg'
+
+    img_key = f'{application_id}/photos/img/{basename}'
+    thumb_key = f'{application_id}/photos/thumbnails/{basename}'
+
     s3 = boto3.client('s3')
     try:
-        s3.head_object(Bucket=s3_bucket_name, Key=key)
+        s3.head_object(Bucket=s3_bucket_name, Key=img_key)
         return {'statusCode': 409, 'body': json.dumps({'error': 'Datei existiert bereits'})}
-    except s3.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != '404':
+    except Exception as e:
+        if hasattr(e, 'response') and e.response.get('Error', {}).get('Code') != '404':
             raise
-    s3.put_object(Bucket=s3_bucket_name, Key=key, Body=base64.b64decode(file_base64))
-    return {'statusCode': 200, 'body': json.dumps({'message': f'{name} hochgeladen'})}
+
+    image_bytes = base64.b64decode(data['file'])
+    thumbnail_bytes = _generate_thumbnail(image_bytes)
+
+    s3.put_object(Bucket=s3_bucket_name, Key=img_key, Body=image_bytes, ContentType='image/jpeg')
+    s3.put_object(Bucket=s3_bucket_name, Key=thumb_key, Body=thumbnail_bytes, ContentType='image/jpeg')
+
+    return {'statusCode': 200, 'body': json.dumps({'message': f'{basename} hochgeladen'})}
+
+
+def _generate_thumbnail(image_bytes, size=400):
+    from PIL import Image
+    import io as _io
+    img = Image.open(_io.BytesIO(image_bytes)).convert('RGB')
+    w, h = img.size
+    min_dim = min(w, h)
+    left = (w - min_dim) // 2
+    top = (h - min_dim) // 2
+    img = img.crop((left, top, left + min_dim, top + min_dim))
+    img = img.resize((size, size), Image.LANCZOS)
+    buf = _io.BytesIO()
+    img.save(buf, format='JPEG', quality=70)
+    return buf.getvalue()
 
 
 def _get_s3_content(key):
