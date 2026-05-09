@@ -114,5 +114,36 @@ class TestGetPhotos(unittest.TestCase):
         self.assertEqual(json.loads(response['body']), [])
 
 
+class TestDeletePhoto(unittest.TestCase):
+    def setUp(self):
+        self.mock_s3 = MagicMock()
+        _boto3_mock.client.return_value = self.mock_s3
+
+    def _delete_event(self, basename):
+        return {
+            'requestContext': {'http': {'method': 'DELETE', 'path': f'/photos/{basename}'}},
+            'headers': {'applicationid': APP_ID},
+            'pathParameters': {'proxy': basename},
+        }
+
+    def test_deletes_both_img_and_thumbnail(self):
+        event = self._delete_event('foo.jpg')
+        response = lambda_handler.delete_photo(event, APP_ID)
+        self.assertEqual(response['statusCode'], 200)
+        delete_calls = self.mock_s3.delete_object.call_args_list
+        keys = [c.kwargs['Key'] for c in delete_calls]
+        self.assertIn(f'{APP_ID}/photos/img/foo.jpg', keys)
+        self.assertIn(f'{APP_ID}/photos/thumbnails/foo.jpg', keys)
+
+    def test_returns_400_when_basename_missing(self):
+        event = {
+            'requestContext': {'http': {'method': 'DELETE', 'path': '/photos/'}},
+            'headers': {'applicationid': APP_ID},
+            'pathParameters': {},
+        }
+        response = lambda_handler.delete_photo(event, APP_ID)
+        self.assertEqual(response['statusCode'], 400)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -105,6 +105,8 @@ def _dispatch(event, context, method, path, application_id, headers):
         return {**headers, **get_photos(event, application_id)}
     elif method == 'POST' and path.startswith('/photos'):
         return {**headers, **add_photo(event, application_id)}
+    elif method == 'DELETE' and path.startswith('/photos/'):
+        return {**headers, **delete_photo(event, application_id)}
     elif method == 'GET' and path.startswith('/customers/'):
         import api_customers
         return {**headers, **api_customers.get_customer_by_id(event, context)}
@@ -318,6 +320,18 @@ def add_photo(event, application_id):
     s3.put_object(Bucket=s3_bucket_name, Key=thumb_key, Body=thumbnail_bytes, ContentType='image/jpeg')
 
     return {'statusCode': 200, 'body': json.dumps({'message': f'{basename} hochgeladen'})}
+
+
+def delete_photo(event, application_id):
+    import urllib.parse
+    proxy = (event.get('pathParameters') or {}).get('proxy')
+    if not proxy:
+        return {'statusCode': 400, 'body': json.dumps({'error': 'Dateiname fehlt'})}
+    basename = urllib.parse.unquote(proxy)
+    s3 = boto3.client('s3')
+    s3.delete_object(Bucket=s3_bucket_name, Key=f'{application_id}/photos/img/{basename}')
+    s3.delete_object(Bucket=s3_bucket_name, Key=f'{application_id}/photos/thumbnails/{basename}')
+    return {'statusCode': 200, 'body': json.dumps({'message': f'{basename} gelöscht'})}
 
 
 def _generate_thumbnail(image_bytes, size=400):
