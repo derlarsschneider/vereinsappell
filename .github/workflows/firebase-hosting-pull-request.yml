@@ -47,3 +47,57 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d text="🔍 PR Preview bereit%0A${{ github.event.pull_request.title }}%0A${{ steps.deploy.outputs.details_url }}"
+
+  backend:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Install Test Dependencies
+        run: pip install pytest boto3 requests pillow
+
+      - name: 🧪 Run Backend Tests
+        working-directory: aws_backend/lambda
+        run: pytest tests/
+
+      - name: 🔧 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: 🏗️ Build Lambda (manylinux deps)
+        working-directory: aws_backend/lambda
+        run: ./build.sh
+
+      - name: 📦 Zip Lambda
+        working-directory: aws_backend/lambda
+        run: ./zip.sh
+
+      - name: 🚀 Deploy to Lambda $LATEST
+        id: deploy
+        working-directory: aws_backend/lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name vereins-app-beta-lambda_backend \
+            --zip-file fileb://lambda.zip
+          API_ID=$(aws apigatewayv2 get-apis \
+            --query "Items[?Name=='vereins-app-beta-api'].ApiId" \
+            --output text)
+          echo "dev_url=https://${API_ID}.execute-api.eu-central-1.amazonaws.com/dev" >> $GITHUB_OUTPUT
+
+      - name: 📨 Notify Telegram (Backend)
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="🔧 Backend Dev bereit%0A${{ github.event.pull_request.title }}%0A${{ steps.deploy.outputs.dev_url }}"
