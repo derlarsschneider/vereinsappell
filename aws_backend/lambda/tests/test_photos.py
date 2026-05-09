@@ -76,5 +76,43 @@ class TestAddPhoto(unittest.TestCase):
         self.assertIn(f'{APP_ID}/photos/img/photo.jpg', keys)
 
 
+class TestGetPhotos(unittest.TestCase):
+    def setUp(self):
+        self.mock_s3 = MagicMock()
+        _boto3_mock.client.return_value = self.mock_s3
+
+    def _list_event(self, proxy=None):
+        event = {
+            'requestContext': {'http': {'method': 'GET', 'path': f'/photos/{proxy}' if proxy else '/photos/thumbnails'}},
+            'headers': {'applicationid': APP_ID},
+            'pathParameters': {'proxy': proxy} if proxy else {'proxy': 'thumbnails'},
+        }
+        return event
+
+    def test_thumbnail_list_returns_presigned_urls(self):
+        self.mock_s3.list_objects_v2.return_value = {
+            'Contents': [{'Key': f'{APP_ID}/photos/thumbnails/foo.jpg'}]
+        }
+        self.mock_s3.generate_presigned_url.side_effect = [
+            'https://s3.example.com/thumb/foo.jpg',
+            'https://s3.example.com/img/foo.jpg',
+        ]
+        event = self._list_event()
+        response = lambda_handler.get_photos(event, APP_ID)
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertEqual(len(body), 1)
+        self.assertEqual(body[0]['name'], 'foo.jpg')
+        self.assertIn('thumbnail_url', body[0])
+        self.assertIn('photo_url', body[0])
+
+    def test_thumbnail_list_returns_empty_list_when_no_photos(self):
+        self.mock_s3.list_objects_v2.return_value = {}
+        event = self._list_event()
+        response = lambda_handler.get_photos(event, APP_ID)
+        self.assertEqual(response['statusCode'], 200)
+        self.assertEqual(json.loads(response['body']), [])
+
+
 if __name__ == '__main__':
     unittest.main()
