@@ -13,6 +13,8 @@ sys.modules['push_notifications'] = MagicMock()
 sys.modules['error_handler'] = MagicMock()
 sys.modules['api_members'] = MagicMock()
 sys.modules['api_docs'] = MagicMock()
+# Resolve to whatever is actually registered — another test file may have run first
+_boto3_mock = sys.modules['boto3']
 
 sys.path.insert(0, '.')
 import lambda_handler
