@@ -1,20 +1,15 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
+import 'package:vereinsappell/widgets/photo_lightbox.dart';
 
 import '../api/gallery_api.dart';
 
 class GalleryScreen extends DefaultScreen {
-
   const GalleryScreen({
     super.key,
     required super.config,
-  }) : super(title: 'Fotogalerie',);
+  }) : super(title: 'Fotogalerie');
 
   @override
   DefaultScreenState createState() => _GalleryScreenState();
@@ -22,9 +17,8 @@ class GalleryScreen extends DefaultScreen {
 
 class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   late final GalleryApi api;
-  List<Map<String, dynamic>> photos = [];
+  List<Map<String, String>> photos = [];
   final ImagePicker _picker = ImagePicker();
-  bool isLoading = false;
 
   @override
   void initState() {
@@ -33,16 +27,11 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     fetchThumbnails();
   }
 
-  Future<void> fetchPhoto(String name) async {
+  Future<void> fetchThumbnails() async {
     setState(() => isLoading = true);
     try {
-        final Uint8List imageBytes = await api.fetchPhoto(name);
-        showDialog(
-          context: context,
-          builder: (_) => Dialog(
-            child: Image.memory(imageBytes, fit: BoxFit.contain),
-          ),
-        );
+      final data = await api.fetchThumbnails();
+      setState(() => photos = data);
     } catch (e) {
       showError('Fehler: $e');
     } finally {
@@ -50,43 +39,14 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     }
   }
 
-  Future<void> fetchThumbnails() async {
-    setState(() => isLoading = true);
-    try {
-      final List<dynamic> data = await api.fetchThumbnails();
-      setState(() {
-        photos = data.cast<Map<String, dynamic>>();
-      });
-    } catch (e) {
-      showError('Fehler Thumbnails: $e');
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
   Future<void> uploadPhoto() async {
     final XFile? pickedFile =
-    await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (pickedFile == null) return;
-
     final originalBytes = await pickedFile.readAsBytes();
-    final originalImage = img.decodeImage(originalBytes);
-    if (originalImage == null) return;
-
-    final jpegBytes = img.encodeJpg(originalImage, quality: 90);
-
-    final resized = img.copyResize(originalImage, width: 200); // z.B. 800px Breite
-    final resizedBytes = img.encodeJpg(resized, quality: 70); // oder encodePng()
-
     setState(() => isLoading = true);
-    final String filename = pickedFile.name.replaceAll(RegExp(r"\.\w+$"), ".jpg");
     try {
-      await api.uploadPhoto(
-        original: jpegBytes,
-        thumbnail: resizedBytes,
-        filename: filename,
-      );
+      await api.uploadPhoto(original: originalBytes, filename: pickedFile.name);
       showInfo('Foto hochgeladen');
       await fetchThumbnails();
     } catch (e) {
@@ -96,10 +56,10 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     }
   }
 
-  Future<void> deletePhoto(String photoId) async {
+  Future<void> deletePhoto(String basename) async {
     setState(() => isLoading = true);
     try {
-      await api.deletePhoto(photoId);
+      await api.deletePhoto(basename);
       showInfo('Foto gelöscht');
       await fetchThumbnails();
     } catch (e) {
@@ -109,83 +69,113 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     }
   }
 
+  void _openLightbox(int index) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PhotoLightbox(
+        photos: photos,
+        initialIndex: index,
+        isAdmin: widget.config.member.isAdmin,
+        onDelete: deletePhoto,
+      ),
+      fullscreenDialog: true,
+    ));
+  }
+
+  static const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 130,
+    crossAxisSpacing: 4,
+    mainAxisSpacing: 4,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('📸 Fotogalerie'),
+        title: const Text('📸 Fotogalerie'),
         actions: [
           IconButton(
-            icon: Icon(Icons.add_a_photo),
+            icon: const Icon(Icons.add_a_photo),
             onPressed: uploadPhoto,
             tooltip: 'Foto hochladen',
           ),
         ],
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
+      body: isLoading && photos.isEmpty
+          ? GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: _gridDelegate,
+              itemCount: 12,
+              itemBuilder: (_, __) => const _ShimmerTile(),
+            )
           : photos.isEmpty
-          ? Center(child: Text('Keine Fotos vorhanden'))
-          : GridView.builder(
-        padding: EdgeInsets.all(8),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
-        itemCount: photos.length,
-        itemBuilder: (context, index) {
-          final photo = photos[index];
-          final thumbnail = photo['file'] as String? ?? '';
-          final name = photo['name'] as String? ?? '';
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              GestureDetector(
-                onTap: () => fetchPhoto(name.replaceFirst('thumbnails/', 'img/')),
-                child: Image(
-                  image: MemoryImage(base64Decode(thumbnail)),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              if (widget.config.member.isAdmin)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: Text('Foto löschen?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text('Abbrechen'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text(
-                                'Löschen',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) await deletePhoto(name);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
+              ? const Center(child: Text('Keine Fotos vorhanden'))
+              : GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: _gridDelegate,
+                  itemCount: photos.length,
+                  itemBuilder: (context, index) {
+                    final photo = photos[index];
+                    return GestureDetector(
+                      onTap: () => _openLightbox(index),
+                      child: Image.network(
+                        photo['thumbnail_url']!,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null ? child : const _ShimmerTile(),
+                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
                       ),
-                      padding: EdgeInsets.all(4),
-                      child: Icon(Icons.delete, color: Colors.white, size: 20),
-                    ),
-                  ),
+                    );
+                  },
                 ),
+    );
+  }
+}
+
+class _ShimmerTile extends StatefulWidget {
+  const _ShimmerTile();
+
+  @override
+  State<_ShimmerTile> createState() => _ShimmerTileState();
+}
+
+class _ShimmerTileState extends State<_ShimmerTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat();
+    _anim = Tween<double>(begin: -1, end: 2).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value, 0),
+            colors: const [
+              Color(0xFF2a2a2a),
+              Color(0xFF3d3d3d),
+              Color(0xFF2a2a2a),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }
