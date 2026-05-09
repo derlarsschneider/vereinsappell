@@ -260,33 +260,36 @@ def get_photos(event, application_id):
     import urllib.parse
     s3 = boto3.client('s3')
     proxy = (event.get('pathParameters') or {}).get('proxy')
-    prefix = f'{application_id}/photos'
-    if proxy:
-        prefix = f'{prefix}/{urllib.parse.unquote(proxy)}'
 
-    try:
-        s3.head_object(Bucket=s3_bucket_name, Key=prefix)
-        response = s3.get_object(Bucket=s3_bucket_name, Key=prefix)
-        file_bytes = response['Body'].read()
-        content_type = response.get('ContentType', 'application/octet-stream')
-        file_name = prefix.split('/')[-1]
-        return {
-            'statusCode': 200,
-            'isBase64Encoded': True,
-            'headers': {
-                'Content-Type': content_type,
-                'Content-Disposition': f'inline; filename="{file_name}"',
-                'Access-Control-Allow-Origin': '*',
-            },
-            'body': base64.b64encode(file_bytes).decode('utf-8'),
-        }
-    except Exception:
-        response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=f'{prefix}/')
-        files = [{
-            'name': obj['Key'].removeprefix(f'{prefix}/'),
-            'file': _get_s3_content(obj['Key']) if 'thumbnails' in prefix else '',
-        } for obj in response.get('Contents', [])]
-        return {'statusCode': 200, 'body': json.dumps(files)}
+    if proxy and proxy != 'thumbnails':
+        # Single file fetch — return presigned URL
+        key = f'{application_id}/photos/{urllib.parse.unquote(proxy)}'
+        url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': s3_bucket_name, 'Key': key},
+            ExpiresIn=3600,
+        )
+        return {'statusCode': 200, 'body': json.dumps({'url': url})}
+
+    # List thumbnails — return presigned URLs for both sizes
+    thumb_prefix = f'{application_id}/photos/thumbnails/'
+    img_prefix = f'{application_id}/photos/img/'
+    response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=thumb_prefix)
+    files = []
+    for obj in response.get('Contents', []):
+        basename = obj['Key'].removeprefix(thumb_prefix)
+        thumbnail_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': s3_bucket_name, 'Key': obj['Key']},
+            ExpiresIn=3600,
+        )
+        photo_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': s3_bucket_name, 'Key': f'{img_prefix}{basename}'},
+            ExpiresIn=3600,
+        )
+        files.append({'name': basename, 'thumbnail_url': thumbnail_url, 'photo_url': photo_url})
+    return {'statusCode': 200, 'body': json.dumps(files)}
 
 
 def add_photo(event, application_id):
@@ -330,12 +333,6 @@ def _generate_thumbnail(image_bytes, size=400):
     buf = _io.BytesIO()
     img.save(buf, format='JPEG', quality=70)
     return buf.getvalue()
-
-
-def _get_s3_content(key):
-    s3 = boto3.client('s3')
-    response = s3.get_object(Bucket=s3_bucket_name, Key=key)
-    return base64.b64encode(response['Body'].read()).decode('utf-8')
 
 
 def message_response(status_code: int, message: str):
