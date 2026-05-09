@@ -4,6 +4,7 @@ resource "aws_lambda_function" "lambda_backend" {
     handler       = "lambda_handler.lambda_handler"
     runtime       = "python3.10"
     filename      = "lambda/lambda.zip"
+    publish       = true
 
     environment {
         variables = {
@@ -20,6 +21,25 @@ resource "aws_lambda_function" "lambda_backend" {
     }
 }
 
+# prod alias points to a specific published version — managed by promote.sh, not Terraform
+resource "aws_lambda_alias" "prod" {
+    name          = "prod"
+    function_name = aws_lambda_function.lambda_backend.function_name
+    # Bootstrapped to the first Terraform-published version; promote.sh owns it after that
+    function_version = aws_lambda_function.lambda_backend.version
+
+    lifecycle {
+        ignore_changes = [function_version]
+    }
+}
+
+# dev alias always tracks $LATEST
+resource "aws_lambda_alias" "dev" {
+    name             = "dev"
+    function_name    = aws_lambda_function.lambda_backend.function_name
+    function_version = "$LATEST"
+}
+
 resource "aws_dynamodb_table" "error_table" {
     name         = "${local.name_prefix}-error"
     billing_mode = "PAY_PER_REQUEST"
@@ -31,10 +51,20 @@ resource "aws_dynamodb_table" "error_table" {
     }
 }
 
-resource "aws_lambda_permission" "api_gateway" {
-    statement_id  = "AllowAPIGatewayInvoke"
+resource "aws_lambda_permission" "api_gateway_prod" {
+    statement_id  = "AllowAPIGatewayInvokeProd"
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.lambda_backend.function_name
+    qualifier     = aws_lambda_alias.prod.name
+    principal     = "apigateway.amazonaws.com"
+    source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_dev" {
+    statement_id  = "AllowAPIGatewayInvokeDev"
+    action        = "lambda:InvokeFunction"
+    function_name = aws_lambda_function.lambda_backend.function_name
+    qualifier     = aws_lambda_alias.dev.name
     principal     = "apigateway.amazonaws.com"
     source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
@@ -55,7 +85,7 @@ resource "aws_apigatewayv2_api" "http_api" {
 resource "aws_apigatewayv2_integration" "lambda_integration" {
     api_id                 = aws_apigatewayv2_api.http_api.id
     integration_type       = "AWS_PROXY"
-    integration_uri        = aws_lambda_function.lambda_backend.invoke_arn
+    integration_uri        = "arn:aws:apigateway:eu-central-1:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda_backend.arn}:$${stageVariables.alias}/invocations"
     payload_format_version = "2.0"
 }
 
@@ -64,8 +94,27 @@ resource "aws_apigatewayv2_stage" "default" {
     name        = "$default"
     auto_deploy = true
 
+    stage_variables = {
+        alias = "prod"
+    }
+
     default_route_settings {
         throttling_rate_limit  = 50
         throttling_burst_limit = 100
+    }
+}
+
+resource "aws_apigatewayv2_stage" "dev" {
+    api_id      = aws_apigatewayv2_api.http_api.id
+    name        = "dev"
+    auto_deploy = true
+
+    stage_variables = {
+        alias = "dev"
+    }
+
+    default_route_settings {
+        throttling_rate_limit  = 10
+        throttling_burst_limit = 20
     }
 }
