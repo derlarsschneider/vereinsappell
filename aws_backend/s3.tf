@@ -11,3 +11,17 @@ resource "aws_s3_bucket_public_access_block" "s3_bucket_block_public" {
     ignore_public_acls      = true
     restrict_public_buckets = true
 }
+
+resource "aws_s3_bucket_cors_configuration" "s3_bucket_cors" {
+    bucket = aws_s3_bucket.s3_bucket.id
+
+    cors_rule {
+        allowed_headers = ["*"]
+        allowed_methods = ["GET", "HEAD"]
+        allowed_origins = [
+            "https://vereinsappell.web.app",
+            "https://vereinsappell--*.web.app",
+        ]
+        max_age_seconds = 3600
+    }
+}
