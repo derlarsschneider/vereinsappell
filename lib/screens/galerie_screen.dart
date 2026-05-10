@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:vereinsappell/screens/default_screen.dart';
@@ -47,10 +50,15 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (pickedFile == null) return;
-    final originalBytes = await pickedFile.readAsBytes();
+    final bytes = await pickedFile.readAsBytes();
+    await doUpload(bytes, pickedFile.name);
+  }
+
+  @visibleForTesting
+  Future<void> doUpload(Uint8List bytes, String filename) async {
     setState(() => _isUploading = true);
     try {
-      await api.uploadPhoto(original: originalBytes, filename: pickedFile.name);
+      await api.uploadPhoto(original: bytes, filename: filename);
       showInfo('Foto hochgeladen');
       await fetchThumbnails();
     } catch (e) {
