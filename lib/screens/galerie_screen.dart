@@ -6,9 +6,12 @@ import 'package:vereinsappell/widgets/photo_lightbox.dart';
 import '../api/gallery_api.dart';
 
 class GalleryScreen extends DefaultScreen {
+  final GalleryApi? galleryApi;
+
   const GalleryScreen({
     super.key,
     required super.config,
+    this.galleryApi,
   }) : super(title: 'Fotogalerie');
 
   @override
@@ -23,7 +26,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   @override
   void initState() {
     super.initState();
-    api = GalleryApi(widget.config);
+    api = widget.galleryApi ?? GalleryApi(widget.config);
     fetchThumbnails();
   }
 
