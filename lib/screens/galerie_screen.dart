@@ -99,7 +99,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_a_photo),
-            onPressed: uploadPhoto,
+            onPressed: _isUploading ? null : uploadPhoto,
             tooltip: 'Foto hochladen',
           ),
         ],
