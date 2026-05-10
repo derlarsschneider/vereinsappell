@@ -16,8 +16,7 @@ terraform {
 }
 
 locals {
-    name_prefix = terraform.workspace
-
+    name_prefix = "vereins-app-beta"
 }
 
 data "aws_caller_identity" "current" {}
