@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +16,17 @@ GalleryApi _stubApi(AppConfig config, List<Map<String, dynamic>> photos) {
   final client = MockClient(
     (_) async => http.Response(jsonEncode(photos), 200),
   );
+  return GalleryApi(config, client: client);
+}
+
+GalleryApi _slowUploadApi(AppConfig config, Completer<void> uploadCompleter) {
+  final client = MockClient((request) async {
+    if (request.method == 'POST') {
+      await uploadCompleter.future;
+      return http.Response('{}', 200);
+    }
+    return http.Response('[]', 200);
+  });
   return GalleryApi(config, client: client);
 }
 
@@ -59,6 +72,34 @@ void main() {
         wrapScreen(GalleryScreen(config: config, galleryApi: api), config),
       );
       await tester.pump();
+
+      expect(find.text('Foto wird hochgeladen…'), findsNothing);
+    });
+
+    testWidgets('Upload-Overlay sichtbar während des Uploads', (tester) async {
+      final config = await makeConfig(tester);
+      final completer = Completer<void>();
+      final api = _slowUploadApi(config, completer);
+
+      await tester.pumpWidget(
+        wrapScreen(GalleryScreen(config: config, galleryApi: api), config),
+      );
+      await tester.pumpAndSettle();
+
+      // Trigger upload directly without image_picker — do not await so upload stays in flight
+      final state = tester.state<State<GalleryScreen>>(find.byType(GalleryScreen));
+      // ignore: avoid_dynamic_calls
+      unawaited((state as dynamic).doUpload(
+        Uint8List.fromList([1, 2, 3]),
+        'test.jpg',
+      ));
+      await tester.pump();
+
+      expect(find.text('Foto wird hochgeladen…'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+      completer.complete();
+      await tester.pumpAndSettle();
 
       expect(find.text('Foto wird hochgeladen…'), findsNothing);
     });
