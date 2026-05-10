@@ -21,6 +21,7 @@ class GalleryScreen extends DefaultScreen {
 class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
   late final GalleryApi api;
   List<Map<String, String>> photos = [];
+  bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -47,7 +48,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
         await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (pickedFile == null) return;
     final originalBytes = await pickedFile.readAsBytes();
-    setState(() => isLoading = true);
+    setState(() => _isUploading = true);
     try {
       await api.uploadPhoto(original: originalBytes, filename: pickedFile.name);
       showInfo('Foto hochgeladen');
@@ -55,7 +56,7 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
     } catch (e) {
       showError('Fehler: $e');
     } finally {
-      setState(() => isLoading = false);
+      setState(() => _isUploading = false);
     }
   }
 
@@ -103,33 +104,59 @@ class _GalleryScreenState extends DefaultScreenState<GalleryScreen> {
           ),
         ],
       ),
-      body: isLoading && photos.isEmpty
-          ? GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: _gridDelegate,
-              itemCount: 12,
-              itemBuilder: (_, __) => const _ShimmerTile(),
-            )
-          : photos.isEmpty
-              ? const Center(child: Text('Keine Fotos vorhanden'))
-              : GridView.builder(
+      body: Stack(
+        children: [
+          isLoading && photos.isEmpty
+              ? GridView.builder(
                   padding: const EdgeInsets.all(8),
                   gridDelegate: _gridDelegate,
-                  itemCount: photos.length,
-                  itemBuilder: (context, index) {
-                    final photo = photos[index];
-                    return GestureDetector(
-                      onTap: () => _openLightbox(index),
-                      child: Image.network(
-                        photo['thumbnail_url']!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) =>
-                            progress == null ? child : const _ShimmerTile(),
-                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
-                      ),
-                    );
-                  },
+                  itemCount: 12,
+                  itemBuilder: (_, __) => const _ShimmerTile(),
+                )
+              : photos.isEmpty
+                  ? const Center(child: Text('Keine Fotos vorhanden'))
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(8),
+                      gridDelegate: _gridDelegate,
+                      itemCount: photos.length,
+                      itemBuilder: (context, index) {
+                        final photo = photos[index];
+                        return GestureDetector(
+                          onTap: () => _openLightbox(index),
+                          child: Image.network(
+                            photo['thumbnail_url']!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, progress) =>
+                                progress == null ? child : const _ShimmerTile(),
+                            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                          ),
+                        );
+                      },
+                    ),
+          if (_isUploading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('Foto wird hochgeladen…'),
+                        SizedBox(height: 16),
+                        SizedBox(
+                          width: 160,
+                          child: LinearProgressIndicator(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
