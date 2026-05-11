@@ -21,6 +21,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup_bucket_lifecycle" {
         id     = "delete-old-backups"
         status = "Enabled"
 
+        filter {}
+
         expiration {
             days = 30
         }
@@ -110,6 +112,7 @@ resource "aws_lambda_permission" "backup_lambda_scheduler" {
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.backup_lambda.function_name
     principal     = "scheduler.amazonaws.com"
+    source_arn    = aws_scheduler_schedule.daily_backup.arn
 }
 
 # --- restore-lambda IAM ---

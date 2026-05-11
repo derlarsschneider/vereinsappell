@@ -83,6 +83,7 @@ def cmd_restore(timestamp):
         sys.exit(1)
 
     print(f'Restoring from {timestamp}...')
+    failed = []
     for name, table_name in TABLES.items():
         key = f'{prefix}{name}.json'
         try:
@@ -95,8 +96,11 @@ def cmd_restore(timestamp):
             print(f'  ✓ {name}: {len(items)} items written')
         except Exception as e:
             print(f'  ✗ {name}: {e}')
+            failed.append(name)
 
     print('Done.')
+    if failed:
+        sys.exit(1)
 
 
 def cmd_clear(table_key):
