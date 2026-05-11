@@ -23,6 +23,7 @@ import '../config_loader.dart';
 import '../version.dart';
 import '../widgets/pig_overlay.dart';
 import 'abstimmungen_screen.dart';
+import 'backup_screen.dart';
 import 'calendar_screen.dart';
 import 'default_screen.dart';
 import 'documents_screen.dart';
@@ -554,6 +555,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => MonitoringScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (member.isSuperAdmin)
+        _buildMenuTile(
+          context,
+          '💾 Backup',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BackupScreen(config: widget.config),
             ),
           ),
         ),
