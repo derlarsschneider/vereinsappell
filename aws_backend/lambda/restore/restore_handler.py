@@ -3,11 +3,14 @@ import json
 import os
 
 import boto3
+import firebase_backup
 
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 
 BACKUP_BUCKET = os.environ.get('BACKUP_BUCKET', '')
+FIREBASE_SECRET_NAME = os.environ.get('FIREBASE_SECRET_NAME', '')
+FIREBASE_DATABASE_URL = os.environ.get('FIREBASE_DATABASE_URL', '')
 TABLES = {
     'customers': os.environ.get('CUSTOMERS_TABLE_NAME', ''),
     'members': os.environ.get('MEMBERS_TABLE_NAME', ''),
@@ -74,6 +77,13 @@ def _restore(timestamp):
         except Exception as e:
             print(f'Failed to restore {name}: {e}')
             failed.append({'table': name, 'error': str(e)})
+
+    try:
+        firebase_backup.restore_polls(FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp)
+        restored.append('firebase/polls')
+    except Exception as e:
+        print(f'Failed to restore firebase/polls: {e}')
+        failed.append({'table': 'firebase/polls', 'error': str(e)})
 
     return {
         'statusCode': 200,

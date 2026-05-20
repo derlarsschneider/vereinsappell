@@ -5,6 +5,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import boto3
+import firebase_backup
 
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
@@ -17,6 +18,8 @@ TABLES = {
     'fines': os.environ.get('FINES_TABLE_NAME', ''),
 }
 MEMBERS_TABLE_NAME = os.environ.get('MEMBERS_TABLE_NAME', '')
+FIREBASE_SECRET_NAME = os.environ.get('FIREBASE_SECRET_NAME', '')
+FIREBASE_DATABASE_URL = os.environ.get('FIREBASE_DATABASE_URL', '')
 
 
 def _serialize_decimal(obj):
@@ -73,6 +76,12 @@ def _run_backup():
         except Exception as e:
             print(f'Failed to backup {name}: {e}')
             failed.append(name)
+
+    try:
+        firebase_backup.backup_polls(FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp)
+    except Exception as e:
+        print(f'Failed to backup firebase/polls: {e}')
+        failed.append('firebase/polls')
 
     suffix = '-partial' if failed else ''
     return {

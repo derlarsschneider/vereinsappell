@@ -49,6 +49,11 @@ resource "aws_iam_role_policy_attachment" "backup_lambda_basic" {
     policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "backup_lambda_secretsmanager" {
+    role       = aws_iam_role.backup_lambda_role.name
+    policy_arn = aws_iam_policy.secretsmanager_policy.arn
+}
+
 resource "aws_iam_role_policy" "backup_lambda_policy" {
     name = "${local.name_prefix}-backup-lambda-policy"
     role = aws_iam_role.backup_lambda_role.id
@@ -95,6 +100,8 @@ resource "aws_lambda_function" "backup_lambda" {
             MEMBERS_TABLE_NAME      = aws_dynamodb_table.members_table.name
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name
             FINES_TABLE_NAME        = aws_dynamodb_table.fines_table.name
+            FIREBASE_SECRET_NAME    = aws_secretsmanager_secret.firebase_credentials.name
+            FIREBASE_DATABASE_URL   = "https://vereinsappell-default-rtdb.europe-west1.firebasedatabase.app"
         }
     }
 }
@@ -133,6 +140,11 @@ resource "aws_iam_role" "restore_lambda_role" {
 resource "aws_iam_role_policy_attachment" "restore_lambda_basic" {
     role       = aws_iam_role.restore_lambda_role.name
     policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "restore_lambda_secretsmanager" {
+    role       = aws_iam_role.restore_lambda_role.name
+    policy_arn = aws_iam_policy.secretsmanager_policy.arn
 }
 
 resource "aws_iam_role_policy" "restore_lambda_policy" {
@@ -181,6 +193,8 @@ resource "aws_lambda_function" "restore_lambda" {
             MEMBERS_TABLE_NAME      = aws_dynamodb_table.members_table.name
             MARSCHBEFEHL_TABLE_NAME = aws_dynamodb_table.marschbefehl_table.name
             FINES_TABLE_NAME        = aws_dynamodb_table.fines_table.name
+            FIREBASE_SECRET_NAME    = aws_secretsmanager_secret.firebase_credentials.name
+            FIREBASE_DATABASE_URL   = "https://vereinsappell-default-rtdb.europe-west1.firebasedatabase.app"
         }
     }
 }

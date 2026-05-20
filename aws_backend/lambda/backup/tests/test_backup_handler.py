@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import MagicMock, patch, call
 
 sys.modules.setdefault('boto3', MagicMock())
+sys.modules.setdefault('firebase_backup', MagicMock())
 
 sys.path.insert(0, 'aws_backend/lambda/backup')
 import backup_handler
