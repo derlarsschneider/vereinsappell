@@ -23,7 +23,7 @@ def _get_token(secret_name: str) -> str:
     return credentials.token
 
 
-def backup_polls(database_url: str, secret_name: str, s3_client, bucket: str, timestamp: str) -> None:
+def backup_polls(database_url: str, secret_name: str, s3_client, bucket: str, timestamp: str) -> int:
     token = _get_token(secret_name)
     url = f'{database_url.rstrip("/")}/polls.json'
     req = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}'})
@@ -35,9 +35,11 @@ def backup_polls(database_url: str, secret_name: str, s3_client, bucket: str, ti
         Body=data,
         ContentType='application/json',
     )
+    parsed = json.loads(data)
+    return len(parsed) if isinstance(parsed, dict) else 0
 
 
-def restore_polls(database_url: str, secret_name: str, s3_client, bucket: str, timestamp: str) -> None:
+def restore_polls(database_url: str, secret_name: str, s3_client, bucket: str, timestamp: str) -> int:
     obj = s3_client.get_object(Bucket=bucket, Key=f'firebase/{timestamp}/polls.json')
     data = obj['Body'].read()
     token = _get_token(secret_name)
@@ -52,3 +54,5 @@ def restore_polls(database_url: str, secret_name: str, s3_client, bucket: str, t
         },
     )
     urllib.request.urlopen(req)
+    parsed = json.loads(data)
+    return len(parsed) if isinstance(parsed, dict) else 0

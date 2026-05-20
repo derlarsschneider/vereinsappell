@@ -66,6 +66,8 @@ class TestRestore(unittest.TestCase):
         restore_handler.s3.get_object.return_value = {
             'Body': MagicMock(read=lambda: json.dumps([{'applicationId': 'a', 'memberId': 'm'}]).encode())
         }
+        restore_handler.firebase_backup = MagicMock()
+        restore_handler.firebase_backup.restore_polls.return_value = 2
 
     def test_restore_puts_items_from_backup(self):
         response = restore_handler.lambda_handler(

@@ -42,6 +42,22 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
     }
   }
 
+  void _showInfoDialog(String title, String details) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(child: Text(details)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showErrorDialog(String title, String details) {
     showDialog<void>(
       context: context,
@@ -63,7 +79,9 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
     try {
       final result = await _api.createBackup();
       if (!mounted) return;
-      showNotification('Backup erstellt: ${result['s3_path']}');
+      final counts = result['counts'] as Map<String, dynamic>? ?? {};
+      final summary = counts.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+      _showInfoDialog('Backup erstellt', '${result['s3_path']}\n\n$summary');
       await _loadBackups();
     } catch (e) {
       if (mounted) showNotification('Fehler: $e');
@@ -98,15 +116,14 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
     try {
       final result = await _api.restoreBackup(timestamp);
       if (!mounted) return;
-      final restored = (result['restored'] as List).join(', ');
+      final counts = result['counts'] as Map<String, dynamic>? ?? {};
       final failed = result['failed'] as List;
+      final summary = counts.entries.map((e) => '${e.key}: ${e.value}').join('\n');
       if (failed.isEmpty) {
-        showNotification('Restore abgeschlossen: $restored');
+        _showInfoDialog('Restore abgeschlossen', summary);
       } else {
-        final details = failed
-            .map((f) => '${f['table']}: ${f['error']}')
-            .join('\n');
-        _showErrorDialog('Restore-Fehler', details);
+        final errors = failed.map((f) => '${f['table']}: ${f['error']}').join('\n');
+        _showErrorDialog('Restore-Fehler', '$summary\n\nFehler:\n$errors');
       }
     } catch (e) {
       if (mounted) showNotification('Fehler: $e');

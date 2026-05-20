@@ -63,6 +63,7 @@ def _run_backup():
     now = datetime.now(ZoneInfo('Europe/Berlin'))
     timestamp = now.strftime('%Y-%m-%d_%H-%M')
     failed = []
+    counts = {}
 
     for name, table_name in TABLES.items():
         try:
@@ -73,12 +74,15 @@ def _run_backup():
                 Body=json.dumps(items, default=_serialize_decimal),
                 ContentType='application/json',
             )
+            counts[name] = len(items)
         except Exception as e:
             print(f'Failed to backup {name}: {e}')
             failed.append(name)
 
     try:
-        firebase_backup.backup_polls(FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp)
+        counts['firebase/polls'] = firebase_backup.backup_polls(
+            FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp
+        )
     except Exception as e:
         print(f'Failed to backup firebase/polls: {e}')
         failed.append('firebase/polls')
@@ -89,6 +93,7 @@ def _run_backup():
         'body': json.dumps({
             's3_path': f's3://{BACKUP_BUCKET}/dynamodb/{timestamp}{suffix}/',
             'timestamp': timestamp,
+            'counts': counts,
             'failed': failed,
         }),
     }

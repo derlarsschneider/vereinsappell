@@ -67,19 +67,23 @@ def _restore(timestamp):
 
     restored = []
     failed = []
+    counts = {}
     for name, table_name in TABLES.items():
         key = f'{prefix}{name}.json'
         try:
             obj = s3.get_object(Bucket=BACKUP_BUCKET, Key=key)
             items = json.loads(obj['Body'].read(), parse_float=decimal.Decimal, parse_int=decimal.Decimal)
             _batch_write(table_name, items)
+            counts[name] = len(items)
             restored.append(name)
         except Exception as e:
             print(f'Failed to restore {name}: {e}')
             failed.append({'table': name, 'error': str(e)})
 
     try:
-        firebase_backup.restore_polls(FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp)
+        counts['firebase/polls'] = firebase_backup.restore_polls(
+            FIREBASE_DATABASE_URL, FIREBASE_SECRET_NAME, s3, BACKUP_BUCKET, timestamp
+        )
         restored.append('firebase/polls')
     except Exception as e:
         print(f'Failed to restore firebase/polls: {e}')
@@ -87,7 +91,7 @@ def _restore(timestamp):
 
     return {
         'statusCode': 200,
-        'body': json.dumps({'restored': restored, 'failed': failed}),
+        'body': json.dumps({'restored': restored, 'counts': counts, 'failed': failed}),
     }
 
 

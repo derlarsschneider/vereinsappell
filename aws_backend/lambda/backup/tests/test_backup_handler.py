@@ -70,6 +70,8 @@ class TestBackupRun(unittest.TestCase):
             return mock_data_table
 
         backup_handler.dynamodb.Table.side_effect = table_factory
+        backup_handler.firebase_backup = MagicMock()
+        backup_handler.firebase_backup.backup_polls.return_value = 3
 
     def test_scheduler_trigger_skips_superadmin_check(self):
         response = backup_handler.lambda_handler(_scheduler_event(), {})
