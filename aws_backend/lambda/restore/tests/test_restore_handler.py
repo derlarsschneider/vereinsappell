@@ -91,6 +91,16 @@ class TestRestore(unittest.TestCase):
             item = put_calls[0][1]['Item']
             self.assertIsInstance(item.get('amount'), decimal.Decimal)
 
+    def test_restore_failed_entries_include_error_message(self):
+        restore_handler.s3.get_object.side_effect = Exception('NoSuchKey')
+        response = restore_handler.lambda_handler(
+            _event('POST', '/admin/backup/2026-05-11_02-00/restore',
+                   {'timestamp': '2026-05-11_02-00'}), {}
+        )
+        body = json.loads(response['body'])
+        self.assertTrue(all('table' in f and 'error' in f for f in body['failed']))
+        self.assertIn('NoSuchKey', body['failed'][0]['error'])
+
     def test_restore_returns_404_when_timestamp_not_found(self):
         restore_handler.s3.list_objects_v2.return_value = {'Contents': []}
         response = restore_handler.lambda_handler(

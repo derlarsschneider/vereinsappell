@@ -42,6 +42,22 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
     }
   }
 
+  void _showErrorDialog(String title, String details) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(child: Text(details)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _createBackup() async {
     setState(() => _actionInProgress = true);
     try {
@@ -87,7 +103,10 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
       if (failed.isEmpty) {
         showNotification('Restore abgeschlossen: $restored');
       } else {
-        showNotification('Restore: $restored. Fehler bei: ${failed.join(', ')}');
+        final details = failed
+            .map((f) => '${f['table']}: ${f['error']}')
+            .join('\n');
+        _showErrorDialog('Restore-Fehler', details);
       }
     } catch (e) {
       if (mounted) showNotification('Fehler: $e');

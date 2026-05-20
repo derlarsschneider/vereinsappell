@@ -73,7 +73,7 @@ def _restore(timestamp):
             restored.append(name)
         except Exception as e:
             print(f'Failed to restore {name}: {e}')
-            failed.append(name)
+            failed.append({'table': name, 'error': str(e)})
 
     return {
         'statusCode': 200,
