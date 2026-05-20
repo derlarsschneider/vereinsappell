@@ -79,7 +79,12 @@ POLICY_DOC=$(cat <<EOF
         "lambda:GetFunctionCodeSigningConfig",
         "lambda:TagResource",
         "lambda:UntagResource",
-        "lambda:ListTags"
+        "lambda:ListTags",
+        "lambda:CreateAlias",
+        "lambda:DeleteAlias",
+        "lambda:GetAlias",
+        "lambda:UpdateAlias",
+        "lambda:ListAliases"
       ],
       "Resource": "*"
     },
@@ -112,7 +117,9 @@ POLICY_DOC=$(cat <<EOF
       "Action": "s3:*",
       "Resource": [
         "arn:aws:s3:::vereins-app-*",
-        "arn:aws:s3:::vereins-app-*/*"
+        "arn:aws:s3:::vereins-app-*/*",
+        "arn:aws:s3:::vereinsappell-*",
+        "arn:aws:s3:::vereinsappell-*/*"
       ]
     },
     {
@@ -140,7 +147,26 @@ POLICY_DOC=$(cat <<EOF
         "iam:GetRolePolicy",
         "iam:TagPolicy",
         "iam:UntagPolicy",
-        "iam:ListInstanceProfilesForRole"
+        "iam:ListInstanceProfilesForRole",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Scheduler",
+      "Effect": "Allow",
+      "Action": [
+        "scheduler:CreateSchedule",
+        "scheduler:DeleteSchedule",
+        "scheduler:GetSchedule",
+        "scheduler:UpdateSchedule",
+        "scheduler:ListSchedules",
+        "scheduler:GetScheduleGroup",
+        "scheduler:ListScheduleGroups",
+        "scheduler:TagResource",
+        "scheduler:UntagResource",
+        "scheduler:ListTagsForResource"
       ],
       "Resource": "*"
     },
