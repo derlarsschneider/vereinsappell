@@ -83,7 +83,12 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
       final result = await _api.restoreBackup(timestamp);
       if (!mounted) return;
       final restored = (result['restored'] as List).join(', ');
-      showNotification('Restore abgeschlossen: $restored');
+      final failed = result['failed'] as List;
+      if (failed.isEmpty) {
+        showNotification('Restore abgeschlossen: $restored');
+      } else {
+        showNotification('Restore: $restored. Fehler bei: ${failed.join(', ')}');
+      }
     } catch (e) {
       if (mounted) showNotification('Fehler: $e');
     } finally {

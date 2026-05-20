@@ -1,3 +1,4 @@
+import decimal
 import json
 import os
 from datetime import datetime
@@ -16,6 +17,12 @@ TABLES = {
     'fines': os.environ.get('FINES_TABLE_NAME', ''),
 }
 MEMBERS_TABLE_NAME = os.environ.get('MEMBERS_TABLE_NAME', '')
+
+
+def _serialize_decimal(obj):
+    if isinstance(obj, decimal.Decimal):
+        return int(obj) if obj == obj.to_integral_value() else float(obj)
+    raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
 
 
 def lambda_handler(event, context):
@@ -60,7 +67,7 @@ def _run_backup():
             s3.put_object(
                 Bucket=BACKUP_BUCKET,
                 Key=f'dynamodb/{timestamp}/{name}.json',
-                Body=json.dumps(items, default=str),
+                Body=json.dumps(items, default=_serialize_decimal),
                 ContentType='application/json',
             )
         except Exception as e:

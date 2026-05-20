@@ -1,3 +1,4 @@
+import decimal
 import json
 import sys
 import unittest
@@ -96,6 +97,24 @@ class TestBackupRun(unittest.TestCase):
             _api_event('POST', '/admin/backup'), {}
         )
         self.assertEqual(response['statusCode'], 200)
+
+    def test_decimal_values_serialized_as_numbers_not_strings(self):
+        mock_member_table = MagicMock()
+        mock_member_table.get_item.return_value = {'Item': {'isSuperAdmin': True}}
+        mock_data_table = MagicMock()
+        mock_data_table.scan.return_value = {
+            'Items': [{'fineId': 'abc', 'amount': decimal.Decimal('5'), 'rate': decimal.Decimal('1.5')}]
+        }
+        backup_handler.dynamodb.Table.side_effect = lambda name: (
+            mock_member_table if name == 'members-table' else mock_data_table
+        )
+
+        backup_handler.lambda_handler(_scheduler_event(), {})
+
+        call_body = backup_handler.s3.put_object.call_args_list[0][1]['Body']
+        items = json.loads(call_body)
+        self.assertEqual(items[0]['amount'], 5)
+        self.assertEqual(items[0]['rate'], 1.5)
 
 
 class TestListBackups(unittest.TestCase):

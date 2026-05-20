@@ -1,3 +1,4 @@
+import decimal
 import json
 import sys
 import unittest
@@ -73,6 +74,22 @@ class TestRestore(unittest.TestCase):
         self.assertEqual(response['statusCode'], 200)
         body = json.loads(response['body'])
         self.assertIn('restored', body)
+
+    def test_restore_decimal_numbers_preserved_as_decimal_type(self):
+        restore_handler.s3.get_object.return_value = {
+            'Body': MagicMock(read=lambda: json.dumps([{
+                'applicationId': 'a', 'memberId': 'm', 'fineId': 'f1',
+                'amount': 5, 'rate': 1.5
+            }]).encode())
+        }
+        restore_handler.lambda_handler(
+            _event('POST', '/admin/backup/2026-05-11_02-00/restore',
+                   {'timestamp': '2026-05-11_02-00'}), {}
+        )
+        put_calls = restore_handler.dynamodb.Table.return_value.__enter__.return_value.put_item.call_args_list
+        if put_calls:
+            item = put_calls[0][1]['Item']
+            self.assertIsInstance(item.get('amount'), decimal.Decimal)
 
     def test_restore_returns_404_when_timestamp_not_found(self):
         restore_handler.s3.list_objects_v2.return_value = {'Contents': []}

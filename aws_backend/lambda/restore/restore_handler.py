@@ -1,3 +1,4 @@
+import decimal
 import json
 import os
 
@@ -67,7 +68,7 @@ def _restore(timestamp):
         key = f'{prefix}{name}.json'
         try:
             obj = s3.get_object(Bucket=BACKUP_BUCKET, Key=key)
-            items = json.loads(obj['Body'].read())
+            items = json.loads(obj['Body'].read(), parse_float=decimal.Decimal, parse_int=decimal.Decimal)
             _batch_write(table_name, items)
             restored.append(name)
         except Exception as e:
