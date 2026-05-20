@@ -144,7 +144,7 @@ resource "aws_iam_role_policy" "restore_lambda_policy" {
         Statement = [
             {
                 Effect = "Allow"
-                Action = ["dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:Scan"]
+                Action = ["dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:Scan", "dynamodb:BatchWriteItem"]
                 Resource = [
                     aws_dynamodb_table.customer_config_table.arn,
                     aws_dynamodb_table.members_table.arn,
