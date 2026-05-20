@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/backup_api.dart';
 import 'default_screen.dart';
 
-const _clearableTables = ['customers', 'members', 'marschbefehl', 'fines'];
+const _clearableTables = ['marschbefehl', 'fines'];
 
 class BackupScreen extends DefaultScreen {
   const BackupScreen({super.key, required super.config})
