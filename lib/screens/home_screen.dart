@@ -18,6 +18,7 @@ import 'package:vereinsappell/screens/strafen_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/customers_api.dart';
+import '../widgets/ad_banner_widget.dart';
 import '../utils/startup_timer.dart';
 import '../config_loader.dart';
 import '../version.dart';
@@ -49,6 +50,11 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   String _applicationLogoBase64 = "";
   List<String>? _activeScreens; // null = show all (backwards compatible)
   String _paypalAccount = "";
+  String _adType = 'none';
+  String _adBannerImageUrl = '';
+  String _adBannerLinkUrl = '';
+  String _adAdmobPublisherId = '';
+  String _adAdmobAdUnitId = '';
   StreamSubscription? _messageSubscription;
   List<AppConfig> _allAccounts = [];
   int _activeAccountIndex = 0;
@@ -286,6 +292,11 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
         _paypalAccount = customer['paypal_account'] ?? '';
+        _adType = customer['ad_type'] as String? ?? 'none';
+        _adBannerImageUrl = customer['ad_banner_image_url'] as String? ?? '';
+        _adBannerLinkUrl = customer['ad_banner_link_url'] as String? ?? '';
+        _adAdmobPublisherId = customer['ad_admob_publisher_id'] as String? ?? '';
+        _adAdmobAdUnitId = customer['ad_admob_ad_unit_id'] as String? ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
           _activeScreens = List<String>.from(screens);
@@ -395,17 +406,50 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _paypalAccount.isNotEmpty
-          ? GestureDetector(
-              onTap: _openDonation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('🍺', style: TextStyle(fontSize: 32)),
-                  const SizedBox(height: 2),
-                  Text('spenden',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                ],
+      bottomNavigationBar: (_adType != 'none' || _paypalAccount.isNotEmpty)
+          ? SafeArea(
+              child: Container(
+                height: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, -1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AdBannerWidget(
+                        adType: _adType,
+                        bannerImageUrl: _adBannerImageUrl,
+                        bannerLinkUrl: _adBannerLinkUrl,
+                        publisherId: _adAdmobPublisherId,
+                        adUnitId: _adAdmobAdUnitId,
+                      ),
+                    ),
+                    if (_paypalAccount.isNotEmpty)
+                      GestureDetector(
+                        onTap: _openDonation,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('🍺', style: TextStyle(fontSize: 28)),
+                            const SizedBox(height: 2),
+                            Text(
+                              'spenden',
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
             )
           : null,
