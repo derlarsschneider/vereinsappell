@@ -27,10 +27,15 @@ class AdBannerWidget extends StatelessWidget {
         if (bannerImageUrl.isEmpty) return const SizedBox.shrink();
         return GestureDetector(
           onTap: bannerLinkUrl.isNotEmpty
-              ? () => launchUrl(
+              ? () async {
+                  final ok = await launchUrl(
                     Uri.parse(bannerLinkUrl),
                     mode: LaunchMode.externalApplication,
-                  )
+                  );
+                  if (!ok) {
+                    debugPrint('Could not launch $bannerLinkUrl');
+                  }
+                }
               : null,
           child: Image.network(
             bannerImageUrl,
