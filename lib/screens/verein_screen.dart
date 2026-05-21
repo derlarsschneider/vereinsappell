@@ -43,6 +43,12 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
 
   bool _saving = false;
 
+  String _adType = 'none';
+  final _adBannerImageUrlController = TextEditingController();
+  final _adBannerLinkUrlController = TextEditingController();
+  final _adPublisherIdController = TextEditingController();
+  final _adAdUnitIdController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +60,10 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   void dispose() {
     _nameController.dispose();
     _paypalAccountController.dispose();
+    _adBannerImageUrlController.dispose();
+    _adBannerLinkUrlController.dispose();
+    _adPublisherIdController.dispose();
+    _adAdUnitIdController.dispose();
     super.dispose();
   }
 
@@ -98,6 +108,11 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
       _activeScreens = screens != null
           ? List<String>.from(screens)
           : _allScreens.map((s) => s['key']!).toList();
+      _adType = club['ad_type'] as String? ?? 'none';
+      _adBannerImageUrlController.text = club['ad_banner_image_url'] as String? ?? '';
+      _adBannerLinkUrlController.text = club['ad_banner_link_url'] as String? ?? '';
+      _adPublisherIdController.text = club['ad_admob_publisher_id'] as String? ?? '';
+      _adAdUnitIdController.text = club['ad_admob_ad_unit_id'] as String? ?? '';
     });
   }
 
@@ -150,6 +165,11 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
         'paypal_account': _paypalAccountController.text.trim(),
         'application_logo': _logoBase64,
         'active_screens': _activeScreens,
+        'ad_type': _adType,
+        'ad_banner_image_url': _adBannerImageUrlController.text.trim(),
+        'ad_banner_link_url': _adBannerLinkUrlController.text.trim(),
+        'ad_admob_publisher_id': _adPublisherIdController.text.trim(),
+        'ad_admob_ad_unit_id': _adAdUnitIdController.text.trim(),
       });
       showInfo('Gespeichert');
     } catch (e) {
@@ -367,6 +387,58 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                       },
                     );
                   }),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Werbung',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'none', label: Text('Keine')),
+                      ButtonSegment(value: 'banner', label: Text('Sponsor-Banner')),
+                      ButtonSegment(value: 'admob', label: Text('Google Ads')),
+                    ],
+                    selected: {_adType},
+                    onSelectionChanged: (selected) =>
+                        setState(() => _adType = selected.first),
+                  ),
+                  if (_adType == 'banner') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _adBannerImageUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'Bild-URL',
+                        helperText: 'URL zum Sponsor-Bild (https://...)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _adBannerLinkUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ziel-URL',
+                        helperText: 'URL die beim Klick geöffnet wird (https://...)',
+                      ),
+                    ),
+                  ],
+                  if (_adType == 'admob') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _adPublisherIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'Publisher-ID',
+                        helperText: 'z.B. ca-pub-1234567890123456',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _adAdUnitIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ad-Unit-ID',
+                        helperText: 'Numerische ID aus Google AdSense',
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     icon: _saving
