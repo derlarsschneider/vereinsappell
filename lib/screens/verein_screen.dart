@@ -108,7 +108,8 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
       _activeScreens = screens != null
           ? List<String>.from(screens)
           : _allScreens.map((s) => s['key']!).toList();
-      _adType = club['ad_type'] as String? ?? 'none';
+      final adType = club['ad_type'] as String? ?? 'none';
+      _adType = const ['none', 'banner', 'admob'].contains(adType) ? adType : 'none';
       _adBannerImageUrlController.text = club['ad_banner_image_url'] as String? ?? '';
       _adBannerLinkUrlController.text = club['ad_banner_link_url'] as String? ?? '';
       _adPublisherIdController.text = club['ad_admob_publisher_id'] as String? ?? '';
