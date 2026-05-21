@@ -292,7 +292,8 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
         _paypalAccount = customer['paypal_account'] ?? '';
-        _adType = customer['ad_type'] as String? ?? 'none';
+        final rawAdType = customer['ad_type'] as String? ?? 'none';
+        _adType = const ['none', 'banner', 'admob'].contains(rawAdType) ? rawAdType : 'none';
         _adBannerImageUrl = customer['ad_banner_image_url'] as String? ?? '';
         _adBannerLinkUrl = customer['ad_banner_link_url'] as String? ?? '';
         _adAdmobPublisherId = customer['ad_admob_publisher_id'] as String? ?? '';
