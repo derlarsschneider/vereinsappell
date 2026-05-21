@@ -49,5 +49,23 @@ void main() {
       );
       expect(find.byType(Image), findsNothing);
     });
+
+    testWidgets('renders admob view for ad_type admob with both IDs set', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AdBannerWidget(
+              adType: 'admob',
+              publisherId: 'ca-pub-1234567890123456',
+              adUnitId: '9876543210',
+            ),
+          ),
+        ),
+      );
+      // On non-web (test environment), buildAdmobView returns SizedBox.shrink.
+      // The key assertion is that the widget builds without error and no Image is shown.
+      expect(find.byType(Image), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
