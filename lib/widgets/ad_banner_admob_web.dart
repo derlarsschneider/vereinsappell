@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
 
 final _registeredViewTypes = <String>{};
-bool _scriptInjected = false;
+String? _injectedPublisherId;
 
 @JS('eval')
 external JSAny? _jsEval(String code);
@@ -33,20 +33,24 @@ class _AdmobViewState extends State<_AdmobView> {
     _ensureScriptInjected(widget.publisherId);
     _ensureViewRegistered(_viewType, widget.publisherId, widget.adUnitId);
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _jsEval('(adsbygoogle=window.adsbygoogle||[]).push({})'),
+      (_) {
+        // adsbygoogle is initialised as a plain array before the script loads;
+        // AdSense drains the queue when it finishes loading.
+        _jsEval('(adsbygoogle=window.adsbygoogle||[]).push({})');
+      },
     );
   }
 
   static void _ensureScriptInjected(String publisherId) {
-    if (_scriptInjected) return;
-    _scriptInjected = true;
+    if (_injectedPublisherId == publisherId) return;
+    _injectedPublisherId = publisherId;
     final script =
         web.document.createElement('script') as web.HTMLScriptElement;
     script.async = true;
     script.src =
         'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=$publisherId';
     script.crossOrigin = 'anonymous';
-    web.document.head!.appendChild(script);
+    (web.document.head ?? web.document.body)?.appendChild(script);
   }
 
   static void _ensureViewRegistered(
