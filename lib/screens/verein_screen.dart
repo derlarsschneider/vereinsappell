@@ -430,80 +430,81 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                       },
                     );
                   }),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Werbung',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'none', label: Text('Keine')),
-                      ButtonSegment(value: 'banner', label: Text('Sponsor-Banner')),
-                      ButtonSegment(value: 'admob', label: Text('Google Ads')),
-                    ],
-                    selected: {_adType},
-                    onSelectionChanged: (selected) =>
-                        setState(() => _adType = selected.first),
-                  ),
-                  if (_adType == 'banner') ...[
-                    const SizedBox(height: 12),
-                    // Banner image: show preview, then offer file pick or URL input.
-                    if (_adBannerPickedBytes != null)
-                      Image.memory(_adBannerPickedBytes!, height: 60)
-                    else if (_adBannerPreviewUrl.isNotEmpty)
-                      Image.network(_adBannerPreviewUrl, height: 60,
-                          errorBuilder: (ctx2, e, stack) => const SizedBox()),
+                  if (member.isSuperAdmin) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Werbung',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.upload_file),
-                          label: const Text('Bild wählen'),
-                          onPressed: _pickBannerImage,
-                        ),
-                        if (_adBannerPickedBytes != null)
-                          const Icon(Icons.check_circle, color: Colors.green),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'none', label: Text('Keine')),
+                        ButtonSegment(value: 'banner', label: Text('Sponsor-Banner')),
+                        ButtonSegment(value: 'admob', label: Text('Google Ads')),
                       ],
+                      selected: {_adType},
+                      onSelectionChanged: (selected) =>
+                          setState(() => _adType = selected.first),
                     ),
-                    TextField(
-                      controller: _adBannerImageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'oder Bild-URL',
-                        helperText: 'Alternatives Bild per URL (https://...)',
+                    if (_adType == 'banner') ...[
+                      const SizedBox(height: 12),
+                      if (_adBannerPickedBytes != null)
+                        Image.memory(_adBannerPickedBytes!, height: 60)
+                      else if (_adBannerPreviewUrl.isNotEmpty)
+                        Image.network(_adBannerPreviewUrl, height: 60,
+                            errorBuilder: (ctx2, e, stack) => const SizedBox()),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            icon: const Icon(Icons.upload_file),
+                            label: const Text('Bild wählen'),
+                            onPressed: _pickBannerImage,
+                          ),
+                          if (_adBannerPickedBytes != null)
+                            const Icon(Icons.check_circle, color: Colors.green),
+                        ],
                       ),
-                      onChanged: (_) {
-                        if (_adBannerPickedBytes != null) {
-                          setState(() => _adBannerPickedBytes = null);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _adBannerLinkUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Ziel-URL',
-                        helperText: 'URL die beim Klick geöffnet wird (https://...)',
+                      TextField(
+                        controller: _adBannerImageUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'oder Bild-URL',
+                          helperText: 'Alternatives Bild per URL (https://...)',
+                        ),
+                        onChanged: (_) {
+                          if (_adBannerPickedBytes != null) {
+                            setState(() => _adBannerPickedBytes = null);
+                          }
+                        },
                       ),
-                    ),
-                  ],
-                  if (_adType == 'admob') ...[
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _adPublisherIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Publisher-ID',
-                        helperText: 'z.B. ca-pub-1234567890123456',
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _adBannerLinkUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Ziel-URL',
+                          helperText: 'URL die beim Klick geöffnet wird (https://...)',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _adAdUnitIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Ad-Unit-ID',
-                        helperText: 'Numerische ID aus Google AdSense',
+                    ],
+                    if (_adType == 'admob') ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _adPublisherIdController,
+                        decoration: const InputDecoration(
+                          labelText: 'Publisher-ID',
+                          helperText: 'z.B. ca-pub-1234567890123456',
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _adAdUnitIdController,
+                        decoration: const InputDecoration(
+                          labelText: 'Ad-Unit-ID',
+                          helperText: 'Numerische ID aus Google AdSense',
+                        ),
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
