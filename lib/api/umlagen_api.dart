@@ -84,30 +84,36 @@ class UmlagenApi implements IUmlagenApi {
         if (e.value != 'pending') e.key: e.value
     };
 
-    await Future.wait([
-      historyRef.set({
-        'collectorId': collectorId,
-        'amount': session.amount,
-        'name': session.name,
-        'startedAt': session.startedAt,
-        'closedAt': now,
-        'totalPaid': session.totalCollected,
-        'participants': participantsMap,
-      }),
-      statsRef.runTransaction((currentData) {
-        final current = currentData as Map<dynamic, dynamic>? ?? {};
-        return Transaction.success({
-          'totalCollected': ((current['totalCollected'] as num?) ?? 0) + session.totalCollected,
-          'collectionsCount': ((current['collectionsCount'] as num?) ?? 0) + 1,
-        });
-      }),
-      _activeRef.child(collectorId).remove(),
-    ]);
+    // Write history first
+    await historyRef.set({
+      'collectorId': collectorId,
+      'amount': session.amount,
+      'name': session.name,
+      'startedAt': session.startedAt,
+      'closedAt': now,
+      'totalPaid': session.totalCollected,
+      'participants': participantsMap,
+    });
+
+    // Update stats via transaction
+    await statsRef.runTransaction((currentData) {
+      final current = currentData as Map<dynamic, dynamic>? ?? {};
+      return Transaction.success({
+        'totalCollected': ((current['totalCollected'] as num?) ?? 0) + session.totalCollected,
+        'collectionsCount': ((current['collectionsCount'] as num?) ?? 0) + 1,
+      });
+    });
+
+    // Remove from active
+    await _activeRef.child(collectorId).remove();
   }
 
   @override
-  Future<List<HistoryEntry>> fetchHistory({int limit = 20, String? startAfterKey}) async {
-    final Query query = _historyRef.orderByChild('closedAt').limitToLast(limit);
+  Future<List<HistoryEntry>> fetchHistory({int limit = 20, int? beforeClosedAt}) async {
+    Query query = _historyRef.orderByChild('closedAt').limitToLast(limit);
+    if (beforeClosedAt != null) {
+      query = query.endBefore(beforeClosedAt);
+    }
     final snapshot = await query.get();
     if (!snapshot.exists || snapshot.value is! Map) return [];
 
@@ -121,10 +127,6 @@ class UmlagenApi implements IUmlagenApi {
         .toList()
       ..sort((a, b) => b.closedAt.compareTo(a.closedAt));
 
-    if (startAfterKey != null) {
-      final idx = entries.indexWhere((e) => e.id == startAfterKey);
-      if (idx != -1) return entries.sublist(idx + 1);
-    }
     return entries;
   }
 }
