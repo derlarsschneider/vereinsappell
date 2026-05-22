@@ -90,6 +90,7 @@ def get_member(application_id, member_id, all_details, cached_item=None):
         'isSpiess': item.get('isSpiess', False),
         'isSaftschubse': item.get('isSaftschubse', False),
         'isSuperAdmin': item.get('isSuperAdmin', False),
+        'isGeldeintreiber': item.get('isGeldeintreiber', False),
         'isActive': item.get('isActive', True),
         'token': item.get('token', ''),
     }
@@ -135,7 +136,7 @@ def add_member(body, application_id):
         Key={'applicationId': application_id, 'memberId': data_member_id},
         UpdateExpression=(
             'SET #name = :name, isAdmin = :isAdmin, isSpiess = :isSpiess, '
-            'isSaftschubse = :isSaftschubse, isUmlageneinsammler = :isUmlageneinsammler, '
+            'isSaftschubse = :isSaftschubse, isGeldeintreiber = :isGeldeintreiber, '
             'isActive = :isActive, #token = :token, street = :street, '
             'houseNumber = :houseNumber, postalCode = :postalCode, '
             'city = :city, phone1 = :phone1, phone2 = :phone2'
@@ -146,7 +147,7 @@ def add_member(body, application_id):
             ':isAdmin': data.get('isAdmin', False),
             ':isSpiess': data.get('isSpiess', False),
             ':isSaftschubse': data.get('isSaftschubse', False),
-            ':isUmlageneinsammler': data.get('isUmlageneinsammler', False),
+            ':isGeldeintreiber': data.get('isGeldeintreiber', False),
             ':isActive': data.get('isActive', True),
             ':token': data.get('token', ''),
             ':street': data.get('street', ''),
@@ -166,7 +167,7 @@ def add_member(body, application_id):
             'isAdmin': data.get('isAdmin', False),
             'isSpiess': data.get('isSpiess', False),
             'isSaftschubse': data.get('isSaftschubse', False),
-            'isUmlageneinsammler': data.get('isUmlageneinsammler', False),
+            'isGeldeintreiber': data.get('isGeldeintreiber', False),
             'isActive': data.get('isActive', True),
             'token': data.get('token', ''),
             'street': data.get('street', ''),
