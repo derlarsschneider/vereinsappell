@@ -18,5 +18,5 @@ abstract class IUmlagenApi {
     required String collectorId,
     required UmlageSession session,
   });
-  Future<List<HistoryEntry>> fetchHistory({int limit = 20, String? startAfterKey});
+  Future<List<HistoryEntry>> fetchHistory({int limit = 20, int? beforeClosedAt});
 }
