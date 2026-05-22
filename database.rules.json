@@ -1,0 +1,39 @@
+{
+  "rules": {
+    "umlagen": {
+      "$applicationId": {
+        "active": {
+          ".read": true,
+          ".write": true
+        },
+        "history": {
+          ".read": true,
+          ".write": true,
+          ".indexOn": ["closedAt"]
+        },
+        "stats": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+    "tallies": {
+      "$applicationId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "ssp": {
+      "$appId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "polls": {
+      "$applicationId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
