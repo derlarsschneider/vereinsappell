@@ -98,10 +98,13 @@ jobs:
       - name: 🔧 Setup Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: 🔐 Write Firebase Service Account
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}' > /tmp/firebase-key.json
+
       - name: 🔥 Deploy Firebase Database Rules
         run: firebase deploy --only database
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
 
       - name: 📨 Notify Telegram (Backend)
         if: success()
