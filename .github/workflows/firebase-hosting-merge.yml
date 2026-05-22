@@ -120,9 +120,14 @@ jobs:
         mkdir -p aws_backend/secrets
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > aws_backend/secrets/firebase-service-account.json
 
+    - name: 🔧 Setup Firebase CLI
+      run: npm install -g firebase-tools
+
     - name: 🚀 Deploy Backend
       working-directory: aws_backend
       run: ./update_backend.sh
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI }}
 
     - name: 🎯 Promote to prod
       working-directory: aws_backend/lambda
