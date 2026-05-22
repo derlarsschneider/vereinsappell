@@ -33,6 +33,7 @@ import 'getraenke_screen.dart';
 import 'marschbefehl_screen.dart';
 import 'mitglieder_screen.dart';
 import 'monitoring_screen.dart';
+import 'umlage_screen.dart';
 import 'verein_screen.dart';
 
 @JS('hardReload')
@@ -496,6 +497,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => AbstimmungenScreen(config: widget.config),
+            ),
+          ),
+        ),
+      if (_isScreenActive('umlagen'))
+        _buildMenuTile(
+          context,
+          '💶 Umlagen',
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => UmlagenScreen(config: widget.config),
             ),
           ),
         ),

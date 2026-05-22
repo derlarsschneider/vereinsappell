@@ -262,6 +262,11 @@ class _MitgliederScreenState extends DefaultScreenState<MitgliederScreen> {
               value: selectedMember!['isSaftschubse'] == true,
               onChanged: (val) => setState(() => selectedMember!['isSaftschubse'] = val),
             ),
+            SwitchListTile(
+              title: Text('Umlageneinsammler'),
+              value: selectedMember!['isUmlageneinsammler'] == true,
+              onChanged: (val) => setState(() => selectedMember!['isUmlageneinsammler'] = val),
+            ),
 
             // QR Code
             SizedBox(height: 20),
