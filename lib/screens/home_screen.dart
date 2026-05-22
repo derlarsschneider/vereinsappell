@@ -407,7 +407,24 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: (_adType != 'none' || _paypalAccount.isNotEmpty)
+      floatingActionButton: _paypalAccount.isNotEmpty
+          ? GestureDetector(
+              onTap: _openDonation,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🍺', style: TextStyle(fontSize: 32)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'spenden',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: _adType != 'none'
           ? SafeArea(
               child: Container(
                 height: 60,
@@ -422,35 +439,12 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    if (_adType != 'none')
-                      Expanded(
-                        child: AdBannerWidget(
-                          adType: _adType,
-                          bannerImageUrl: _adBannerImageUrl,
-                          bannerLinkUrl: _adBannerLinkUrl,
-                          publisherId: _adAdmobPublisherId,
-                          adUnitId: _adAdmobAdUnitId,
-                        ),
-                      ),
-                    if (_paypalAccount.isNotEmpty)
-                      GestureDetector(
-                        onTap: _openDonation,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text('🍺', style: TextStyle(fontSize: 28)),
-                            const SizedBox(height: 2),
-                            Text(
-                              'spenden',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                child: AdBannerWidget(
+                  adType: _adType,
+                  bannerImageUrl: _adBannerImageUrl,
+                  bannerLinkUrl: _adBannerLinkUrl,
+                  publisherId: _adAdmobPublisherId,
+                  adUnitId: _adAdmobAdUnitId,
                 ),
               ),
             )
