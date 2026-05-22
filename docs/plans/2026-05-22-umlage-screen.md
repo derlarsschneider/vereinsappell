@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a 3-tab screen for collecting member levies (Umlagen), backed by Firebase Realtime Database, with a new `isUmlageneinsammler` role flag.
+**Goal:** Build a 3-tab screen for collecting member levies (Umlagen), backed by Firebase Realtime Database, with a new `isGeldeintreiber` role flag.
 
 **Architecture:** A new `UmlagenScreen` with 3 tabs ("Meine Sammlung", "Alle aktiven", "Abgeschlossen") uses Firebase Realtime Database streams for live updates. Business logic lives in `UmlagenApi` behind an `IUmlagenApi` interface for testability. Models are plain Dart classes in `lib/models/umlage.dart`.
 
@@ -18,17 +18,17 @@
 | Create | `lib/api/umlagen_api_interface.dart` | `IUmlagenApi` interface |
 | Create | `lib/api/umlagen_api.dart` | Firebase Realtime Database implementation |
 | Create | `lib/screens/umlage_screen.dart` | 3-tab screen widget |
-| Modify | `lib/config_loader.dart` | Add `isUmlageneinsammler` to `Member` |
+| Modify | `lib/config_loader.dart` | Add `isGeldeintreiber` to `Member` |
 | Modify | `lib/screens/mitglieder_screen.dart` | Add `SwitchListTile` for new flag |
 | Modify | `lib/screens/verein_screen.dart` | Add `'umlagen'` to `_allScreens` |
 | Modify | `lib/screens/home_screen.dart` | Add `'💶 Umlagen'` menu tile |
-| Modify | `test/widget/test_helpers.dart` | Add `isUmlageneinsammler` param to `makeConfig` |
+| Modify | `test/widget/test_helpers.dart` | Add `isGeldeintreiber` param to `makeConfig` |
 | Create | `test/unit/umlage_model_test.dart` | Unit tests for model parsing |
 | Create | `test/widget/umlage_screen_test.dart` | Widget tests for all 3 tabs |
 
 ---
 
-## Task 1: Add `isUmlageneinsammler` to Member
+## Task 1: Add `isGeldeintreiber` to Member
 
 **Files:**
 - Modify: `lib/config_loader.dart`
@@ -43,35 +43,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vereinsappell/config_loader.dart';
 
 void main() {
-  test('Member.updateMember parses isUmlageneinsammler true', () {
+  test('Member.updateMember parses isGeldeintreiber true', () {
     final config = AppConfig(
       apiBaseUrl: 'https://api.example.com',
       applicationId: 'test-app',
       memberId: 'user-1',
     );
-    config.member.updateMember({'isUmlageneinsammler': true});
-    expect(config.member.isUmlageneinsammler, isTrue);
+    config.member.updateMember({'isGeldeintreiber': true});
+    expect(config.member.isGeldeintreiber, isTrue);
   });
 
-  test('Member.updateMember defaults isUmlageneinsammler to false', () {
+  test('Member.updateMember defaults isGeldeintreiber to false', () {
     final config = AppConfig(
       apiBaseUrl: 'https://api.example.com',
       applicationId: 'test-app',
       memberId: 'user-1',
     );
     config.member.updateMember({});
-    expect(config.member.isUmlageneinsammler, isFalse);
+    expect(config.member.isGeldeintreiber, isFalse);
   });
 
-  test('Member.encodeMember includes isUmlageneinsammler', () {
+  test('Member.encodeMember includes isGeldeintreiber', () {
     final config = AppConfig(
       apiBaseUrl: 'https://api.example.com',
       applicationId: 'test-app',
       memberId: 'user-1',
     );
-    config.member.updateMember({'isUmlageneinsammler': true});
+    config.member.updateMember({'isGeldeintreiber': true});
     final encoded = config.member.encodeMember();
-    expect(encoded, contains('"isUmlageneinsammler":true'));
+    expect(encoded, contains('"isGeldeintreiber":true'));
   });
 }
 ```
@@ -83,38 +83,38 @@ cd /home/lars/tzg/vereinsappell
 flutter test test/unit/umlage_member_flag_test.dart
 ```
 
-Expected: FAIL — `isUmlageneinsammler` is not defined on `Member`.
+Expected: FAIL — `isGeldeintreiber` is not defined on `Member`.
 
-- [ ] **Step 3: Add `isUmlageneinsammler` to `lib/config_loader.dart`**
+- [ ] **Step 3: Add `isGeldeintreiber` to `lib/config_loader.dart`**
 
 In the `Member` class, add alongside the other flags (after `_isSaftschubse`):
 
 ```dart
-bool _isUmlageneinsammler = false;
+bool _isGeldeintreiber = false;
 ```
 
 Add getter after `get isSaftschubse`:
 
 ```dart
-bool get isUmlageneinsammler => _isUmlageneinsammler;
+bool get isGeldeintreiber => _isGeldeintreiber;
 ```
 
 Add setter after `set isSaftschubse`:
 
 ```dart
-set isUmlageneinsammler(bool value) => _isUmlageneinsammler = value;
+set isGeldeintreiber(bool value) => _isGeldeintreiber = value;
 ```
 
 In `updateMember`, add after `_isSaftschubse = member?['isSaftschubse'] ?? false;`:
 
 ```dart
-_isUmlageneinsammler = member?['isUmlageneinsammler'] ?? false;
+_isGeldeintreiber = member?['isGeldeintreiber'] ?? false;
 ```
 
 In `encodeMember`, add after `'isSaftschubse': _isSaftschubse,`:
 
 ```dart
-'isUmlageneinsammler': _isUmlageneinsammler,
+'isGeldeintreiber': _isGeldeintreiber,
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -127,14 +127,14 @@ Expected: All 3 tests PASS.
 
 - [ ] **Step 5: Update `test/widget/test_helpers.dart` to support the new flag**
 
-In `makeConfig`, add `isUmlageneinsammler = false` parameter and include it in `memberJson`:
+In `makeConfig`, add `isGeldeintreiber = false` parameter and include it in `memberJson`:
 
 ```dart
 Future<AppConfig> makeConfig(
   WidgetTester tester, {
   bool isAdmin = false,
   bool isSuperAdmin = false,
-  bool isUmlageneinsammler = false,
+  bool isGeldeintreiber = false,
   String? sessionPassword = 'testpw',
 }) async {
   final config = await tester.runAsync(() async {
@@ -144,7 +144,7 @@ Future<AppConfig> makeConfig(
       'isAdmin': isAdmin,
       'isSuperAdmin': isSuperAdmin,
       'isSpiess': false,
-      'isUmlageneinsammler': isUmlageneinsammler,
+      'isGeldeintreiber': isGeldeintreiber,
       'token': '',
     });
     // rest of function unchanged
@@ -162,7 +162,7 @@ Expected: All existing tests still PASS.
 
 ```bash
 git add lib/config_loader.dart test/widget/test_helpers.dart test/unit/umlage_member_flag_test.dart
-git commit -m "feat(member): add isUmlageneinsammler flag"
+git commit -m "feat(member): add isGeldeintreiber flag"
 ```
 
 ---
@@ -675,15 +675,15 @@ if (_isScreenActive('umlagen'))
   ),
 ```
 
-- [ ] **Step 3: Add `isUmlageneinsammler` SwitchListTile in `lib/screens/mitglieder_screen.dart`**
+- [ ] **Step 3: Add `isGeldeintreiber` SwitchListTile in `lib/screens/mitglieder_screen.dart`**
 
 In `_buildMemberDetail`, in the Rollen section after the `isSaftschubse` SwitchListTile, add:
 
 ```dart
 SwitchListTile(
-  title: Text('Umlageneinsammler'),
-  value: selectedMember!['isUmlageneinsammler'] == true,
-  onChanged: (val) => setState(() => selectedMember!['isUmlageneinsammler'] = val),
+  title: Text('Geldeintreiber'),
+  value: selectedMember!['isGeldeintreiber'] == true,
+  onChanged: (val) => setState(() => selectedMember!['isGeldeintreiber'] = val),
 ),
 ```
 
@@ -876,7 +876,7 @@ void main() {
   group('Tab "Meine Sammlung"', () {
     testWidgets('Tab nicht sichtbar für Nicht-Einsammler', (tester) async {
       final api = FakeUmlagenApi();
-      final config = await makeConfig(tester, isUmlageneinsammler: false);
+      final config = await makeConfig(tester, isGeldeintreiber: false);
       await tester.pumpWidget(wrapScreen(
         UmlagenScreen(config: config, api: api),
         config,
@@ -888,7 +888,7 @@ void main() {
 
     testWidgets('Tab sichtbar für Einsammler', (tester) async {
       final api = FakeUmlagenApi();
-      final config = await makeConfig(tester, isUmlageneinsammler: true);
+      final config = await makeConfig(tester, isGeldeintreiber: true);
       await tester.pumpWidget(wrapScreen(
         UmlagenScreen(config: config, api: api),
         config,
@@ -946,7 +946,7 @@ class _UmlagenScreenState extends DefaultScreenState<UmlagenScreen>
   void initState() {
     super.initState();
     _api = widget.api ?? UmlagenApi(widget.config);
-    final isCollector = widget.config.member.isUmlageneinsammler;
+    final isCollector = widget.config.member.isGeldeintreiber;
     _tabController = TabController(
       length: isCollector ? 3 : 2,
       vsync: this,
@@ -988,7 +988,7 @@ class _UmlagenScreenState extends DefaultScreenState<UmlagenScreen>
   @override
   Widget build(BuildContext context) {
     final member = Provider.of<Member>(context);
-    final isCollector = member.isUmlageneinsammler;
+    final isCollector = member.isGeldeintreiber;
 
     final tabs = [
       if (isCollector) const Tab(text: 'Meine Sammlung'),
