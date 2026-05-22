@@ -296,7 +296,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
         _adType = const ['none', 'banner', 'admob'].contains(rawAdType) ? rawAdType : 'none';
         _adBannerImageUrl = customer['ad_banner_image_url'] as String? ?? '';
         _adBannerLinkUrl = customer['ad_banner_link_url'] as String? ?? '';
-        _adAdmobPublisherId = customer['ad_admob_publisher_id'] as String? ?? '';
+        _adAdmobPublisherId = customer['ad_admob_publisher_id'] as String? ?? 'ca-pub-4535258076297789';
         _adAdmobAdUnitId = customer['ad_admob_ad_unit_id'] as String? ?? '';
         final screens = customer['active_screens'];
         if (screens != null) {
