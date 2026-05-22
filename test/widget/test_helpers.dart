@@ -17,6 +17,7 @@ Future<AppConfig> makeConfig(
   WidgetTester tester, {
   bool isAdmin = false,
   bool isSuperAdmin = false,
+  bool isUmlageneinsammler = false,
   String? sessionPassword = 'testpw',
 }) async {
   final config = await tester.runAsync(() async {
@@ -26,6 +27,7 @@ Future<AppConfig> makeConfig(
       'isAdmin': isAdmin,
       'isSuperAdmin': isSuperAdmin,
       'isSpiess': false,
+      'isUmlageneinsammler': isUmlageneinsammler,
       'token': '',
     });
 
