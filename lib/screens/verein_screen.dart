@@ -113,7 +113,7 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
       _adBannerImageUrlController.text = club['ad_banner_image_url'] as String? ?? '';
       _adBannerLinkUrlController.text = club['ad_banner_link_url'] as String? ?? '';
       _adPublisherIdController.text = club['ad_admob_publisher_id'] as String? ?? 'ca-pub-4535258076297789';
-      _adAdUnitIdController.text = club['ad_admob_ad_unit_id'] as String? ?? '';
+      _adAdUnitIdController.text = club['ad_admob_ad_unit_id'] as String? ?? '8160945670';
     });
   }
 
