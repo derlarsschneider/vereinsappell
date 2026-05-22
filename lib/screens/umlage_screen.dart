@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../api/members_api.dart';
 import '../api/umlagen_api.dart';
 import '../api/umlagen_api_interface.dart';
 import '../config_loader.dart';
@@ -119,6 +120,14 @@ class _MeineSammlungTab extends StatefulWidget {
 class _MeineSammlungTabState extends State<_MeineSammlungTab> {
   int _selectedAmount = 20;
   final _nameController = TextEditingController();
+  List<dynamic> _members = [];
+  bool _membersLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMembers();
+  }
 
   @override
   void dispose() {
@@ -126,14 +135,38 @@ class _MeineSammlungTabState extends State<_MeineSammlungTab> {
     super.dispose();
   }
 
+  Future<void> _fetchMembers() async {
+    setState(() => _membersLoading = true);
+    try {
+      final api = MembersApi(widget.config);
+      final data = await api.fetchMembers();
+      if (mounted) {
+        setState(() {
+          _members = data
+            ..sort((a, b) =>
+                ((a['name'] as String?) ?? '').toLowerCase()
+                    .compareTo(((b['name'] as String?) ?? '').toLowerCase()));
+        });
+      }
+    } catch (_) {
+      // silently ignore — member names fall back to memberId
+    } finally {
+      if (mounted) setState(() => _membersLoading = false);
+    }
+  }
+
   Future<void> _startSession() async {
     final name = _nameController.text.trim();
+    final memberIds = _members
+        .where((m) => m['isActive'] != false)
+        .map<String>((m) => m['memberId'] as String)
+        .toList();
     try {
       await widget.api.startSession(
         collectorId: widget.config.memberId,
         amount: _selectedAmount,
         name: name,
-        memberIds: [],
+        memberIds: memberIds,
       );
     } catch (e) {
       if (mounted) {
@@ -217,7 +250,7 @@ class _MeineSammlungTabState extends State<_MeineSammlungTab> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: _startSession,
+            onPressed: _membersLoading ? null : _startSession,
             icon: const Icon(Icons.play_arrow),
             label: Text('Umlage starten (€$_selectedAmount)'),
           ),
@@ -236,6 +269,10 @@ class _MeineSammlungTabState extends State<_MeineSammlungTab> {
         .where((e) => e.value != 'excluded')
         .map((e) => e.key)
         .toList();
+    final nameMap = {
+      for (final m in _members)
+        m['memberId'] as String: (m['name'] as String?) ?? m['memberId'] as String
+    };
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
@@ -277,7 +314,7 @@ class _MeineSammlungTabState extends State<_MeineSammlungTab> {
                 final status = session.participants[memberId] ?? 'pending';
                 return _MemberListTile(
                   memberId: memberId,
-                  memberName: memberId,
+                  memberName: nameMap[memberId] ?? memberId,
                   status: status,
                   onTap: () => widget.api.updateParticipant(
                     collectorId: widget.config.memberId,
