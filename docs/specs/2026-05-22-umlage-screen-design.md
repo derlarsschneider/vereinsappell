@@ -5,7 +5,7 @@
 
 ## Summary
 
-New screen for collecting Vereins-Umlagen (member levies). A new `isUmlageneinsammler` flag identifies levy collectors. The screen has three tabs and uses Firebase Realtime Database for live persistence. All active members can view the screen; only collectors can manage their own active collection.
+New screen for collecting Vereins-Umlagen (member levies). A new `isGeldeintreiber` flag identifies levy collectors. The screen has three tabs and uses Firebase Realtime Database for live persistence. All active members can view the screen; only collectors can manage their own active collection.
 
 ---
 
@@ -47,7 +47,7 @@ umlagen/
 
 ## Member Flag
 
-New boolean field `isUmlageneinsammler` added to the `Member` class in `config_loader.dart`, parallel to existing flags (`isSpiess`, `isAdmin`, `isSaftschubse`).
+New boolean field `isGeldeintreiber` added to the `Member` class in `config_loader.dart`, parallel to existing flags (`isSpiess`, `isAdmin`, `isSaftschubse`).
 
 - Stored and fetched via the existing members API.
 - Editable in `mitglieder_screen.dart` via a new `SwitchListTile`.
@@ -59,7 +59,7 @@ New boolean field `isUmlageneinsammler` added to the `Member` class in `config_l
 
 - New menu tile `'💶 Umlagen'` in `home_screen.dart`, gated behind `_isScreenActive('umlagen')`.
 - `'umlagen'` added to the active screens list in `verein_screen.dart`.
-- Default tab on open: "Meine Sammlung" if `isUmlageneinsammler`, otherwise "Alle aktiven".
+- Default tab on open: "Meine Sammlung" if `isGeldeintreiber`, otherwise "Alle aktiven".
 
 ---
 

@@ -32,7 +32,7 @@ class _UmlagenScreenState extends DefaultScreenState<UmlagenScreen>
   void initState() {
     super.initState();
     _api = widget.api ?? UmlagenApi(widget.config);
-    final isCollector = widget.config.member.isUmlageneinsammler;
+    final isCollector = widget.config.member.isGeldeintreiber;
     _tabController = TabController(
       length: isCollector ? 3 : 2,
       vsync: this,
@@ -73,7 +73,7 @@ class _UmlagenScreenState extends DefaultScreenState<UmlagenScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isCollector = widget.config.member.isUmlageneinsammler;
+    final isCollector = widget.config.member.isGeldeintreiber;
 
     final tabs = [
       if (isCollector) const Tab(text: 'Meine Sammlung'),

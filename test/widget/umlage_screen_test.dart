@@ -138,7 +138,7 @@ void main() {
   group('Tab "Meine Sammlung"', () {
     testWidgets('Tab nicht sichtbar für Nicht-Einsammler', (tester) async {
       final api = FakeUmlagenApi();
-      final config = await makeConfig(tester, isUmlageneinsammler: false);
+      final config = await makeConfig(tester, isGeldeintreiber: false);
       await tester.pumpWidget(wrapScreen(
         UmlagenScreen(config: config, api: api),
         config,
@@ -150,7 +150,7 @@ void main() {
 
     testWidgets('Tab sichtbar für Einsammler', (tester) async {
       final api = FakeUmlagenApi();
-      final config = await makeConfig(tester, isUmlageneinsammler: true);
+      final config = await makeConfig(tester, isGeldeintreiber: true);
       await tester.pumpWidget(wrapScreen(
         UmlagenScreen(config: config, api: api),
         config,
