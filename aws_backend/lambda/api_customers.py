@@ -54,6 +54,16 @@ def update_customer(event):
         update_expr += ', paypal_account = :paypal'
         expr_values[':paypal'] = paypal_account
 
+    ad_type = body.get('ad_type', 'none')
+    update_expr += ', ad_type = :ad_type'
+    expr_values[':ad_type'] = ad_type
+
+    for field in ('ad_banner_image_url', 'ad_banner_link_url', 'ad_admob_publisher_id', 'ad_admob_ad_unit_id'):
+        value = body.get(field, '')
+        if value:
+            update_expr += f', {field} = :{field}'
+            expr_values[f':{field}'] = value
+
     table().update_item(
         Key={'application_id': customer_id},
         UpdateExpression=update_expr,
