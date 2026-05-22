@@ -477,8 +477,8 @@ class _BanknotePicker extends StatelessWidget {
             onTap: onChanged == null ? null : () => onChanged!(amount),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              width: 64,
-              height: 36,
+              width: isSelected ? 70 : 64,
+              height: isSelected ? 40 : 36,
               decoration: BoxDecoration(
                 color: colors[amount],
                 borderRadius: BorderRadius.circular(6),
