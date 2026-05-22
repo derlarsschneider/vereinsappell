@@ -120,7 +120,7 @@ void main() {
   });
 
   group('Tab "Abgeschlossen"', () {
-    testWidgets('renders without error when history is empty', (tester) async {
+    testWidgets('zeigt abgeschlossene Umlage mit Name und Betrag', (tester) async {
       final api = FakeUmlagenApi();
       final config = await makeConfig(tester);
       await tester.pumpWidget(wrapScreen(
@@ -132,7 +132,7 @@ void main() {
       await tester.tap(find.text('Abgeschlossen'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(ListView), findsWidgets);
+      expect(find.text('Noch keine abgeschlossenen Umlagen.'), findsOneWidget);
     });
   });
 

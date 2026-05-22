@@ -73,8 +73,7 @@ class _UmlagenScreenState extends DefaultScreenState<UmlagenScreen>
 
   @override
   Widget build(BuildContext context) {
-    final member = Provider.of<Member>(context);
-    final isCollector = member.isUmlageneinsammler;
+    final isCollector = widget.config.member.isUmlageneinsammler;
 
     final tabs = [
       if (isCollector) const Tab(text: 'Meine Sammlung'),
@@ -166,10 +165,18 @@ class _MeineSammlungTabState extends State<_MeineSammlungTab> {
           ),
         ) == true);
     if (confirmed) {
-      await widget.api.closeSession(
-        collectorId: widget.config.memberId,
-        session: session,
-      );
+      try {
+        await widget.api.closeSession(
+          collectorId: widget.config.memberId,
+          session: session,
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+          );
+        }
+      }
     }
   }
 
