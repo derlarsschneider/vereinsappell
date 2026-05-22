@@ -731,7 +731,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text('${member.isSpiess ? " 🛡️ " : ""}${member.isAdmin ? " 🛠️ " : ""}${member.isSaftschubse ? " 🍻 " : ""}${member.isSuperAdmin ? " 🦸‍♀️ " : ""}'),
+                Text('${member.isSpiess ? " 🛡️ " : ""}${member.isAdmin ? " 🛠️ " : ""}${member.isSaftschubse ? " 🍻 " : ""}${member.isSuperAdmin ? " 🦸‍♀️ " : ""}${member.isUmlageneinsammler ? " 💶 " : ""}'),
                 if (!member.isActive) ...[
                   const SizedBox(height: 8),
                   const Text(

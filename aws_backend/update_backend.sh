@@ -36,4 +36,5 @@ else
   lambda/build.sh && lambda/update.sh
 fi
 
+firebase deploy --only database
 echo "✅ Backend wurde aktualisiert."
