@@ -99,7 +99,9 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: 🔥 Deploy Firebase Database Rules
-        run: firebase deploy --only database --token "${{ secrets.FIREBASE_CI }}"
+        run: firebase deploy --only database
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI }}
 
       - name: 📨 Notify Telegram (Backend)
         if: success()
