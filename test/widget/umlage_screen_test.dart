@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vereinsappell/api/umlagen_api_interface.dart';
 import 'package:vereinsappell/models/umlage.dart';

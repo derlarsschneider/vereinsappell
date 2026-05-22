@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 import '../api/members_api.dart';
 import '../api/umlagen_api.dart';
@@ -587,7 +586,7 @@ class _MemberListTile extends StatelessWidget {
             color: isPaid ? Colors.green[50] : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: isPaid ? Border.all(color: Colors.green, width: 1.5) : null,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)],
           ),
           child: ListTile(
             leading: CircleAvatar(
