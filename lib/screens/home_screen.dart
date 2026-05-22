@@ -424,15 +424,16 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: AdBannerWidget(
-                        adType: _adType,
-                        bannerImageUrl: _adBannerImageUrl,
-                        bannerLinkUrl: _adBannerLinkUrl,
-                        publisherId: _adAdmobPublisherId,
-                        adUnitId: _adAdmobAdUnitId,
+                    if (_adType != 'none')
+                      Expanded(
+                        child: AdBannerWidget(
+                          adType: _adType,
+                          bannerImageUrl: _adBannerImageUrl,
+                          bannerLinkUrl: _adBannerLinkUrl,
+                          publisherId: _adAdmobPublisherId,
+                          adUnitId: _adAdmobAdUnitId,
+                        ),
                       ),
-                    ),
                     if (_paypalAccount.isNotEmpty)
                       GestureDetector(
                         onTap: _openDonation,
