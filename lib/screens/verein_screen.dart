@@ -44,10 +44,15 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
   bool _saving = false;
 
   String _adType = 'none';
+  // URL field for manually entering an external banner image URL.
   final _adBannerImageUrlController = TextEditingController();
   final _adBannerLinkUrlController = TextEditingController();
   final _adPublisherIdController = TextEditingController();
   final _adAdUnitIdController = TextEditingController();
+  // Bytes of a locally picked banner image (takes priority over URL field).
+  Uint8List? _adBannerPickedBytes;
+  // Presigned S3 URL returned by the backend for displaying a preview.
+  String _adBannerPreviewUrl = '';
 
   @override
   void initState() {
@@ -110,7 +115,9 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
           : _allScreens.map((s) => s['key']!).toList();
       final adType = club['ad_type'] as String? ?? 'none';
       _adType = const ['none', 'banner', 'admob'].contains(adType) ? adType : 'none';
-      _adBannerImageUrlController.text = club['ad_banner_image_url'] as String? ?? '';
+      _adBannerPreviewUrl = club['ad_banner_image_url'] as String? ?? '';
+      _adBannerPickedBytes = null;
+      _adBannerImageUrlController.text = '';
       _adBannerLinkUrlController.text = club['ad_banner_link_url'] as String? ?? '';
       _adPublisherIdController.text = club['ad_admob_publisher_id'] as String? ?? 'ca-pub-4535258076297789';
       _adAdUnitIdController.text = club['ad_admob_ad_unit_id'] as String? ?? '8160945670';
@@ -131,6 +138,30 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
     } catch (_) {
       return null;
     }
+  }
+
+  Uint8List _resizeBanner(Uint8List bytes) {
+    final src = img.decodeImage(bytes);
+    if (src == null) return bytes;
+    const maxWidth = 800;
+    final image = src.width > maxWidth
+        ? img.copyResize(src, width: maxWidth)
+        : src;
+    return Uint8List.fromList(img.encodeJpg(image, quality: 85));
+  }
+
+  Future<void> _pickBannerImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final bytes = result.files.first.bytes;
+    if (bytes == null) return;
+    setState(() {
+      _adBannerPickedBytes = _resizeBanner(bytes);
+      _adBannerImageUrlController.clear();
+    });
   }
 
   // Resize and JPEG-compress an image so it fits within DynamoDB's item size limit.
@@ -161,17 +192,28 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
         _selectedClub?['application_id'] ?? widget.config.applicationId;
     setState(() => _saving = true);
     try {
-      await _api.updateCustomer(clubId, {
+      final payload = <String, dynamic>{
         'application_name': _nameController.text.trim(),
         'paypal_account': _paypalAccountController.text.trim(),
         'application_logo': _logoBase64,
         'active_screens': _activeScreens,
         'ad_type': _adType,
-        'ad_banner_image_url': _adBannerImageUrlController.text.trim(),
         'ad_banner_link_url': _adBannerLinkUrlController.text.trim(),
         'ad_admob_publisher_id': _adPublisherIdController.text.trim(),
         'ad_admob_ad_unit_id': _adAdUnitIdController.text.trim(),
-      });
+      };
+      if (_adBannerPickedBytes != null) {
+        payload['ad_banner_image_data'] = base64Encode(_adBannerPickedBytes!);
+      } else {
+        final url = _adBannerImageUrlController.text.trim();
+        if (url.isNotEmpty) payload['ad_banner_image_source_url'] = url;
+      }
+      await _api.updateCustomer(clubId, payload);
+
+      // Reload to get a fresh presigned URL for the banner image.
+      final updated = await _api.getCustomer(clubId);
+      if (mounted) _applyClub(updated);
+
       showInfo('Gespeichert');
     } catch (e) {
       showError('Fehler beim Speichern: $e');
@@ -406,12 +448,35 @@ class _VereinScreenState extends DefaultScreenState<VereinScreen> {
                   ),
                   if (_adType == 'banner') ...[
                     const SizedBox(height: 12),
+                    // Banner image: show preview, then offer file pick or URL input.
+                    if (_adBannerPickedBytes != null)
+                      Image.memory(_adBannerPickedBytes!, height: 60)
+                    else if (_adBannerPreviewUrl.isNotEmpty)
+                      Image.network(_adBannerPreviewUrl, height: 60,
+                          errorBuilder: (ctx2, e, stack) => const SizedBox()),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text('Bild wählen'),
+                          onPressed: _pickBannerImage,
+                        ),
+                        if (_adBannerPickedBytes != null)
+                          const Icon(Icons.check_circle, color: Colors.green),
+                      ],
+                    ),
                     TextField(
                       controller: _adBannerImageUrlController,
                       decoration: const InputDecoration(
-                        labelText: 'Bild-URL',
-                        helperText: 'URL zum Sponsor-Bild (https://...)',
+                        labelText: 'oder Bild-URL',
+                        helperText: 'Alternatives Bild per URL (https://...)',
                       ),
+                      onChanged: (_) {
+                        if (_adBannerPickedBytes != null) {
+                          setState(() => _adBannerPickedBytes = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 8),
                     TextField(

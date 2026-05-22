@@ -1,11 +1,15 @@
+import base64
 import json
 import os
+import urllib.request
 import uuid
 import boto3
 
 _dynamodb = boto3.resource('dynamodb')
 _customers_table = _dynamodb.Table(os.environ.get('CUSTOMERS_TABLE_NAME', ''))
 _members_table_ref = _dynamodb.Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+_s3 = boto3.client('s3')
+_s3_bucket_name = os.environ.get('S3_BUCKET_NAME', '')
 
 
 def table():
@@ -17,6 +21,27 @@ def _members_table():
 
 
 ALL_SCREEN_KEYS = ['termine', 'marschbefehl', 'strafen', 'dokumente', 'galerie', 'schere_stein_papier']
+
+_AD_BANNER_PREFIX = 'ad_banner'
+
+
+def _upload_ad_banner(customer_id: str, image_bytes: bytes, content_type: str = 'image/jpeg') -> str:
+    key = f'{customer_id}/{_AD_BANNER_PREFIX}/banner.jpg'
+    _s3.put_object(
+        Bucket=_s3_bucket_name,
+        Key=key,
+        Body=image_bytes,
+        ContentType=content_type,
+    )
+    return key
+
+
+def _presigned_url_for_key(key: str, expiry: int = 604800) -> str:
+    return _s3.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': _s3_bucket_name, 'Key': key},
+        ExpiresIn=expiry,
+    )
 API_BASE_URL = os.environ.get('API_BASE_URL', '')
 
 
@@ -28,6 +53,11 @@ def list_customers():
     while 'LastEvaluatedKey' in response:
         response = t.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
         items.extend(response.get('Items', []))
+
+    for item in items:
+        s3_key = item.get('ad_banner_s3_key', '')
+        if s3_key:
+            item['ad_banner_image_url'] = _presigned_url_for_key(s3_key)
 
     return {
         'statusCode': 200,
@@ -58,7 +88,22 @@ def update_customer(event):
     update_expr += ', ad_type = :ad_type'
     expr_values[':ad_type'] = ad_type
 
-    for field in ('ad_banner_image_url', 'ad_banner_link_url', 'ad_admob_publisher_id', 'ad_admob_ad_unit_id'):
+    # Upload ad banner image to S3 (from base64 data or source URL) and store the S3 key.
+    image_data_b64 = body.get('ad_banner_image_data', '')
+    image_source_url = body.get('ad_banner_image_source_url', '')
+    if image_data_b64:
+        image_bytes = base64.b64decode(image_data_b64)
+        s3_key = _upload_ad_banner(customer_id, image_bytes)
+        update_expr += ', ad_banner_s3_key = :ad_banner_s3_key'
+        expr_values[':ad_banner_s3_key'] = s3_key
+    elif image_source_url:
+        with urllib.request.urlopen(image_source_url, timeout=10) as resp:  # noqa: S310
+            image_bytes = resp.read()
+        s3_key = _upload_ad_banner(customer_id, image_bytes)
+        update_expr += ', ad_banner_s3_key = :ad_banner_s3_key'
+        expr_values[':ad_banner_s3_key'] = s3_key
+
+    for field in ('ad_banner_link_url', 'ad_admob_publisher_id', 'ad_admob_ad_unit_id'):
         value = body.get(field, '')
         if value:
             update_expr += f', {field} = :{field}'
@@ -130,6 +175,10 @@ def get_customer_by_id(event, context):
             'statusCode': 404,
             'body': json.dumps({'error': 'Verein nicht gefunden'})
         }
+
+    s3_key = item.get('ad_banner_s3_key', '')
+    if s3_key:
+        item['ad_banner_image_url'] = _presigned_url_for_key(s3_key)
 
     return {
         'statusCode': 200,
