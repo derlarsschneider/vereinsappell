@@ -8,7 +8,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  build_and_preview:
+  frontend:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
 
@@ -106,7 +106,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
 
   notify:
-    needs: [build_and_preview, backend]
+    needs: [frontend, backend]
     if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
 
@@ -114,7 +114,7 @@ jobs:
       - name: 📨 Notify Telegram
         run: |
           ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
-          PREVIEW_LINK="${{ needs.build_and_preview.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+          PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
           MSG=$(printf '🔍 PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
