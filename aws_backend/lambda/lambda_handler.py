@@ -36,6 +36,9 @@ def lambda_handler(event, context):
     try:
         method = event.get('requestContext', {}).get('http', {}).get('method')
         path = event.get('requestContext', {}).get('http', {}).get('path')
+        stage = event.get('requestContext', {}).get('stage', '')
+        if stage and stage != '$default' and path and path.startswith(f'/{stage}'):
+            path = path[len(f'/{stage}'):]
         origin = event.get('headers', {}).get('origin', 'https://vereinsappell.web.app')
         application_id = event.get('headers', {}).get('applicationid', '')
         member_id = event.get('headers', {}).get('memberid', '')
