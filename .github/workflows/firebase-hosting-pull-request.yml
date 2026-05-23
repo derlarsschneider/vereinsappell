@@ -90,7 +90,7 @@ jobs:
             --function-name vereins-app-beta-lambda_backend \
             --zip-file fileb://lambda.zip
           API_ID=$(aws apigatewayv2 get-apis \
-            --query "Items[?Name=='vereins-app-beta-api'].ApiId" \
+            --query "Items[?Name=='vereins-app-beta-api'].ApiId | [0]" \
             --output text)
           echo "dev_url=https://${API_ID}.execute-api.eu-central-1.amazonaws.com/dev" >> $GITHUB_OUTPUT
 
