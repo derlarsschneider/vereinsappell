@@ -86,7 +86,7 @@
 </script>
 
 <script>
-  (function () {
+  document.addEventListener('DOMContentLoaded', function () {
     const p = new URLSearchParams(window.location.search);
     if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
       const s = document.createElement('script');
@@ -95,7 +95,7 @@
     } else {
       document.getElementById('lp').style.display = 'block';
     }
-  })();
+  });
 </script>
 
 <div id="lp">
