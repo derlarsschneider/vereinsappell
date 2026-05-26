@@ -132,7 +132,12 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const p = new URLSearchParams(window.location.search);
-    if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
+    const hasUrlParams = p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId');
+    const hasStoredAccount = (function () {
+      try { const a = JSON.parse(localStorage.getItem('accounts') || '[]'); return Array.isArray(a) && a.length > 0; }
+      catch (_) { return false; }
+    })();
+    if (hasUrlParams || hasStoredAccount) {
       const s = document.createElement('script');
       s.src = 'flutter_bootstrap.js';
       document.body.appendChild(s);
