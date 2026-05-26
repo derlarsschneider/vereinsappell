@@ -94,16 +94,33 @@ jobs:
             --output text)
           echo "dev_url=https://${API_ID}.execute-api.eu-central-1.amazonaws.com/dev" >> $GITHUB_OUTPUT
 
-      - name: 🔧 Setup Firebase CLI
-        run: npm install -g firebase-tools
+      - name: 🏗️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: 🔐 Write Firebase Service Account
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/firebase-key.json
+        run: |
+          mkdir -p aws_backend/secrets
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > aws_backend/secrets/firebase-service-account.json
+
+      - name: 📋 Terraform Plan
+        working-directory: aws_backend
+        run: |
+          terraform init -input=false
+          terraform plan -no-color -input=false 2>&1 | tee /tmp/tf-plan.txt
+          echo "### 🏗️ Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 /tmp/tf-plan.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/aws_backend/secrets/firebase-service-account.json
+
+      - name: 🔧 Setup Firebase CLI
+        run: npm install -g firebase-tools
 
       - name: 🔥 Deploy Firebase Database Rules
         run: firebase deploy --only database
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/aws_backend/secrets/firebase-service-account.json
 
   notify:
     needs: [frontend, backend]
