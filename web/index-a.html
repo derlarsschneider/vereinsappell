@@ -124,6 +124,44 @@
 </script>
 
 <script>
+  async function updatePwaManifest() {
+    try {
+      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+      if (!Array.isArray(accounts) || !accounts.length) return;
+      const idx = Math.max(0, Math.min(parseInt(localStorage.getItem('activeAccount') || '0', 10), accounts.length - 1));
+      const acc = accounts[idx];
+      if (!acc || !acc.apiBaseUrl || !acc.applicationId || !acc.memberId) return;
+      const resp = await fetch(`${acc.apiBaseUrl}/customers/${acc.applicationId}`, {
+        headers: { applicationId: acc.applicationId, memberId: acc.memberId, password: acc.password || '' }
+      });
+      if (!resp.ok) return;
+      const club = await resp.json();
+      const logo = club.application_logo;
+      const name = club.application_name || 'Vereins Appell';
+      if (!logo) return;
+      let mime = 'image/png';
+      if (logo.startsWith('/9j/')) mime = 'image/jpeg';
+      else if (logo.startsWith('R0lGOD')) mime = 'image/gif';
+      else if (logo.startsWith('UklGR')) mime = 'image/webp';
+      const dataUrl = `data:${mime};base64,${logo}`;
+      const manifest = {
+        name, short_name: name, start_url: '/', display: 'standalone',
+        background_color: '#283f22', theme_color: '#283f22',
+        icons: [
+          { src: dataUrl, sizes: '192x192', type: mime },
+          { src: dataUrl, sizes: '512x512', type: mime },
+          { src: dataUrl, sizes: '192x192', type: mime, purpose: 'maskable' },
+          { src: dataUrl, sizes: '512x512', type: mime, purpose: 'maskable' },
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      const link = document.querySelector('link[rel="manifest"]');
+      if (link) link.href = URL.createObjectURL(blob);
+    } catch (e) { console.warn('[manifest] update failed:', e); }
+  }
+</script>
+
+<script>
   document.addEventListener('DOMContentLoaded', function () {
     const p = new URLSearchParams(window.location.search);
     const hasUrlParams = p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId');
@@ -135,6 +173,7 @@
       const s = document.createElement('script');
       s.src = 'flutter_bootstrap.js';
       document.body.appendChild(s);
+      updatePwaManifest();
     } else {
       document.getElementById('lp').style.display = 'block';
       // Load AdSense only when landing page is shown
