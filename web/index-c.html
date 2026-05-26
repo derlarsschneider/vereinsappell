@@ -1,0 +1,660 @@
+<!-- Variant C: Full-Screen Sections -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="google-adsense-account" content="ca-pub-4535258076297789">
+  <meta name="description" content="Vereins Appell: Die App für deinen Verein. Mitgliederverwaltung, Termine, Abstimmungen und mehr.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vereins Appell">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="icons/logo.svg">
+  <meta name="theme-color" content="#283f22">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Vereins Appell: Die App für deinen Verein</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#f0f4f0}
+    #lp{display:none}
+    .lp-nav{background:#1a3a1a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+    .lp-nav img{width:32px;height:32px;border-radius:6px;flex-shrink:0}
+    .lp-nav-title{font-weight:700;font-size:15px;letter-spacing:1px}
+    .lp-nav-sub{font-size:11px;opacity:.7}
+    .lp-hero{background:linear-gradient(135deg,#1a3a1a 0%,#2d6a2d 100%);color:#fff;text-align:center;padding:32px 20px 28px}
+    .lp-hero h1{font-size:22px;font-weight:800;margin-bottom:6px}
+    .lp-hero p{font-size:13px;opacity:.85;max-width:420px;margin:0 auto}
+    .lp-section{max-width:560px;margin:0 auto;padding:0 14px}
+    .lp-cards{display:flex;flex-direction:column;gap:10px;margin:-18px 0 14px}
+    .lp-card{background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;border:2px solid transparent;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;flex-direction:row;align-items:center;gap:14px;transition:border-color .2s,box-shadow .2s}
+    .lp-card:hover{border-color:#2d6a2d;box-shadow:0 4px 16px rgba(45,106,45,.15)}
+    .lp-card .ic{font-size:28px;flex-shrink:0}
+    .lp-card-body{flex:1}
+    .lp-card h2{font-size:13px;font-weight:700;color:#1a3a1a;margin-bottom:3px;line-height:1.3}
+    .lp-card p{font-size:12px;color:#666;line-height:1.4}
+    .lp-btn{display:inline-block;background:#2d6a2d;color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer}
+    .lp-btn-outline{background:#fff;color:#2d6a2d;border:1.5px solid #2d6a2d}
+    .lp-hint{background:#fff;border-radius:10px;padding:12px 16px;text-align:center;font-size:12px;color:#888;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+    .lp-hint a{color:#2d6a2d;font-weight:600;text-decoration:none}
+    .lp-footer{text-align:center;padding:20px;font-size:11px;color:#aaa;background:#f0f4f0}
+    .lp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:12px}
+    .lp-modal.open{display:flex}
+    .lp-box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+    .lp-box h2{font-size:15px;font-weight:700;color:#1a3a1a;margin-bottom:14px}
+    .lp-field{margin-bottom:12px}
+    .lp-field label{display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px}
+    .lp-field input,.lp-field textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:16px;outline:none;font-family:inherit}
+    .lp-field input:focus,.lp-field textarea:focus{border-color:#2d6a2d}
+    .lp-field textarea{min-height:80px;resize:vertical}
+    .lp-row{display:flex;gap:8px;margin-top:4px}
+    .lp-close{background:none;border:none;font-size:20px;cursor:pointer;color:#888;float:right;margin-top:-4px}
+    .lp-msg{font-size:12px;margin-top:8px;padding:8px 12px;border-radius:6px;display:none}
+    .lp-msg.ok{background:#e8f5e9;color:#2d6a2d;display:block}
+    .lp-msg.err{background:#fdecea;color:#c62828;display:block}
+    #qr-wrap{display:none;margin-top:12px}
+    #qr-wrap video{width:100%;border-radius:8px}
+    #qr-error{font-size:12px;color:#c62828;margin-top:6px;display:none}
+    @media(min-width:500px){
+      .lp-hero h1{font-size:26px}
+      .lp-hero p{font-size:14px}
+      .lp-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:-20px 0 16px}
+      .lp-card{flex-direction:column;align-items:center;padding:20px 12px;text-align:center}
+      .lp-card .ic{margin-bottom:8px}
+      .lp-card-body{width:100%}
+      .lp-btn{width:100%;margin-top:8px}
+    }
+    /* ── Full-Screen Sections (Variant C) ── */
+    .feat-screen{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+    .feat-screen:nth-child(odd){background:linear-gradient(160deg,#1a3a1a 0%,#2d6a2d 100%);color:#fff}
+    .feat-screen:nth-child(even){background:#fff;color:#1a3a1a}
+    .feat-num{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.45;margin-bottom:10px}
+    .feat-emoji{font-size:52px;margin-bottom:14px;line-height:1}
+    .feat-screen h2{font-size:30px;font-weight:900;margin-bottom:8px;line-height:1.1}
+    .feat-screen:nth-child(even) h2{color:#1a3a1a}
+    .feat-tagline{font-size:14px;opacity:.78;margin-bottom:28px;max-width:360px;line-height:1.55}
+    .feat-screen:nth-child(even) .feat-tagline{color:#555;opacity:1}
+    .feat-panel{width:100%;max-width:360px;text-align:left;border-radius:14px;padding:16px 18px;overflow:hidden}
+    .feat-screen:nth-child(odd) .feat-panel{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.15)}
+    .feat-screen:nth-child(even) .feat-panel{background:#f4f8f4;border:1px solid #e0ebe0}
+    .fp-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.55;margin-bottom:10px}
+    .fp-item{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
+    .feat-screen:nth-child(even) .fp-item{border-bottom-color:#e0ebe0}
+    .fp-item:last-child{border-bottom:none}
+    .fp-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .fp-label{font-size:13px;font-weight:500}
+    .fp-sub{font-size:11px;opacity:.65;margin-top:2px}
+    .feat-screen:nth-child(even) .fp-sub{color:#777;opacity:1}
+    .fp-val{font-size:12px;font-weight:700;flex-shrink:0;padding:2px 8px;border-radius:6px}
+    .fp-val-ok{background:rgba(255,255,255,.2);color:#fff}
+    .feat-screen:nth-child(even) .fp-val-ok{background:#e8f5e9;color:#2d6a2d}
+    .fp-val-warn{background:rgba(255,200,50,.25);color:#ffd54f}
+    .feat-screen:nth-child(even) .fp-val-warn{background:#fff3e0;color:#c6820a}
+    .fp-val-red{background:rgba(255,100,100,.25);color:#ff8a80}
+    .feat-screen:nth-child(even) .fp-val-red{background:#fdecea;color:#c62828}
+    .vbar{margin-top:4px}
+    .vbar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .vbar-label{font-size:11px;min-width:80px;opacity:.8}
+    .vbar-track{flex:1;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.2)}
+    .feat-screen:nth-child(even) .vbar-track{background:#e0e0e0}
+    .vbar-fill{height:100%;border-radius:4px}
+    .vbar-pct{font-size:11px;min-width:28px;text-align:right;opacity:.9;font-weight:600}
+    .lp-ad-wrap{background:#f0f4f0;padding:16px}
+    .lp-ad{max-width:560px;margin:0 auto;min-height:50px}
+    .feat-scroll-hint{margin-top:24px;font-size:11px;opacity:.45;letter-spacing:.5px}
+    .feat-scroll-hint::after{content:" ↓"}
+  </style>
+</head>
+<body>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+  }
+  window.hardReload = async function () {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        for (const k of keys) await window.caches.delete(k);
+      }
+    } catch (e) { console.error('Hard reload failed:', e); }
+    setTimeout(() => { window.location.href = window.location.origin + '/'; }, 200);
+  };
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const p = new URLSearchParams(window.location.search);
+    if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
+      const s = document.createElement('script');
+      s.src = 'flutter_bootstrap.js';
+      document.body.appendChild(s);
+    } else {
+      document.getElementById('lp').style.display = 'block';
+      // Load AdSense only when landing page is shown
+      const as = document.createElement('script');
+      as.async = true;
+      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
+      as.crossOrigin = 'anonymous';
+      document.head.appendChild(as);
+    }
+  });
+</script>
+
+<div id="lp">
+  <nav class="lp-nav">
+    <img src="icons/logo.svg" alt="Logo">
+    <div>
+      <div class="lp-nav-title">VEREINS APPELL</div>
+      <div class="lp-nav-sub">Die App für deinen Verein</div>
+    </div>
+  </nav>
+
+  <div class="lp-hero">
+    <h1>Was möchtest du tun?</h1>
+    <p>Vereinsverwaltung einfach gemacht — für Schützenvereine, Sportvereine und mehr.</p>
+  </div>
+
+  <div class="lp-section">
+    <div class="lp-cards">
+      <div class="lp-card" onclick="openModal('club')">
+        <div class="ic">🏛️</div>
+        <div class="lp-card-body">
+          <h2>Meinen Verein anmelden</h2>
+          <p>Vereinsverwaltung einrichten und alle Mitglieder einladen.</p>
+          <button class="lp-btn" style="margin-top:8px">Jetzt anmelden</button>
+        </div>
+      </div>
+      <div class="lp-card" onclick="openModal('qr')">
+        <div class="ic">📷</div>
+        <div class="lp-card-body">
+          <h2>QR-Code scannen</h2>
+          <p>Einladungs-QR vom Admin scannen und sofort loslegen.</p>
+          <button class="lp-btn lp-btn-outline" style="margin-top:8px">QR scannen</button>
+        </div>
+      </div>
+      <div class="lp-card" onclick="openModal('member')">
+        <div class="ic">✉️</div>
+        <div class="lp-card-body">
+          <h2>Beitrittsanfrage</h2>
+          <p>Keinen QR-Code? Anfrage an deinen Vereinsadmin schicken.</p>
+          <button class="lp-btn lp-btn-outline" style="margin-top:8px">Anfrage stellen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-hint">
+      Bereits registriert? Öffne deinen <a href="#" onclick="openModal('link');return false">Einladungslink</a> oder scanne den QR-Code.
+    </div>
+  </div>
+
+  <!-- AdSense unit 1: between CTA and feature screens -->
+  <!-- Replace data-ad-slot with your slot ID from AdSense console -->
+  <div class="lp-ad-wrap">
+    <div class="lp-ad">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-4535258076297789"
+           data-ad-slot="REPLACE_SLOT_1"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  </div>
+
+  <!-- Feature full-screen sections -->
+
+  <!-- 1. Termine -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 01 von 07</div>
+    <div class="feat-emoji">📅</div>
+    <h2>Termine</h2>
+    <p class="feat-tagline">Plane Vereinstermine und erinnere alle Mitglieder automatisch per Push-Notification. Nie wieder ein verpasstes Event.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Nächste Termine</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🗓️ Hauptversammlung</div>
+          <div class="fp-val fp-val-ok">12 Zusagen</div>
+        </div>
+        <div class="fp-sub">Sa. 14. Jun 2026 · 19:00 · Vereinsheim</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🎯 Schießtraining</div>
+          <div class="fp-val fp-val-ok">8 Zusagen</div>
+        </div>
+        <div class="fp-sub">Di. 17. Jun 2026 · 18:00 · Schießstand</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🎉 Sommerfest</div>
+          <div class="fp-val fp-val-ok">23 Zusagen</div>
+        </div>
+        <div class="fp-sub">Sa. 5. Jul 2026 · 15:00 · Biergarten</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- 2. Abstimmungen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 02 von 07</div>
+    <div class="feat-emoji">🗳️</div>
+    <h2>Abstimmungen</h2>
+    <p class="feat-tagline">Entscheidungen demokratisch und transparent treffen — anonym oder namentlich, live Ergebnisse für alle.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Neue Schützenscheiben kaufen?</div>
+      <div class="fp-item" style="padding:0">
+        <div class="vbar">
+          <div class="vbar-row"><span class="vbar-label">✅ Ja</span><div class="vbar-track"><div class="vbar-fill" style="width:74%;background:#4caf50"></div></div><span class="vbar-pct">74%</span></div>
+          <div class="vbar-row"><span class="vbar-label">❌ Nein</span><div class="vbar-track"><div class="vbar-fill" style="width:16%;background:#ef5350"></div></div><span class="vbar-pct">16%</span></div>
+          <div class="vbar-row"><span class="vbar-label">➖ Enthaltung</span><div class="vbar-track"><div class="vbar-fill" style="width:10%;background:#9e9e9e"></div></div><span class="vbar-pct">10%</span></div>
+        </div>
+      </div>
+      <div class="fp-item" style="margin-top:8px">
+        <div class="fp-row">
+          <div class="fp-label">Jahresbeitrag 2027 erhöhen?</div>
+          <div class="fp-val fp-val-warn">Offen</div>
+        </div>
+        <div class="fp-sub">8 von 19 Mitgliedern haben abgestimmt</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- 3. Umlagen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 03 von 07</div>
+    <div class="feat-emoji">💶</div>
+    <h2>Umlagen</h2>
+    <p class="feat-tagline">Sonderumlagen und Beiträge fair verwalten. Jedes Mitglied sieht auf einen Blick, was offen oder bereits bezahlt ist.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Aktuelle Umlagen</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Vereinsfest-Umlage 2026</div>
+          <div class="fp-val fp-val-warn">25,00 €</div>
+        </div>
+        <div class="fp-sub">11 von 16 bezahlt · Frist: 30. Jun 2026</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Raummiete Hauptversammlung</div>
+          <div class="fp-val fp-val-ok">✓ Fertig</div>
+        </div>
+        <div class="fp-sub">5,00 € · alle 16 Mitglieder bezahlt</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Trikot-Umlage Sommer</div>
+          <div class="fp-val fp-val-warn">40,00 €</div>
+        </div>
+        <div class="fp-sub">4 von 16 bezahlt · Frist: 15. Jul 2026</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- AdSense unit 2: mid-page (between feature screens 3 and 4) -->
+  <!-- Replace data-ad-slot with your slot ID from AdSense console -->
+  <div class="lp-ad-wrap">
+    <div class="lp-ad">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-4535258076297789"
+           data-ad-slot="REPLACE_SLOT_2"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  </div>
+
+  <!-- 4. Strafen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 04 von 07</div>
+    <div class="feat-emoji">⚠️</div>
+    <h2>Strafen</h2>
+    <p class="feat-tagline">Regelverstöße transparent dokumentieren und direkt in der App ausgleichen. Schluss mit losen Zetteln.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Strafen · Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max M.</div>
+          <div class="fp-val fp-val-red">5,00 €</div>
+        </div>
+        <div class="fp-sub">Zu spät erschienen · Training 10. Jun</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Lisa K.</div>
+          <div class="fp-val fp-val-red">3,00 €</div>
+        </div>
+        <div class="fp-sub">Handy beim Vereinsmeeting</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom B.</div>
+          <div class="fp-val fp-val-ok">✓ Beglichen</div>
+        </div>
+        <div class="fp-sub">Trikot vergessen · 2,00 € bezahlt</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- 5. Dokumente -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 05 von 07</div>
+    <div class="feat-emoji">📄</div>
+    <h2>Dokumente</h2>
+    <p class="feat-tagline">Alle Vereinsdokumente an einem Ort — Protokolle, Satzungen, Berichte. Immer und überall für alle Mitglieder verfügbar.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Vereinsdokumente</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Protokoll HV 2025.pdf</div>
+        </div>
+        <div class="fp-sub">245 KB · hochgeladen 14. Jan 2026</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Satzung des Vereins.pdf</div>
+        </div>
+        <div class="fp-sub">1,2 MB · hochgeladen 03. Mär 2024</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Jahresbericht 2025.pdf</div>
+        </div>
+        <div class="fp-sub">890 KB · hochgeladen 15. Feb 2026</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- 6. Getränkebestellungen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 06 von 07</div>
+    <div class="feat-emoji">🍺</div>
+    <h2>Getränkebestellungen</h2>
+    <p class="feat-tagline">Bestellungen für Veranstaltungen einfach vorab sammeln. Kein Durcheinander mehr beim Ausschank — alles übersichtlich.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Vereinsfest · 14. Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max M.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
+        </div>
+        <div class="fp-sub">2× Bier, 1× Wasser</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Lisa K.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
+        </div>
+        <div class="fp-sub">1× Apfelschorle</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom B.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
+        </div>
+        <div class="fp-sub">3× Bier, 1× Cola</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Klaus W.</div>
+          <div class="fp-val fp-val-warn">Offen</div>
+        </div>
+        <div class="fp-sub">Noch keine Bestellung aufgegeben</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- 7. Knobeln -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 07 von 07</div>
+    <div class="feat-emoji">✂️</div>
+    <h2>Schere Stein Papier</h2>
+    <p class="feat-tagline">Wer macht was? Entscheidet per Knobeln direkt in der App — fair, nachvollziehbar und ohne Diskussion.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Turnier: Putzdienst-Reihenfolge · Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max ✂️ vs. Lisa 🪨</div>
+          <div class="fp-val fp-val-ok">Lisa gewinnt</div>
+        </div>
+        <div class="fp-sub">Stein schlägt Schere</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom 📄 vs. Klaus ✂️</div>
+          <div class="fp-val fp-val-ok">Tom gewinnt</div>
+        </div>
+        <div class="fp-sub">Papier schlägt Stein</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Finale: Lisa 🪨 vs. Tom 📄</div>
+          <div class="fp-val" style="background:rgba(255,215,0,.3);color:#ffd700;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700">Tom 🏆</div>
+        </div>
+        <div class="fp-sub">Papier schlägt Stein — Tom zieht zuerst Putzdienst</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lp-footer">© 2026 Vereins Appell</div>
+</div><!-- /#lp -->
+
+<!-- Modal: Verein anmelden -->
+<div id="modal-club" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('club')">✕</button>
+    <h2>🏛️ Verein anmelden</h2>
+    <div class="lp-field"><label>Vereinsname *</label><input id="club-name" type="text" placeholder="Schützenverein Musterstadt"></div>
+    <div class="lp-field"><label>Ansprechpartner *</label><input id="club-contact" type="text" placeholder="Max Mustermann"></div>
+    <div class="lp-field"><label>E-Mail *</label><input id="club-email" type="email" placeholder="max@example.com"></div>
+    <div class="lp-field"><label>Telefon</label><input id="club-phone" type="tel" placeholder="+49 123 456789"></div>
+    <div class="lp-field"><label>Nachricht</label><textarea id="club-message" placeholder="Kurze Beschreibung eures Vereins..."></textarea></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('club')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitClub()">Absenden</button>
+    </div>
+    <div id="club-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<!-- Modal: Beitrittsanfrage -->
+<div id="modal-member" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('member')">✕</button>
+    <h2>✉️ Beitrittsanfrage</h2>
+    <div class="lp-field"><label>Dein Name *</label><input id="member-name" type="text" placeholder="Max Mustermann"></div>
+    <div class="lp-field"><label>Vereinsname *</label><input id="member-club" type="text" placeholder="Schützenverein Musterstadt"></div>
+    <div class="lp-field"><label>Deine E-Mail *</label><input id="member-email" type="email" placeholder="max@example.com"></div>
+    <div class="lp-field"><label>Nachricht</label><textarea id="member-message" placeholder="Optional: Kurze Nachricht an den Admin..."></textarea></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('member')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitMember()">Absenden</button>
+    </div>
+    <div id="member-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<!-- Modal: QR-Code scannen -->
+<div id="modal-qr" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('qr')">✕</button>
+    <h2>📷 QR-Code scannen</h2>
+    <p style="font-size:12px;color:#666;margin-bottom:12px">Halte die Kamera auf den Einladungs-QR-Code deines Admins.</p>
+    <button class="lp-btn" onclick="startQr()">Kamera starten</button>
+    <div id="qr-wrap">
+      <video id="qr-video" autoplay playsinline muted></video>
+      <canvas id="qr-canvas" style="display:none"></canvas>
+    </div>
+    <div id="qr-error"></div>
+  </div>
+</div>
+
+<!-- Modal: Einladungslink eingeben -->
+<div id="modal-link" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('link')">✕</button>
+    <h2>🔗 Einladungslink eingeben</h2>
+    <p style="font-size:12px;color:#666;margin-bottom:12px">Füge den Link ein, den du von deinem Admin erhalten hast.</p>
+    <div class="lp-field"><label>Einladungslink</label><input id="invite-link" type="url" placeholder="https://vereinsappell.web.app/?apiBaseUrl=..."></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('link')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitLink()">Öffnen</button>
+    </div>
+    <div id="link-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+
+  function openModal(name) { document.getElementById('modal-' + name).classList.add('open'); }
+  function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); stopQr(); }
+
+  function showMsg(id, text, isOk) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'lp-msg ' + (isOk ? 'ok' : 'err');
+  }
+
+  async function post(path, body) {
+    const r = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('Fehler ' + r.status);
+  }
+
+  async function submitClub() {
+    const name = document.getElementById('club-name').value.trim();
+    const contact = document.getElementById('club-contact').value.trim();
+    const email = document.getElementById('club-email').value.trim();
+    if (!name || !contact || !email) { showMsg('club-msg', 'Bitte alle Pflichtfelder ausfüllen.', false); return; }
+    try {
+      await post('/join/club', {
+        clubName: name, contact, email,
+        phone: document.getElementById('club-phone').value.trim(),
+        message: document.getElementById('club-message').value.trim(),
+      });
+      showMsg('club-msg', 'Vielen Dank! Wir melden uns in Kürze bei dir.', true);
+    } catch (e) { showMsg('club-msg', 'Fehler beim Senden. Bitte versuche es später nochmal.', false); }
+  }
+
+  async function submitMember() {
+    const name = document.getElementById('member-name').value.trim();
+    const club = document.getElementById('member-club').value.trim();
+    const email = document.getElementById('member-email').value.trim();
+    if (!name || !club || !email) { showMsg('member-msg', 'Bitte alle Pflichtfelder ausfüllen.', false); return; }
+    try {
+      await post('/join/member', {
+        name, clubName: club, email,
+        message: document.getElementById('member-message').value.trim(),
+      });
+      showMsg('member-msg', 'Deine Anfrage wurde weitergeleitet. Du erhältst bald Nachricht.', true);
+    } catch (e) { showMsg('member-msg', 'Fehler beim Senden. Bitte versuche es später nochmal.', false); }
+  }
+
+  function submitLink() {
+    const val = document.getElementById('invite-link').value.trim();
+    try {
+      const u = new URL(val);
+      const p = u.searchParams;
+      if (!p.has('apiBaseUrl') || !p.has('applicationId') || !p.has('memberId')) {
+        showMsg('link-msg', 'Der Link ist unvollständig. Bitte prüfe ihn und versuche es nochmal.', false);
+        return;
+      }
+      window.location.href = val;
+    } catch {
+      showMsg('link-msg', 'Ungültiger Link.', false);
+    }
+  }
+
+  let qrStream = null;
+  let qrAnimFrame = null;
+  let jsQrLoaded = false;
+
+  async function loadJsQr() {
+    if (jsQrLoaded) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    jsQrLoaded = true;
+  }
+
+  async function startQr() {
+    const errEl = document.getElementById('qr-error');
+    errEl.style.display = 'none';
+    try {
+      await loadJsQr();
+      qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.getElementById('qr-video');
+      video.srcObject = qrStream;
+      document.getElementById('qr-wrap').style.display = 'block';
+      scanFrame();
+    } catch (e) {
+      errEl.textContent = 'Kamera konnte nicht gestartet werden: ' + e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  function scanFrame() {
+    const video = document.getElementById('qr-video');
+    const canvas = document.getElementById('qr-canvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        stopQr();
+        handleQrResult(code.data);
+        return;
+      }
+    }
+    qrAnimFrame = requestAnimationFrame(scanFrame);
+  }
+
+  function stopQr() {
+    if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+    if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+    document.getElementById('qr-wrap').style.display = 'none';
+  }
+
+  function handleQrResult(data) {
+    try {
+      const u = new URL(data);
+      const p = u.searchParams;
+      if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
+        window.location.href = data;
+        return;
+      }
+    } catch {}
+    const errEl = document.getElementById('qr-error');
+    errEl.textContent = 'Ungültiger QR-Code. Bitte den Einladungs-QR vom Admin scannen.';
+    errEl.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
