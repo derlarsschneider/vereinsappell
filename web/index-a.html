@@ -1,0 +1,667 @@
+<!-- Variant A: Phone Mockups -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="google-adsense-account" content="ca-pub-4535258076297789">
+  <meta name="description" content="Vereins Appell: Die App für deinen Verein. Mitgliederverwaltung, Termine, Abstimmungen und mehr.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vereins Appell">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="icons/logo.svg">
+  <meta name="theme-color" content="#283f22">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Vereins Appell: Die App für deinen Verein</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#f0f4f0}
+    #lp{display:none}
+    .lp-nav{background:#1a3a1a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+    .lp-nav img{width:32px;height:32px;border-radius:6px;flex-shrink:0}
+    .lp-nav-title{font-weight:700;font-size:15px;letter-spacing:1px}
+    .lp-nav-sub{font-size:11px;opacity:.7}
+    .lp-hero{background:linear-gradient(135deg,#1a3a1a 0%,#2d6a2d 100%);color:#fff;text-align:center;padding:32px 20px 28px}
+    .lp-hero h1{font-size:22px;font-weight:800;margin-bottom:6px}
+    .lp-hero p{font-size:13px;opacity:.85;max-width:420px;margin:0 auto}
+    .lp-section{max-width:560px;margin:0 auto;padding:0 14px}
+    .lp-cards{display:flex;flex-direction:column;gap:10px;margin:-18px 0 14px}
+    .lp-card{background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;border:2px solid transparent;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;flex-direction:row;align-items:center;gap:14px;transition:border-color .2s,box-shadow .2s}
+    .lp-card:hover{border-color:#2d6a2d;box-shadow:0 4px 16px rgba(45,106,45,.15)}
+    .lp-card .ic{font-size:28px;flex-shrink:0}
+    .lp-card-body{flex:1}
+    .lp-card h2{font-size:13px;font-weight:700;color:#1a3a1a;margin-bottom:3px;line-height:1.3}
+    .lp-card p{font-size:12px;color:#666;line-height:1.4}
+    .lp-btn{margin-top:8px;display:inline-block;background:#2d6a2d;color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer}
+    .lp-btn-outline{background:#fff;color:#2d6a2d;border:1.5px solid #2d6a2d}
+    .lp-hint{background:#fff;border-radius:10px;padding:12px 16px;text-align:center;font-size:12px;color:#888;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+    .lp-hint a{color:#2d6a2d;font-weight:600;text-decoration:none}
+    .lp-footer{text-align:center;padding:16px;font-size:11px;color:#aaa}
+    .lp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:12px}
+    .lp-modal.open{display:flex}
+    .lp-box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+    .lp-box h2{font-size:15px;font-weight:700;color:#1a3a1a;margin-bottom:14px}
+    .lp-field{margin-bottom:12px}
+    .lp-field label{display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px}
+    .lp-field input,.lp-field textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:16px;outline:none;font-family:inherit}
+    .lp-field input:focus,.lp-field textarea:focus{border-color:#2d6a2d}
+    .lp-field textarea{min-height:80px;resize:vertical}
+    .lp-row{display:flex;gap:8px;margin-top:4px}
+    .lp-close{background:none;border:none;font-size:20px;cursor:pointer;color:#888;float:right;margin-top:-4px}
+    .lp-msg{font-size:12px;margin-top:8px;padding:8px 12px;border-radius:6px;display:none}
+    .lp-msg.ok{background:#e8f5e9;color:#2d6a2d;display:block}
+    .lp-msg.err{background:#fdecea;color:#c62828;display:block}
+    #qr-wrap{display:none;margin-top:12px}
+    #qr-wrap video{width:100%;border-radius:8px}
+    #qr-error{font-size:12px;color:#c62828;margin-top:6px;display:none}
+    @media(min-width:500px){
+      .lp-hero h1{font-size:26px}
+      .lp-hero p{font-size:14px}
+      .lp-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:-20px 0 16px}
+      .lp-card{flex-direction:column;align-items:center;padding:20px 12px;text-align:center}
+      .lp-card .ic{margin-bottom:8px}
+      .lp-card-body{width:100%}
+      .lp-btn{width:100%}
+    }
+    /* ── Phone Mockups (Variant A) ── */
+    .feat-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:4px 0 20px;text-align:center}
+    .feat-row{display:flex;align-items:center;gap:20px;margin-bottom:28px}
+    .feat-row:nth-child(even){flex-direction:row-reverse}
+    .feat-txt{flex:1;min-width:0}
+    .feat-txt h3{font-size:16px;font-weight:800;color:#1a3a1a;margin-bottom:6px}
+    .feat-txt p{font-size:12px;color:#555;line-height:1.55}
+    .phone-w{flex-shrink:0;width:128px}
+    .phone-f{background:#1a3a1a;border-radius:20px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    .phone-s{background:#fff;border-radius:15px;overflow:hidden;min-height:120px}
+    .ps-hd{background:#2d6a2d;color:#fff;font-size:8px;font-weight:700;padding:5px 8px;letter-spacing:.6px}
+    .ps-bd{padding:5px 8px}
+    .pi{padding:4px 0;border-bottom:1px solid #f2f2f2}
+    .pi:last-child{border-bottom:none}
+    .pi-t{font-size:9px;font-weight:700;color:#1a3a1a}
+    .pi-s{font-size:8px;color:#888;margin-top:1px}
+    .pi-v{font-size:8.5px;font-weight:700;flex-shrink:0}
+    .pi-v-ok{color:#2d6a2d}
+    .pi-v-red{color:#c62828}
+    .pi-v-warn{color:#c6820a}
+    .pi-row{display:flex;justify-content:space-between;align-items:center}
+    .vbar{margin-top:2px}
+    .vbar-row{display:flex;align-items:center;gap:3px;margin-bottom:1px}
+    .vbar-label{font-size:7px;color:#555;min-width:46px}
+    .vbar-track{flex:1;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden}
+    .vbar-fill{height:100%;border-radius:3px}
+    .vbar-pct{font-size:7px;color:#666;min-width:20px;text-align:right}
+    .lp-ad{margin:12px 0;min-height:50px}
+    @media(max-width:440px){
+      .feat-row,.feat-row:nth-child(even){flex-direction:column;text-align:center}
+      .phone-w{width:110px}
+      .feat-txt h3{font-size:14px}
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+  }
+  window.hardReload = async function () {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        for (const k of keys) await window.caches.delete(k);
+      }
+    } catch (e) { console.error('Hard reload failed:', e); }
+    setTimeout(() => { window.location.href = window.location.origin + '/'; }, 200);
+  };
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const p = new URLSearchParams(window.location.search);
+    if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
+      const s = document.createElement('script');
+      s.src = 'flutter_bootstrap.js';
+      document.body.appendChild(s);
+    } else {
+      document.getElementById('lp').style.display = 'block';
+      // Load AdSense only when landing page is shown
+      const as = document.createElement('script');
+      as.async = true;
+      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
+      as.crossOrigin = 'anonymous';
+      document.head.appendChild(as);
+    }
+  });
+</script>
+
+<div id="lp">
+  <nav class="lp-nav">
+    <img src="icons/logo.svg" alt="Logo">
+    <div>
+      <div class="lp-nav-title">VEREINS APPELL</div>
+      <div class="lp-nav-sub">Die App für deinen Verein</div>
+    </div>
+  </nav>
+
+  <div class="lp-hero">
+    <h1>Was möchtest du tun?</h1>
+    <p>Vereinsverwaltung einfach gemacht — für Schützenvereine, Sportvereine und mehr.</p>
+  </div>
+
+  <div class="lp-section">
+    <div class="lp-cards">
+      <div class="lp-card" onclick="openModal('club')">
+        <div class="ic">🏛️</div>
+        <div class="lp-card-body">
+          <h2>Meinen Verein anmelden</h2>
+          <p>Vereinsverwaltung einrichten und alle Mitglieder einladen.</p>
+          <button class="lp-btn">Jetzt anmelden</button>
+        </div>
+      </div>
+      <div class="lp-card" onclick="openModal('qr')">
+        <div class="ic">📷</div>
+        <div class="lp-card-body">
+          <h2>QR-Code scannen</h2>
+          <p>Einladungs-QR vom Admin scannen und sofort loslegen.</p>
+          <button class="lp-btn lp-btn-outline">QR scannen</button>
+        </div>
+      </div>
+      <div class="lp-card" onclick="openModal('member')">
+        <div class="ic">✉️</div>
+        <div class="lp-card-body">
+          <h2>Beitrittsanfrage</h2>
+          <p>Keinen QR-Code? Anfrage an deinen Vereinsadmin schicken.</p>
+          <button class="lp-btn lp-btn-outline">Anfrage stellen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-hint">
+      Bereits registriert? Öffne deinen <a href="#" onclick="openModal('link');return false">Einladungslink</a> oder scanne den QR-Code.
+    </div>
+
+    <!-- AdSense unit 1 -->
+    <!-- Replace data-ad-slot with your slot ID from AdSense console -->
+    <div class="lp-ad">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-4535258076297789"
+           data-ad-slot="REPLACE_SLOT_1"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <p class="feat-section-title">Entdecke alle Funktionen</p>
+
+    <!-- 1. Termine -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>📅 Termine</h3>
+        <p>Plane Vereinstermine und erinnere alle Mitglieder automatisch per Push-Notification. Mit Zu- und Absagen immer den Überblick behalten.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">📅 TERMINE</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">Hauptversammlung</div>
+                <div class="pi-s">Sa. 14. Jun · 19:00 · Vereinsheim</div>
+                <div class="pi-s" style="color:#2d6a2d">12 Zusagen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Schießtraining</div>
+                <div class="pi-s">Di. 17. Jun · 18:00 · Schießstand</div>
+                <div class="pi-s" style="color:#2d6a2d">8 Zusagen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Sommerfest</div>
+                <div class="pi-s">Sa. 5. Jul · 15:00 · Biergarten</div>
+                <div class="pi-s" style="color:#2d6a2d">23 Zusagen</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Abstimmungen -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>🗳️ Abstimmungen</h3>
+        <p>Triff Entscheidungen demokratisch und transparent. Anonym abstimmen ist genauso möglich wie namentlich — live Ergebnisse für alle.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">🗳️ ABSTIMMUNGEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t" style="margin-bottom:3px">Neue Schützenscheiben?</div>
+                <div class="vbar">
+                  <div class="vbar-row"><span class="vbar-label">✅ Ja</span><div class="vbar-track"><div class="vbar-fill" style="width:74%;background:#2d6a2d"></div></div><span class="vbar-pct">74%</span></div>
+                  <div class="vbar-row"><span class="vbar-label">❌ Nein</span><div class="vbar-track"><div class="vbar-fill" style="width:16%;background:#e53935"></div></div><span class="vbar-pct">16%</span></div>
+                  <div class="vbar-row"><span class="vbar-label">➖ Enthalten</span><div class="vbar-track"><div class="vbar-fill" style="width:10%;background:#bbb"></div></div><span class="vbar-pct">10%</span></div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Jahresbeitrag erhöhen?</div>
+                <div class="pi-s" style="color:#c6820a">8 von 19 · noch offen</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Umlagen -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>💶 Umlagen</h3>
+        <p>Sonderumlagen fair verwalten und nachverfolgen. Jedes Mitglied sieht auf einen Blick was offen oder bezahlt ist.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">💶 UMLAGEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Vereinsfest-Umlage</div>
+                  <div class="pi-v pi-v-warn">25 €</div>
+                </div>
+                <div class="pi-s" style="color:#c6820a">11 / 16 bezahlt · Frist: 30. Jun</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Raummiete HV</div>
+                  <div class="pi-v pi-v-ok">5 €</div>
+                </div>
+                <div class="pi-s" style="color:#2d6a2d">✓ Abgeschlossen · 16/16</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Trikot-Umlage</div>
+                  <div class="pi-v pi-v-warn">40 €</div>
+                </div>
+                <div class="pi-s" style="color:#c6820a">4 / 16 bezahlt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AdSense unit 2: mid-page -->
+    <!-- Replace data-ad-slot with your slot ID from AdSense console -->
+    <div class="lp-ad">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-4535258076297789"
+           data-ad-slot="REPLACE_SLOT_2"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <!-- 4. Strafen -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>⚠️ Strafen</h3>
+        <p>Regelverstöße transparent dokumentieren und direkt in der App ausgleichen. Schluss mit losen Zetteln und Vergessen.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">⚠️ STRAFEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Max M.</div>
+                  <div class="pi-v pi-v-red">5,00 €</div>
+                </div>
+                <div class="pi-s">Zu spät erschienen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Lisa K.</div>
+                  <div class="pi-v pi-v-red">3,00 €</div>
+                </div>
+                <div class="pi-s">Handy beim Meeting</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Tom B.</div>
+                  <div class="pi-v pi-v-red">2,00 €</div>
+                </div>
+                <div class="pi-s">Trikot vergessen</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Dokumente -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>📄 Dokumente</h3>
+        <p>Alle Vereinsdokumente an einem Ort. Protokolle, Satzungen und Berichte — immer und überall für alle Mitglieder verfügbar.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">📄 DOKUMENTE</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">📋 Protokoll HV 2025.pdf</div>
+                <div class="pi-s">245 KB · 14. Jan 2026</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">📋 Satzung des Vereins.pdf</div>
+                <div class="pi-s">1,2 MB · 03. Mär 2024</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">📋 Jahresbericht 2025.pdf</div>
+                <div class="pi-s">890 KB · 15. Feb 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Getränkebestellungen -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>🍺 Getränkebestellungen</h3>
+        <p>Bestellungen für Veranstaltungen einfach vorab sammeln. Kein Durcheinander mehr beim Ausschank — alles auf einen Blick.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">🍺 GETRÄNKE</div>
+            <div class="ps-bd">
+              <div class="pi" style="padding-bottom:3px">
+                <div class="pi-t">Vereinsfest · 14. Jun</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Max M.</div>
+                </div>
+                <div class="pi-s">2× Bier, 1× Wasser</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Lisa K.</div>
+                </div>
+                <div class="pi-s">1× Apfelschorle</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Tom B.</div>
+                </div>
+                <div class="pi-s">3× Bier, 1× Cola</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Knobeln -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>✂️ Schere Stein Papier</h3>
+        <p>Wer macht was? Entscheidet per Knobeln direkt in der App — fair, nachvollziehbar und ohne Streit.</p>
+      </div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">✂️ KNOBELN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">Putzdienst-Reihenfolge</div>
+                <div class="pi-s">Turnier · Jun 2026</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Max ✂️ vs. Lisa 🪨</div>
+                  <div class="pi-v pi-v-ok">Lisa 🏅</div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Tom 📄 vs. Klaus ✂️</div>
+                  <div class="pi-v pi-v-ok">Tom 🏅</div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Lisa 🪨 vs. Tom 📄</div>
+                  <div class="pi-v" style="color:#1a3a1a">Tom 🏆</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.lp-section -->
+
+  <div class="lp-footer">© 2026 Vereins Appell</div>
+</div><!-- /#lp -->
+
+<!-- Modal: Verein anmelden -->
+<div id="modal-club" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('club')">✕</button>
+    <h2>🏛️ Verein anmelden</h2>
+    <div class="lp-field"><label>Vereinsname *</label><input id="club-name" type="text" placeholder="Schützenverein Musterstadt"></div>
+    <div class="lp-field"><label>Ansprechpartner *</label><input id="club-contact" type="text" placeholder="Max Mustermann"></div>
+    <div class="lp-field"><label>E-Mail *</label><input id="club-email" type="email" placeholder="max@example.com"></div>
+    <div class="lp-field"><label>Telefon</label><input id="club-phone" type="tel" placeholder="+49 123 456789"></div>
+    <div class="lp-field"><label>Nachricht</label><textarea id="club-message" placeholder="Kurze Beschreibung eures Vereins..."></textarea></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('club')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitClub()">Absenden</button>
+    </div>
+    <div id="club-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<!-- Modal: Beitrittsanfrage -->
+<div id="modal-member" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('member')">✕</button>
+    <h2>✉️ Beitrittsanfrage</h2>
+    <div class="lp-field"><label>Dein Name *</label><input id="member-name" type="text" placeholder="Max Mustermann"></div>
+    <div class="lp-field"><label>Vereinsname *</label><input id="member-club" type="text" placeholder="Schützenverein Musterstadt"></div>
+    <div class="lp-field"><label>Deine E-Mail *</label><input id="member-email" type="email" placeholder="max@example.com"></div>
+    <div class="lp-field"><label>Nachricht</label><textarea id="member-message" placeholder="Optional: Kurze Nachricht an den Admin..."></textarea></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('member')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitMember()">Absenden</button>
+    </div>
+    <div id="member-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<!-- Modal: QR-Code scannen -->
+<div id="modal-qr" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('qr')">✕</button>
+    <h2>📷 QR-Code scannen</h2>
+    <p style="font-size:12px;color:#666;margin-bottom:12px">Halte die Kamera auf den Einladungs-QR-Code deines Admins.</p>
+    <button class="lp-btn" onclick="startQr()">Kamera starten</button>
+    <div id="qr-wrap">
+      <video id="qr-video" autoplay playsinline muted></video>
+      <canvas id="qr-canvas" style="display:none"></canvas>
+    </div>
+    <div id="qr-error"></div>
+  </div>
+</div>
+
+<!-- Modal: Einladungslink eingeben -->
+<div id="modal-link" class="lp-modal">
+  <div class="lp-box">
+    <button class="lp-close" onclick="closeModal('link')">✕</button>
+    <h2>🔗 Einladungslink eingeben</h2>
+    <p style="font-size:12px;color:#666;margin-bottom:12px">Füge den Link ein, den du von deinem Admin erhalten hast.</p>
+    <div class="lp-field"><label>Einladungslink</label><input id="invite-link" type="url" placeholder="https://vereinsappell.web.app/?apiBaseUrl=..."></div>
+    <div class="lp-row">
+      <button class="lp-btn lp-btn-outline" style="flex:1" onclick="closeModal('link')">Abbrechen</button>
+      <button class="lp-btn" style="flex:2" onclick="submitLink()">Öffnen</button>
+    </div>
+    <div id="link-msg" class="lp-msg"></div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+
+  function openModal(name) { document.getElementById('modal-' + name).classList.add('open'); }
+  function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); stopQr(); }
+
+  function showMsg(id, text, isOk) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'lp-msg ' + (isOk ? 'ok' : 'err');
+  }
+
+  async function post(path, body) {
+    const r = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('Fehler ' + r.status);
+  }
+
+  async function submitClub() {
+    const name = document.getElementById('club-name').value.trim();
+    const contact = document.getElementById('club-contact').value.trim();
+    const email = document.getElementById('club-email').value.trim();
+    if (!name || !contact || !email) { showMsg('club-msg', 'Bitte alle Pflichtfelder ausfüllen.', false); return; }
+    try {
+      await post('/join/club', {
+        clubName: name, contact, email,
+        phone: document.getElementById('club-phone').value.trim(),
+        message: document.getElementById('club-message').value.trim(),
+      });
+      showMsg('club-msg', 'Vielen Dank! Wir melden uns in Kürze bei dir.', true);
+    } catch (e) { showMsg('club-msg', 'Fehler beim Senden. Bitte versuche es später nochmal.', false); }
+  }
+
+  async function submitMember() {
+    const name = document.getElementById('member-name').value.trim();
+    const club = document.getElementById('member-club').value.trim();
+    const email = document.getElementById('member-email').value.trim();
+    if (!name || !club || !email) { showMsg('member-msg', 'Bitte alle Pflichtfelder ausfüllen.', false); return; }
+    try {
+      await post('/join/member', {
+        name, clubName: club, email,
+        message: document.getElementById('member-message').value.trim(),
+      });
+      showMsg('member-msg', 'Deine Anfrage wurde weitergeleitet. Du erhältst bald Nachricht.', true);
+    } catch (e) { showMsg('member-msg', 'Fehler beim Senden. Bitte versuche es später nochmal.', false); }
+  }
+
+  function submitLink() {
+    const val = document.getElementById('invite-link').value.trim();
+    try {
+      const u = new URL(val);
+      const p = u.searchParams;
+      if (!p.has('apiBaseUrl') || !p.has('applicationId') || !p.has('memberId')) {
+        showMsg('link-msg', 'Der Link ist unvollständig. Bitte prüfe ihn und versuche es nochmal.', false);
+        return;
+      }
+      window.location.href = val;
+    } catch {
+      showMsg('link-msg', 'Ungültiger Link.', false);
+    }
+  }
+
+  let qrStream = null;
+  let qrAnimFrame = null;
+  let jsQrLoaded = false;
+
+  async function loadJsQr() {
+    if (jsQrLoaded) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    jsQrLoaded = true;
+  }
+
+  async function startQr() {
+    const errEl = document.getElementById('qr-error');
+    errEl.style.display = 'none';
+    try {
+      await loadJsQr();
+      qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.getElementById('qr-video');
+      video.srcObject = qrStream;
+      document.getElementById('qr-wrap').style.display = 'block';
+      scanFrame();
+    } catch (e) {
+      errEl.textContent = 'Kamera konnte nicht gestartet werden: ' + e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  function scanFrame() {
+    const video = document.getElementById('qr-video');
+    const canvas = document.getElementById('qr-canvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        stopQr();
+        handleQrResult(code.data);
+        return;
+      }
+    }
+    qrAnimFrame = requestAnimationFrame(scanFrame);
+  }
+
+  function stopQr() {
+    if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+    if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+    document.getElementById('qr-wrap').style.display = 'none';
+  }
+
+  function handleQrResult(data) {
+    try {
+      const u = new URL(data);
+      const p = u.searchParams;
+      if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
+        window.location.href = data;
+        return;
+      }
+    } catch {}
+    const errEl = document.getElementById('qr-error');
+    errEl.textContent = 'Ungültiger QR-Code. Bitte den Einladungs-QR vom Admin scannen.';
+    errEl.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
