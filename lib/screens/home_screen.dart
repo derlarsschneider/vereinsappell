@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 
+import 'package:web/web.dart' as web;
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -292,6 +294,7 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       setState(() {
         _applicationName = customer['application_name'];
         _applicationLogoBase64 = customer['application_logo'] ?? '';
+        _updateFavicon(_applicationLogoBase64);
         _paypalAccount = customer['paypal_account'] ?? '';
         final rawAdType = customer['ad_type'] as String? ?? 'none';
         _adType = const ['none', 'banner', 'admob'].contains(rawAdType) ? rawAdType : 'none';
@@ -313,6 +316,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
   bool _isScreenActive(String key) {
     if (_activeScreens == null) return true;
     return _activeScreens!.contains(key);
+  }
+
+  void _updateFavicon(String base64Logo) {
+    if (!kIsWeb || base64Logo.isEmpty) return;
+    final dataUrl = base64Logo.startsWith('data:')
+        ? base64Logo
+        : 'data:image/png;base64,$base64Logo';
+    final link = web.document.querySelector("link[rel~='icon']") as web.HTMLLinkElement?;
+    if (link != null) {
+      link.href = dataUrl;
+    }
   }
 
   Uint8List _decodeBase64(String base64String) {
