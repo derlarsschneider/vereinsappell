@@ -320,12 +320,28 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
 
   void _updateFavicon(String base64Logo) {
     if (!kIsWeb || base64Logo.isEmpty) return;
-    final dataUrl = base64Logo.startsWith('data:')
-        ? base64Logo
-        : 'data:image/png;base64,$base64Logo';
-    final link = web.document.querySelector("link[rel~='icon']") as web.HTMLLinkElement?;
-    if (link != null) {
-      link.href = dataUrl;
+    final String dataUrl;
+    if (base64Logo.startsWith('data:')) {
+      dataUrl = base64Logo;
+    } else {
+      final String mime;
+      if (base64Logo.startsWith('/9j/')) {
+        mime = 'image/jpeg';
+      } else if (base64Logo.startsWith('iVBORw0KGgo')) {
+        mime = 'image/png';
+      } else if (base64Logo.startsWith('R0lGOD')) {
+        mime = 'image/gif';
+      } else if (base64Logo.startsWith('UklGR')) {
+        mime = 'image/webp';
+      } else {
+        mime = 'image/png';
+      }
+      dataUrl = 'data:$mime;base64,$base64Logo';
+    }
+    final links = web.document.querySelectorAll("link[rel~='icon']");
+    for (var i = 0; i < links.length; i++) {
+      final link = links.item(i) as web.HTMLLinkElement?;
+      link?.href = dataUrl;
     }
   }
 
