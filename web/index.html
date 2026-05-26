@@ -143,7 +143,9 @@
       if (logo.startsWith('/9j/')) mime = 'image/jpeg';
       else if (logo.startsWith('R0lGOD')) mime = 'image/gif';
       else if (logo.startsWith('UklGR')) mime = 'image/webp';
-      const dataUrl = `data:${mime};base64,${logo}`;
+      let b64 = logo.replace(/\s/g, '');
+      if (b64.length % 4 === 1) b64 = b64.slice(0, -1);
+      const dataUrl = `data:${mime};base64,${b64}`;
       const manifest = {
         name, short_name: name, start_url: '/', display: 'standalone',
         background_color: '#283f22', theme_color: '#283f22',

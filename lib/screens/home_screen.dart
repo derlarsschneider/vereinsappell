@@ -336,7 +336,10 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
       } else {
         mime = 'image/png';
       }
-      dataUrl = 'data:$mime;base64,$base64Logo';
+      // Sanitize: strip whitespace and fix invalid length (% 4 == 1 is undecodable)
+      var b64 = base64Logo.replaceAll(RegExp(r'\s'), '');
+      if (b64.length % 4 == 1) b64 = b64.substring(0, b64.length - 1);
+      dataUrl = 'data:$mime;base64,$b64';
     }
     final links = web.document.querySelectorAll("link[rel~='icon']");
     for (var i = 0; i < links.length; i++) {
