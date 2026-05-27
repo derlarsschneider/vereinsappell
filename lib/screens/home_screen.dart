@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:vereinsappell/screens/schere_stein_papier_screen.dart';
@@ -272,9 +273,125 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                 onTap: () => _switchToAccount(i, ctx),
               );
             }),
-          const SizedBox(height: 16),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.key_outlined),
+            title: const Text('Mein Zugang'),
+            subtitle: const Text('Benutzername, Passwort & Kurzlink'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showCredentials();
+            },
+          ),
+          const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  void _showCredentials() {
+    final appId = widget.config.applicationId;
+    final memId = widget.config.memberId;
+    final shortLink = 'https://vereinsappell.web.app/?applicationId=${Uri.encodeComponent(appId)}&memberId=${Uri.encodeComponent(memId)}';
+    bool memIdVisible = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateSheet) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Mein Zugang', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              _credentialRow(
+                label: 'Benutzername',
+                value: appId,
+                obscure: false,
+                onCopy: () => Clipboard.setData(ClipboardData(text: appId)),
+                onToggle: null,
+                visible: true,
+              ),
+              const SizedBox(height: 10),
+              _credentialRow(
+                label: 'Passwort',
+                value: memId,
+                obscure: !memIdVisible,
+                onCopy: () => Clipboard.setData(ClipboardData(text: memId)),
+                onToggle: () => setStateSheet(() => memIdVisible = !memIdVisible),
+                visible: memIdVisible,
+              ),
+              const SizedBox(height: 10),
+              _credentialRow(
+                label: 'Kurzlink',
+                value: shortLink,
+                obscure: false,
+                onCopy: () => Clipboard.setData(ClipboardData(text: shortLink)),
+                onToggle: null,
+                visible: true,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Speichere diese Daten — du brauchst sie wenn die App zurückgesetzt wird.',
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _credentialRow({
+    required String label,
+    required String value,
+    required bool obscure,
+    required Future<void> Function()? onCopy,
+    required VoidCallback? onToggle,
+    required bool visible,
+  }) {
+    final display = obscure ? '•' * 12 : value;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                display,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (onToggle != null)
+              IconButton(
+                icon: Icon(visible ? Icons.visibility_off : Icons.visibility, size: 18),
+                onPressed: onToggle,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.copy, size: 18),
+              onPressed: onCopy == null ? null : () async {
+                await onCopy();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('$label kopiert'), duration: const Duration(seconds: 2)),
+                  );
+                }
+              },
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
