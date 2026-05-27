@@ -189,6 +189,18 @@
       updatePwaManifest();
     } else {
       document.getElementById('lp').style.display = 'block';
+      // Pre-fill login form if applicationId + memberId are in the URL
+      (function () {
+        const loginUser = p.get('applicationId');
+        const loginPass = p.get('memberId');
+        if (loginUser && loginPass) {
+          document.getElementById('login-user').value = loginUser;
+          document.getElementById('login-pass').value = loginPass;
+          document.getElementById('login-body').style.display = 'block';
+          document.getElementById('login-chevron').classList.add('open');
+          document.getElementById('login-prefill-note').style.display = 'block';
+        }
+      })();
       // Load AdSense only when landing page is shown
       const as = document.createElement('script');
       as.async = true;
