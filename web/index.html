@@ -605,6 +605,28 @@
     errEl.textContent = 'Ungültiger QR-Code. Bitte den Einladungs-QR vom Admin scannen.';
     errEl.style.display = 'block';
   }
+
+  function toggleLogin() {
+    const body = document.getElementById('login-body');
+    const chevron = document.getElementById('login-chevron');
+    const isOpen = body.style.display === 'block';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.classList.toggle('open', !isOpen);
+  }
+
+  function submitLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if (!user || !pass) {
+      showMsg('login-msg', 'Bitte Benutzername und Passwort eingeben.', false);
+      return;
+    }
+    const p = new URLSearchParams(window.location.search);
+    const apiBaseUrl = p.get('apiBaseUrl') || 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+    window.location.href = '/?apiBaseUrl=' + encodeURIComponent(apiBaseUrl) +
+      '&applicationId=' + encodeURIComponent(user) +
+      '&memberId=' + encodeURIComponent(pass);
+  }
 </script>
 
 </body>
