@@ -106,6 +106,17 @@
     .lp-ad{max-width:560px;margin:0 auto;min-height:50px}
     .feat-scroll-hint{margin-top:24px;font-size:11px;opacity:.45;letter-spacing:.5px}
     .feat-scroll-hint::after{content:" ↓"}
+    .lp-login{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden}
+    .lp-login-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:#444}
+    .lp-login-hd:hover{background:#f9fafb}
+    .lp-chevron{color:#2d6a2d;font-size:10px;transition:transform .2s;line-height:1}
+    .lp-chevron.open{transform:rotate(90deg)}
+    .lp-login-bd{display:none;padding:0 16px 14px}
+    .lp-login-row{display:flex;gap:8px;flex-wrap:wrap}
+    .lp-login-row input{flex:1;min-width:120px;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:16px;outline:none;font-family:inherit}
+    .lp-login-row input:focus{border-color:#2d6a2d}
+    .lp-login-row button{background:#2d6a2d;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:16px;cursor:pointer;font-weight:700}
+    .lp-prefill-note{font-size:11px;color:#2d6a2d;margin-top:6px}
   </style>
 </head>
 <body>
@@ -190,6 +201,18 @@
       as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
       as.crossOrigin = 'anonymous';
       document.head.appendChild(as);
+      // Pre-fill login form if applicationId + memberId are in the URL
+      (function () {
+        const loginUser = p.get('applicationId');
+        const loginPass = p.get('memberId');
+        if (loginUser && loginPass) {
+          document.getElementById('login-user').value = loginUser;
+          document.getElementById('login-pass').value = loginPass;
+          document.getElementById('login-body').style.display = 'block';
+          document.getElementById('login-chevron').classList.add('open');
+          document.getElementById('login-prefill-note').style.display = 'block';
+        }
+      })();
     }
   });
 </script>
@@ -238,6 +261,22 @@
 
     <div class="lp-hint">
       Bereits registriert? Öffne deinen <a href="#" onclick="openModal('link');return false">Einladungslink</a> oder scanne den QR-Code.
+    </div>
+
+    <div class="lp-login">
+      <div class="lp-login-hd" onclick="toggleLogin()">
+        <span class="lp-chevron" id="login-chevron">▶</span>
+        <span>Bereits registriert?</span>
+      </div>
+      <div class="lp-login-bd" id="login-body">
+        <div class="lp-login-row">
+          <input id="login-user" type="text" placeholder="Benutzername" autocomplete="username">
+          <input id="login-pass" type="password" placeholder="Passwort" autocomplete="current-password">
+          <button onclick="submitLogin()">→</button>
+        </div>
+        <div id="login-msg" class="lp-msg"></div>
+        <div id="login-prefill-note" class="lp-prefill-note" style="display:none">✓ Vom Einladungslink vorausgefüllt</div>
+      </div>
     </div>
   </div>
 
@@ -697,6 +736,28 @@
     const errEl = document.getElementById('qr-error');
     errEl.textContent = 'Ungültiger QR-Code. Bitte den Einladungs-QR vom Admin scannen.';
     errEl.style.display = 'block';
+  }
+
+  function toggleLogin() {
+    const body = document.getElementById('login-body');
+    const chevron = document.getElementById('login-chevron');
+    const isOpen = body.style.display === 'block';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.classList.toggle('open', !isOpen);
+  }
+
+  function submitLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if (!user || !pass) {
+      showMsg('login-msg', 'Bitte Benutzername und Passwort eingeben.', false);
+      return;
+    }
+    const p = new URLSearchParams(window.location.search);
+    const apiBaseUrl = p.get('apiBaseUrl') || 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
+    window.location.href = '/?apiBaseUrl=' + encodeURIComponent(apiBaseUrl) +
+      '&applicationId=' + encodeURIComponent(user) +
+      '&memberId=' + encodeURIComponent(pass);
   }
 </script>
 
