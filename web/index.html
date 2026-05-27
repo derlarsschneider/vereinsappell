@@ -245,6 +245,22 @@
       Bereits registriert? Öffne deinen <a href="#" onclick="openModal('link');return false">Einladungslink</a> oder scanne den QR-Code.
     </div>
 
+    <div class="lp-login">
+      <div class="lp-login-hd" onclick="toggleLogin()">
+        <span class="lp-chevron" id="login-chevron">▶</span>
+        <span>Bereits registriert?</span>
+      </div>
+      <div class="lp-login-bd" id="login-body">
+        <div class="lp-login-row">
+          <input id="login-user" type="text" placeholder="Benutzername" autocomplete="username">
+          <input id="login-pass" type="password" placeholder="Passwort" autocomplete="current-password">
+          <button onclick="submitLogin()">→</button>
+        </div>
+        <div id="login-msg" class="lp-msg"></div>
+        <div id="login-prefill-note" class="lp-prefill-note" style="display:none">✓ Vom Einladungslink vorausgefüllt</div>
+      </div>
+    </div>
+
     <!-- AdSense unit 1: after CTA, before features -->
     <div class="lp-ad">
       <ins class="adsbygoogle"
