@@ -16,21 +16,25 @@ Add a username + password login section to the landing page. The credentials are
 
 ### Login section
 
-Below the existing three action cards and the "Bereits registriert?" hint, add a divider and a compact login form:
+Below the existing three action cards and the "Bereits registriert?" hint, add a collapsible login section. The fields are hidden by default; clicking the header toggles them open.
 
 ```
-── Bereits registriert? ──────────────────────
+▶ Bereits registriert?          ← collapsed (default)
 
-[ Benutzername              ] [ Passwort ] [→]
+▼ Bereits registriert?          ← expanded
+  [ Benutzername              ] [ Passwort ] [→]
 ```
 
+- Header row is always visible and acts as the toggle (chevron rotates on expand)
+- Fields and submit button are hidden by default, revealed on click
+- When pre-filled from URL params the section auto-expands and shows a note: "Vom Einladungslink vorausgefüllt"
 - Single row on wide screens, stacked on narrow screens
 - "Benutzername" = text input for `applicationId`
 - "Passwort" = password input (masked) for `memberId`
 - Submit button navigates to:
   `/?apiBaseUrl=<prod_url>&applicationId=<input>&memberId=<input>`
-- Validation: both fields must be non-empty UUIDs (basic format check)
-- Error state: inline message if fields are empty
+- Validation: both fields must be non-empty (basic check)
+- Error state: inline message below the form
 
 ### Pre-fill from URL params
 
