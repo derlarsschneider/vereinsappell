@@ -26,6 +26,9 @@ members_table = dynamodb.Table(members_table_name)
 fines_table = dynamodb.Table(fines_table_name)
 marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+news_table_name = os.environ.get('NEWS_TABLE_NAME')
+feedback_table_name = os.environ.get('FEEDBACK_TABLE_NAME')
+legal_texts_table_name = os.environ.get('LEGAL_TEXTS_TABLE_NAME')
 
 _PERF_ENABLED = os.environ.get('PERF_LOGGING_ENABLED', '').lower() == 'true'
 
