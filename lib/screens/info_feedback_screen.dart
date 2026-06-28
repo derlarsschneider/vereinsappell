@@ -724,13 +724,366 @@ class _NewsCardState extends State<_NewsCard> {
   }
 }
 
-// ─── Tab 2 stub (implemented in next task) ────────────────────────────────────
+// ─── Tab 2: Feedback ─────────────────────────────────────────────────────────
 
-class _FeedbackTab extends StatelessWidget {
+class _FeedbackTab extends StatefulWidget {
   final AppConfig config;
   const _FeedbackTab({required this.config});
 
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Feedback — kommt gleich'));
+  State<_FeedbackTab> createState() => _FeedbackTabState();
+}
+
+class _FeedbackTabState extends State<_FeedbackTab> {
+  bool _loading = true;
+  List<FeedbackItem> _items = [];
+  final _messageCtrl = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _messageCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final items = await FeedbackApi(widget.config).getFeedback();
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _send() async {
+    final msg = _messageCtrl.text.trim();
+    if (msg.isEmpty) return;
+    setState(() => _sending = true);
+    try {
+      await FeedbackApi(widget.config).postFeedback(message: msg);
+      if (!mounted) return;
+      _messageCtrl.clear();
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _reply(FeedbackItem item, String replyText) async {
+    try {
+      await FeedbackApi(widget.config).postReply(
+        feedbackId: item.feedbackId,
+        reply: replyText,
+      );
+      if (!mounted) return;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final member = Provider.of<Member>(context);
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    if (member.isSuperAdmin) return _buildSuperAdminView(context);
+    return _buildMemberView(context);
+  }
+
+  Widget _buildMemberView(BuildContext context) {
+    final own = _items
+        .where((i) => i.memberId == widget.config.memberId)
+        .toList();
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        TextField(
+          controller: _messageCtrl,
+          minLines: 3,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: 'Deine Nachricht an den Admin...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _sending ? null : _send,
+            icon: const Icon(Icons.send),
+            label: const Text('📤 Feedback senden'),
+          ),
+        ),
+        if (own.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          const Text('Deine bisherigen Nachrichten',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ...own.map((item) => _MemberFeedbackCard(item: item)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSuperAdminView(BuildContext context) {
+    final open = _items.where((i) => !i.hasReply).toList();
+    final answered = _items.where((i) => i.hasReply).toList();
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        Row(
+          children: [
+            _StatusChip(label: '${open.length} offen', color: Colors.red),
+            const SizedBox(width: 8),
+            _StatusChip(label: '${answered.length} beantwortet', color: Colors.green),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...open.map((item) => _AdminFeedbackCard(
+              item: item,
+              isOpen: true,
+              onReply: (text) => _reply(item, text),
+            )),
+        ...answered.map((item) => _AdminFeedbackCard(
+              item: item,
+              isOpen: false,
+              onReply: (text) => _reply(item, text),
+            )),
+      ],
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _StatusChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Text('● $label',
+            style: TextStyle(
+                fontSize: 12, color: color, fontWeight: FontWeight.bold)),
+      );
+}
+
+class _MemberFeedbackCard extends StatelessWidget {
+  final FeedbackItem item;
+  const _MemberFeedbackCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = item.date.length >= 10 ? item.date.substring(0, 10) : item.date;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: item.isFromNews ? Colors.purple.shade50 : Colors.indigo.shade50,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (item.isFromNews)
+                  Text(
+                    '❓ Antwort auf: "${item.newsQuestion ?? item.newsTitle}"',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.purple.shade700,
+                        fontWeight: FontWeight.w500),
+                  ),
+                if (item.isFromNews) const SizedBox(height: 4),
+                Text('Du · $dateStr',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                const SizedBox(height: 2),
+                Text(item.message),
+              ],
+            ),
+          ),
+          if (item.hasReply)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '↩️ Antwort vom Admin · ${item.repliedAt?.substring(0, 10) ?? ''}',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(item.reply ?? ''),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminFeedbackCard extends StatefulWidget {
+  final FeedbackItem item;
+  final bool isOpen;
+  final void Function(String reply) onReply;
+
+  const _AdminFeedbackCard({
+    required this.item,
+    required this.isOpen,
+    required this.onReply,
+  });
+
+  @override
+  State<_AdminFeedbackCard> createState() => _AdminFeedbackCardState();
+}
+
+class _AdminFeedbackCardState extends State<_AdminFeedbackCard> {
+  final _replyCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _replyCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final dateStr = item.date.length >= 10 ? item.date.substring(0, 10) : item.date;
+    final borderColor = widget.isOpen ? Colors.red.shade200 : Colors.green.shade200;
+    final bgColor = widget.isOpen ? const Color(0xFFFFF8F8) : const Color(0xFFF9FFF9);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: borderColor),
+      ),
+      color: bgColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${widget.isOpen ? "⚠️" : "✅"} ${item.memberName} · ${item.applicationId} · $dateStr',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isOpen ? Colors.red.shade800 : Colors.green.shade800,
+                  ),
+                ),
+                if (item.isFromNews) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '❓ "${item.newsQuestion ?? item.newsTitle}"',
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.purple.shade700),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(item.message),
+              ],
+            ),
+          ),
+          if (item.hasReply)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '↩️ Deine Antwort · ${item.repliedAt?.substring(0, 10) ?? ''}',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(item.reply ?? ''),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _replyCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Antwort schreiben...',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_replyCtrl.text.trim().isEmpty) return;
+                        widget.onReply(_replyCtrl.text.trim());
+                      },
+                      child: const Text('↩️ Antworten'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
