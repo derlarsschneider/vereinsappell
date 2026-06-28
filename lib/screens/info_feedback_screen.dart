@@ -2,10 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// ignore: unused_import
 import '../api/feedback_api.dart';
 import '../api/legal_api.dart';
-// ignore: unused_import
 import '../api/news_api.dart';
 import '../config_loader.dart';
 import 'default_screen.dart';
@@ -88,6 +86,7 @@ class _LegalTabState extends State<_LegalTab> {
   Future<void> _edit(BuildContext context, Member member) async {
     final dsController = TextEditingController(text: _datenschutz);
     final imController = TextEditingController(text: _impressum);
+    final messenger = ScaffoldMessenger.of(context);
 
     final saved = await showDialog<bool>(
       context: context,
@@ -140,13 +139,13 @@ class _LegalTabState extends State<_LegalTab> {
         datenschutz: dsController.text,
         impressum: imController.text,
       );
+      if (!mounted) return;
       setState(() {
         _datenschutz = dsController.text;
         _impressum = imController.text;
       });
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
       );
     }
@@ -220,16 +219,488 @@ class _ExpandableSectionState extends State<_ExpandableSection> {
   }
 }
 
-// ─── Tab 1 + 2 stubs (implemented in later tasks) ────────────────────────────
+// ─── Tab 1: Neuigkeiten ───────────────────────────────────────────────────────
 
-class _NewsTab extends StatelessWidget {
+class _NewsTab extends StatefulWidget {
   final AppConfig config;
   const _NewsTab({required this.config});
 
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('News — kommt gleich'));
+  State<_NewsTab> createState() => _NewsTabState();
 }
+
+class _NewsTabState extends State<_NewsTab> {
+  bool _loading = true;
+  List<NewsItem> _items = [];
+  // newsId -> true if this member already answered
+  final Map<String, bool> _answered = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final items = await NewsApi(widget.config).getNews();
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _delete(String newsId) async {
+    try {
+      await NewsApi(widget.config).deleteNews(newsId);
+      setState(() => _items.removeWhere((i) => i.newsId == newsId));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _submitAnswer(NewsItem item, String answer) async {
+    try {
+      await FeedbackApi(widget.config).postFeedback(
+        message: answer,
+        newsId: item.newsId,
+        newsTitle: item.title,
+        newsQuestion: item.question,
+      );
+      setState(() => _answered[item.newsId] = true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _showCreateDialog(BuildContext context) async {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    final questionCtrl = TextEditingController();
+    final optionCtrl = TextEditingController();
+    String? expiresAt;
+    bool useOptions = false;
+    List<String> options = [];
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: const Text('Neuigkeit verfassen'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Titel', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: bodyCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                        labelText: 'Text', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Sichtbar bis (optional)',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      _ExpiryChip(
+                        label: '1 Woche',
+                        selected: false,
+                        onTap: () {
+                          final d = DateTime.now().add(const Duration(days: 7));
+                          setDlgState(() => expiresAt = d.toIso8601String());
+                        },
+                      ),
+                      _ExpiryChip(
+                        label: '1 Monat',
+                        selected: false,
+                        onTap: () {
+                          final d = DateTime.now().add(const Duration(days: 30));
+                          setDlgState(() => expiresAt = d.toIso8601String());
+                        },
+                      ),
+                      _ExpiryChip(
+                        label: '📅 Datum',
+                        selected: false,
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: ctx,
+                            initialDate: DateTime.now().add(const Duration(days: 7)),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setDlgState(() => expiresAt = picked.toIso8601String());
+                          }
+                        },
+                      ),
+                      _ExpiryChip(
+                        label: '∞ Unbegrenzt',
+                        selected: expiresAt == null,
+                        onTap: () => setDlgState(() => expiresAt = null),
+                      ),
+                    ],
+                  ),
+                  if (expiresAt != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Bis: ${expiresAt!.substring(0, 10)}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  const Text('Frage (optional)',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: questionCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Fragetext', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Text('Antworttyp: '),
+                      ChoiceChip(
+                        label: const Text('Freitext'),
+                        selected: !useOptions,
+                        onSelected: (_) => setDlgState(() => useOptions = false),
+                      ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: const Text('Auswahloptionen'),
+                        selected: useOptions,
+                        onSelected: (_) => setDlgState(() => useOptions = true),
+                      ),
+                    ],
+                  ),
+                  if (useOptions) ...[
+                    const SizedBox(height: 8),
+                    ...options.asMap().entries.map((e) => ListTile(
+                          dense: true,
+                          title: Text(e.value),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            onPressed: () =>
+                                setDlgState(() => options.removeAt(e.key)),
+                          ),
+                        )),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: optionCtrl,
+                            decoration: const InputDecoration(
+                                hintText: 'Option hinzufügen',
+                                border: OutlineInputBorder()),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            if (optionCtrl.text.trim().isNotEmpty) {
+                              setDlgState(() {
+                                options.add(optionCtrl.text.trim());
+                                optionCtrl.clear();
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Abbrechen'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleCtrl.text.trim().isEmpty) return;
+                try {
+                  await NewsApi(widget.config).createNews(
+                    title: titleCtrl.text.trim(),
+                    body: bodyCtrl.text.trim(),
+                    expiresAt: expiresAt,
+                    question: questionCtrl.text.trim().isEmpty
+                        ? null
+                        : questionCtrl.text.trim(),
+                    questionOptions:
+                        useOptions && options.isNotEmpty ? options : null,
+                  );
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  await _load();
+                } catch (e) {
+                  if (!ctx.mounted) return;
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                        content: Text('Fehler: $e'),
+                        backgroundColor: Colors.red),
+                  );
+                }
+              },
+              child: const Text('Veröffentlichen'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final member = Provider.of<Member>(context);
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        if (member.isSuperAdmin)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OutlinedButton.icon(
+              onPressed: () => _showCreateDialog(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Neuigkeit verfassen'),
+            ),
+          ),
+        if (_items.isEmpty)
+          const Center(child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text('Keine Neuigkeiten'),
+          )),
+        ..._items.map((item) => _NewsCard(
+              item: item,
+              isSuperAdmin: member.isSuperAdmin,
+              answered: _answered[item.newsId] ?? false,
+              onDelete: () => _delete(item.newsId),
+              onAnswer: (answer) => _submitAnswer(item, answer),
+            )),
+      ],
+    );
+  }
+}
+
+class _ExpiryChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ExpiryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => ActionChip(
+        label: Text(label),
+        backgroundColor: selected ? Theme.of(context).colorScheme.primary : null,
+        labelStyle: TextStyle(color: selected ? Colors.white : null),
+        onPressed: onTap,
+      );
+}
+
+class _NewsCard extends StatefulWidget {
+  final NewsItem item;
+  final bool isSuperAdmin;
+  final bool answered;
+  final VoidCallback onDelete;
+  final void Function(String answer) onAnswer;
+
+  const _NewsCard({
+    required this.item,
+    required this.isSuperAdmin,
+    required this.answered,
+    required this.onDelete,
+    required this.onAnswer,
+  });
+
+  @override
+  State<_NewsCard> createState() => _NewsCardState();
+}
+
+class _NewsCardState extends State<_NewsCard> {
+  final _answerCtrl = TextEditingController();
+  String? _selectedOption;
+  bool _submitted = false;
+
+  bool get _hasQuestion => widget.item.question != null;
+  bool get _hasOptions => widget.item.questionOptions?.isNotEmpty == true;
+  bool get _alreadyAnswered => widget.answered || _submitted;
+
+  void _submit() {
+    final answer = _hasOptions ? _selectedOption : _answerCtrl.text.trim();
+    if (answer == null || answer.isEmpty) return;
+    widget.onAnswer(answer);
+    setState(() => _submitted = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = widget.item.date.length >= 10
+        ? widget.item.date.substring(0, 10)
+        : widget.item.date;
+    final hasQuestion = _hasQuestion;
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: hasQuestion && !_alreadyAnswered
+            ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.item.title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 4),
+            Text(widget.item.body,
+                style: const TextStyle(fontSize: 13, color: Colors.black87)),
+            if (hasQuestion) ...[
+              const SizedBox(height: 10),
+              if (_alreadyAnswered)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          size: 16, color: Colors.green),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Deine Antwort gesendet: ${_selectedOption ?? _answerCtrl.text}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '❓ ${widget.item.question}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_hasOptions)
+                        ...widget.item.questionOptions!.map((opt) => GestureDetector(
+                              onTap: () => setState(() => _selectedOption = opt),
+                              child: Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: _selectedOption == opt
+                                      ? Colors.purple.shade100
+                                      : Colors.white,
+                                  border: Border.all(
+                                    color: _selectedOption == opt
+                                        ? Colors.purple
+                                        : Colors.purple.shade200,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(opt,
+                                    style: TextStyle(
+                                      fontWeight: _selectedOption == opt
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    )),
+                              ),
+                            ))
+                      else
+                        TextField(
+                          controller: _answerCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Deine Antwort...',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          child: const Text('Antwort senden'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(dateStr,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                if (widget.isSuperAdmin)
+                  TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    onPressed: widget.onDelete,
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Löschen', style: TextStyle(fontSize: 12)),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tab 2 stub (implemented in next task) ────────────────────────────────────
 
 class _FeedbackTab extends StatelessWidget {
   final AppConfig config;
