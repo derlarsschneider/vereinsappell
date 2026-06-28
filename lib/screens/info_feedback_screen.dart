@@ -261,6 +261,7 @@ class _NewsTabState extends State<_NewsTab> {
   Future<void> _delete(String newsId) async {
     try {
       await NewsApi(widget.config).deleteNews(newsId);
+      if (!mounted) return;
       setState(() => _items.removeWhere((i) => i.newsId == newsId));
     } catch (e) {
       if (!mounted) return;
@@ -278,6 +279,7 @@ class _NewsTabState extends State<_NewsTab> {
         newsTitle: item.title,
         newsQuestion: item.question,
       );
+      if (!mounted) return;
       setState(() => _answered[item.newsId] = true);
     } catch (e) {
       if (!mounted) return;
@@ -567,6 +569,7 @@ class _NewsCardState extends State<_NewsCard> {
   final _answerCtrl = TextEditingController();
   String? _selectedOption;
   bool _submitted = false;
+  String _submittedAnswer = '';
 
   bool get _hasQuestion => widget.item.question != null;
   bool get _hasOptions => widget.item.questionOptions?.isNotEmpty == true;
@@ -575,8 +578,17 @@ class _NewsCardState extends State<_NewsCard> {
   void _submit() {
     final answer = _hasOptions ? _selectedOption : _answerCtrl.text.trim();
     if (answer == null || answer.isEmpty) return;
+    setState(() {
+      _submittedAnswer = answer;
+      _submitted = true;
+    });
     widget.onAnswer(answer);
-    setState(() => _submitted = true);
+  }
+
+  @override
+  void dispose() {
+    _answerCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -584,12 +596,11 @@ class _NewsCardState extends State<_NewsCard> {
     final dateStr = widget.item.date.length >= 10
         ? widget.item.date.substring(0, 10)
         : widget.item.date;
-    final hasQuestion = _hasQuestion;
 
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: hasQuestion && !_alreadyAnswered
+        side: _hasQuestion && !_alreadyAnswered
             ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
@@ -605,7 +616,7 @@ class _NewsCardState extends State<_NewsCard> {
             const SizedBox(height: 4),
             Text(widget.item.body,
                 style: const TextStyle(fontSize: 13, color: Colors.black87)),
-            if (hasQuestion) ...[
+            if (_hasQuestion) ...[
               const SizedBox(height: 10),
               if (_alreadyAnswered)
                 Container(
@@ -620,7 +631,7 @@ class _NewsCardState extends State<_NewsCard> {
                           size: 16, color: Colors.green),
                       const SizedBox(width: 6),
                       Text(
-                        'Deine Antwort gesendet: ${_selectedOption ?? _answerCtrl.text}',
+                        'Deine Antwort gesendet: $_submittedAnswer',
                         style: const TextStyle(fontSize: 12),
                       ),
                     ],
