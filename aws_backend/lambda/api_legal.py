@@ -35,8 +35,18 @@ def put_legal(event):
     if not _is_superadmin(event):
         return _ERROR_403
     body = json.loads(event.get('body', '{}'))
-    legal_texts_table.put_item(Item={'id': 'datenschutz', 'text': body.get('datenschutz', '')})
-    legal_texts_table.put_item(Item={'id': 'impressum', 'text': body.get('impressum', '')})
+    legal_texts_table.update_item(
+        Key={'id': 'datenschutz'},
+        UpdateExpression='SET #t = :text',
+        ExpressionAttributeNames={'#t': 'text'},
+        ExpressionAttributeValues={':text': body.get('datenschutz', '')},
+    )
+    legal_texts_table.update_item(
+        Key={'id': 'impressum'},
+        UpdateExpression='SET #t = :text',
+        ExpressionAttributeNames={'#t': 'text'},
+        ExpressionAttributeValues={':text': body.get('impressum', '')},
+    )
     return {'statusCode': 200, 'body': json.dumps({'message': 'Gespeichert'})}
 
 
