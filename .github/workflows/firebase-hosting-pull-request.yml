@@ -175,15 +175,16 @@ jobs:
         mkdir -p aws_backend/secrets
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > aws_backend/secrets/firebase-service-account.json
 
-    - name: 📋 Terraform Plan
+    - name: 🏗️ Terraform Apply
       working-directory: aws_backend
       run: |
         terraform init -input=false
-        terraform plan -no-color -input=false 2>&1 | tee /tmp/tf-plan.txt
+        terraform plan -no-color -input=false -out=tfplan 2>&1 | tee /tmp/tf-plan.txt
         echo "### 🏗️ Terraform Plan" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         tail -20 /tmp/tf-plan.txt >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
+        terraform apply -auto-approve tfplan
       env:
         GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/aws_backend/secrets/firebase-service-account.json
 
