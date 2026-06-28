@@ -293,6 +293,7 @@ class _NewsTabState extends State<_NewsTab> {
     final questionCtrl = TextEditingController();
     final optionCtrl = TextEditingController();
     String? expiresAt;
+    String? selectedExpiryLabel; // 'week', 'month', 'date', null (unlimited)
     bool useOptions = false;
     List<String> options = [];
 
@@ -329,23 +330,29 @@ class _NewsTabState extends State<_NewsTab> {
                     children: [
                       _ExpiryChip(
                         label: '1 Woche',
-                        selected: false,
+                        selected: selectedExpiryLabel == 'week',
                         onTap: () {
                           final d = DateTime.now().add(const Duration(days: 7));
-                          setDlgState(() => expiresAt = d.toIso8601String());
+                          setDlgState(() {
+                            expiresAt = d.toIso8601String();
+                            selectedExpiryLabel = 'week';
+                          });
                         },
                       ),
                       _ExpiryChip(
                         label: '1 Monat',
-                        selected: false,
+                        selected: selectedExpiryLabel == 'month',
                         onTap: () {
                           final d = DateTime.now().add(const Duration(days: 30));
-                          setDlgState(() => expiresAt = d.toIso8601String());
+                          setDlgState(() {
+                            expiresAt = d.toIso8601String();
+                            selectedExpiryLabel = 'month';
+                          });
                         },
                       ),
                       _ExpiryChip(
                         label: '📅 Datum',
-                        selected: false,
+                        selected: selectedExpiryLabel == 'date',
                         onTap: () async {
                           final picked = await showDatePicker(
                             context: ctx,
@@ -354,14 +361,20 @@ class _NewsTabState extends State<_NewsTab> {
                             lastDate: DateTime.now().add(const Duration(days: 365)),
                           );
                           if (picked != null) {
-                            setDlgState(() => expiresAt = picked.toIso8601String());
+                            setDlgState(() {
+                              expiresAt = picked.toIso8601String();
+                              selectedExpiryLabel = 'date';
+                            });
                           }
                         },
                       ),
                       _ExpiryChip(
                         label: '∞ Unbegrenzt',
-                        selected: expiresAt == null,
-                        onTap: () => setDlgState(() => expiresAt = null),
+                        selected: selectedExpiryLabel == null,
+                        onTap: () => setDlgState(() {
+                          expiresAt = null;
+                          selectedExpiryLabel = null;
+                        }),
                       ),
                     ],
                   ),
