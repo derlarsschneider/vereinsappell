@@ -16,6 +16,9 @@ import error_handler
 
 from api_members import handle_members
 from api_docs import handle_docs
+from api_legal import handle_legal
+from api_news import handle_news
+from api_feedback import handle_feedback
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -141,6 +144,12 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif method == 'GET' and path == '/monitoring/perf':
         import api_monitoring
         return {**headers, **api_monitoring.handle_perf_stats(event, context)}
+    elif path.startswith('/news'):
+        return {**headers, **handle_news(event, context)}
+    elif path.startswith('/feedback'):
+        return {**headers, **handle_feedback(event, context)}
+    elif path.startswith('/legal'):
+        return {**headers, **handle_legal(event, context)}
     return None
 
 
