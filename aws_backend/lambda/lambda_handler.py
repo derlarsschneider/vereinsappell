@@ -16,6 +16,9 @@ import error_handler
 
 from api_members import handle_members
 from api_docs import handle_docs
+from api_legal import handle_legal
+from api_news import handle_news
+from api_feedback import handle_feedback
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -26,6 +29,9 @@ members_table = dynamodb.Table(members_table_name)
 fines_table = dynamodb.Table(fines_table_name)
 marschbefehl_table = dynamodb.Table(marschbefehl_table_name)
 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+news_table_name = os.environ.get('NEWS_TABLE_NAME')
+feedback_table_name = os.environ.get('FEEDBACK_TABLE_NAME')
+legal_texts_table_name = os.environ.get('LEGAL_TEXTS_TABLE_NAME')
 
 _PERF_ENABLED = os.environ.get('PERF_LOGGING_ENABLED', '').lower() == 'true'
 
@@ -147,6 +153,12 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif method == 'OPTIONS' and path in ('/join/club', '/join/member'):
         import api_join
         return api_join.handle_join_club(event, context)
+    elif path.startswith('/news'):
+        return {**headers, **handle_news(event, context)}
+    elif path.startswith('/feedback'):
+        return {**headers, **handle_feedback(event, context)}
+    elif path.startswith('/legal'):
+        return {**headers, **handle_legal(event, context)}
     return None
 
 
