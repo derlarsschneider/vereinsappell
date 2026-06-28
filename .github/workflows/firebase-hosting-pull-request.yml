@@ -226,6 +226,7 @@ jobs:
         INTEGRATION_BASE_URL: ${{ needs.backend.outputs.dev_url }}
         INTEGRATION_APP_ID: ${{ secrets.PREVIEW_APPLICATION_ID }}
         INTEGRATION_MEMBER_ID: ${{ secrets.PREVIEW_MEMBER_ID }}
+        INTEGRATION_PASSWORD: ${{ secrets.INTEGRATION_PASSWORD }}
       run: pytest tests/test_integration.py -v
 
   notify:
