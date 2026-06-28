@@ -35,6 +35,7 @@ import 'mitglieder_screen.dart';
 import 'monitoring_screen.dart';
 import 'umlage_screen.dart';
 import 'verein_screen.dart';
+import 'info_feedback_screen.dart';
 
 @JS('hardReload')
 external JSPromise _jsHardReload();
@@ -621,6 +622,16 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
             ),
           ),
         ),
+      _buildMenuTile(
+        context,
+        'ℹ️ Info & Feedback',
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InfoFeedbackScreen(config: widget.config),
+          ),
+        ),
+      ),
     ];
 
     return GridView.count(
