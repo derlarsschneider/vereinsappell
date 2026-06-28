@@ -8,8 +8,32 @@ permissions:
   pull-requests: write
 
 jobs:
-  frontend:
+  changes:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🔍 Detect Flutter file changes
+      id: filter
+      run: |
+        git fetch origin ${{ github.base_ref }} --depth=1
+        CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+        if echo "$CHANGED" | grep -qE '^(lib/|web/|pubspec\.yaml|build-scripts/)'; then
+          echo "frontend=true" >> $GITHUB_OUTPUT
+        else
+          echo "frontend=false" >> $GITHUB_OUTPUT
+        fi
+
+  frontend:
+    needs: changes
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
 
     outputs:
@@ -37,7 +61,7 @@ jobs:
       id: version
       run: |
         BUILD_NAME=$(TZ=Europe/Berlin date +"%Y.%m.%d")
-        BUILD_NUMBER=$(TZ=Europe/Berlin date +"%H%M%S")
+        BUILD_NUMBER=$(TZ=Europe/Berlin date +"%H%M")
         echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
         echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
         echo "📦 Version ist ${BUILD_NAME}+${BUILD_NUMBER}"
@@ -53,7 +77,6 @@ jobs:
     - name: 🚀 Deploy Preview to Firebase Hosting
       id: deploy
       uses: FirebaseExtended/action-hosting-deploy@v0
-      continue-on-error: true
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
@@ -152,12 +175,14 @@ jobs:
           ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
           MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        elif [ "$FRONTEND_RESULT" = "skipped" ] && [ "$BACKEND_RESULT" = "success" ]; then
+          MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}')
+        elif [ "$FRONTEND_RESULT" = "skipped" ]; then
+          MSG=$(printf '❌ Backend fehlgeschlagen\n${{ github.event.pull_request.title }}')
         elif [ "$FRONTEND_RESULT" = "success" ]; then
           ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
           MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
-        elif [ "$BACKEND_RESULT" = "success" ]; then
-          MSG=$(printf '⚠️ PR Preview unvollständig (Frontend fehlgeschlagen)\n${{ github.event.pull_request.title }}')
         else
           MSG=$(printf '❌ PR Build fehlgeschlagen\n${{ github.event.pull_request.title }}\nFrontend: %s | Backend: %s' "$FRONTEND_RESULT" "$BACKEND_RESULT")
         fi
