@@ -53,6 +53,7 @@ jobs:
     - name: 🚀 Deploy Preview to Firebase Hosting
       id: deploy
       uses: FirebaseExtended/action-hosting-deploy@v0
+      continue-on-error: true
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VEREINSAPPELL }}
@@ -144,9 +145,23 @@ jobs:
     steps:
     - name: 📨 Notify Telegram
       run: |
-        ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
-        PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-        MSG=$(printf '🔍 PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        FRONTEND_RESULT="${{ needs.frontend.result }}"
+        BACKEND_RESULT="${{ needs.backend.result }}"
+
+        if [ "$FRONTEND_RESULT" = "success" ] && [ "$BACKEND_RESULT" = "success" ]; then
+          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
+          PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+          MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        elif [ "$FRONTEND_RESULT" = "success" ]; then
+          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
+          PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        elif [ "$BACKEND_RESULT" = "success" ]; then
+          MSG=$(printf '⚠️ PR Preview unvollständig (Frontend fehlgeschlagen)\n${{ github.event.pull_request.title }}')
+        else
+          MSG=$(printf '❌ PR Build fehlgeschlagen\n${{ github.event.pull_request.title }}\nFrontend: %s | Backend: %s' "$FRONTEND_RESULT" "$BACKEND_RESULT")
+        fi
+
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           --data-urlencode "text=${MSG}"
