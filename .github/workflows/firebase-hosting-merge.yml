@@ -43,7 +43,7 @@ jobs:
       id: version
       run: |
         BUILD_NAME=$(TZ=Europe/Berlin date +"%Y.%m.%d")
-        BUILD_NUMBER=$(TZ=Europe/Berlin date +"%H%M")
+        BUILD_NUMBER=$(TZ=Europe/Berlin date +"%H%M%S")
         echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
         echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
         echo "version=${BUILD_NAME}+${BUILD_NUMBER}" >> $GITHUB_OUTPUT
