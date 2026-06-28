@@ -92,28 +92,9 @@
     .vbf-abs{background:#bbb}
     .vbn{min-width:28px;text-align:right;color:#555;font-weight:600;font-size:10px}
     .lp-ad{margin:12px 0;min-height:50px}
-    .lp-login{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden}
-    .lp-login-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:#444}
-    .lp-login-hd:hover{background:#f9fafb}
-    .lp-chevron{color:#2d6a2d;font-size:10px;transition:transform .2s;line-height:1}
-    .lp-chevron.open{transform:rotate(90deg)}
-    .lp-login-bd{display:none;padding:0 16px 14px}
-    .lp-login-row{display:flex;gap:8px;flex-wrap:wrap}
-    .lp-login-row input{flex:1;min-width:120px;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:16px;outline:none;font-family:inherit}
-    .lp-login-row input:focus{border-color:#2d6a2d}
-    .lp-login-row button{background:#2d6a2d;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:16px;cursor:pointer;font-weight:700}
-    .lp-prefill-note{font-size:11px;color:#2d6a2d;margin-top:6px}
   </style>
 </head>
 <body>
-
-<script>
-  (function () {
-    var v = new URLSearchParams(location.search).get('lp') || 'b';
-    if (v === 'a') location.replace('index-a.html' + location.search);
-    else if (v === 'c') location.replace('index-c.html' + location.search);
-  })();
-</script>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -135,72 +116,14 @@
 </script>
 
 <script>
-  async function updatePwaManifest() {
-    try {
-      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
-      if (!Array.isArray(accounts) || !accounts.length) return;
-      const idx = Math.max(0, Math.min(parseInt(localStorage.getItem('activeAccount') || '0', 10), accounts.length - 1));
-      const acc = accounts[idx];
-      if (!acc || !acc.apiBaseUrl || !acc.applicationId || !acc.memberId) return;
-      const resp = await fetch(`${acc.apiBaseUrl}/customers/${acc.applicationId}`, {
-        headers: { applicationId: acc.applicationId, memberId: acc.memberId, password: acc.password || '' }
-      });
-      if (!resp.ok) return;
-      const club = await resp.json();
-      const logo = club.application_logo;
-      const name = club.application_name || 'Vereins Appell';
-      if (!logo) return;
-      let mime = 'image/png';
-      if (logo.startsWith('/9j/')) mime = 'image/jpeg';
-      else if (logo.startsWith('R0lGOD')) mime = 'image/gif';
-      else if (logo.startsWith('UklGR')) mime = 'image/webp';
-      let b64 = logo.replace(/\s/g, '');
-      if (b64.length % 4 === 1) b64 = b64.slice(0, -1);
-      const dataUrl = `data:${mime};base64,${b64}`;
-      const manifest = {
-        name, short_name: name, start_url: '/', display: 'standalone',
-        background_color: '#283f22', theme_color: '#283f22',
-        icons: [
-          { src: dataUrl, sizes: '192x192', type: mime },
-          { src: dataUrl, sizes: '512x512', type: mime },
-          { src: dataUrl, sizes: '192x192', type: mime, purpose: 'maskable' },
-          { src: dataUrl, sizes: '512x512', type: mime, purpose: 'maskable' },
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      const link = document.querySelector('link[rel="manifest"]');
-      if (link) link.href = URL.createObjectURL(blob);
-    } catch (e) { console.warn('[manifest] update failed:', e); }
-  }
-</script>
-
-<script>
   document.addEventListener('DOMContentLoaded', function () {
     const p = new URLSearchParams(window.location.search);
-    const hasUrlParams = p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId');
-    const hasStoredAccount = (function () {
-      try { const a = JSON.parse(localStorage.getItem('accounts') || '[]'); return Array.isArray(a) && a.length > 0; }
-      catch (_) { return false; }
-    })();
-    if (hasUrlParams || hasStoredAccount) {
+    if (p.has('apiBaseUrl') && p.has('applicationId') && p.has('memberId')) {
       const s = document.createElement('script');
       s.src = 'flutter_bootstrap.js';
       document.body.appendChild(s);
-      updatePwaManifest();
     } else {
       document.getElementById('lp').style.display = 'block';
-      // Pre-fill login form if applicationId + memberId are in the URL
-      (function () {
-        const loginUser = p.get('applicationId');
-        const loginPass = p.get('memberId');
-        if (loginUser && loginPass) {
-          document.getElementById('login-user').value = loginUser;
-          document.getElementById('login-pass').value = loginPass;
-          document.getElementById('login-body').style.display = 'block';
-          document.getElementById('login-chevron').classList.add('open');
-          document.getElementById('login-prefill-note').style.display = 'block';
-        }
-      })();
       // Load AdSense only when landing page is shown
       const as = document.createElement('script');
       as.async = true;
@@ -221,7 +144,7 @@
   </nav>
 
   <div class="lp-hero">
-    <h1>Die App für Deinen Verein</h1>
+    <h1>Was möchtest du tun?</h1>
     <p>Vereinsverwaltung einfach gemacht — für Schützenvereine, Sportvereine und mehr.</p>
   </div>
 
@@ -255,22 +178,6 @@
 
     <div class="lp-hint">
       Bereits registriert? Öffne deinen <a href="#" onclick="openModal('link');return false">Einladungslink</a> oder scanne den QR-Code.
-    </div>
-
-    <div class="lp-login">
-      <div class="lp-login-hd" onclick="toggleLogin()">
-        <span class="lp-chevron" id="login-chevron">▶</span>
-        <span>Bereits registriert?</span>
-      </div>
-      <div class="lp-login-bd" id="login-body">
-        <div class="lp-login-row">
-          <input id="login-user" type="text" placeholder="Benutzername" autocomplete="username">
-          <input id="login-pass" type="password" placeholder="Passwort" autocomplete="current-password">
-          <button onclick="submitLogin()">→</button>
-        </div>
-        <div id="login-msg" class="lp-msg"></div>
-        <div id="login-prefill-note" class="lp-prefill-note" style="display:none">✓ Vom Einladungslink vorausgefüllt</div>
-      </div>
     </div>
 
     <!-- AdSense unit 1: after CTA, before features -->
@@ -616,28 +523,6 @@
     const errEl = document.getElementById('qr-error');
     errEl.textContent = 'Ungültiger QR-Code. Bitte den Einladungs-QR vom Admin scannen.';
     errEl.style.display = 'block';
-  }
-
-  function toggleLogin() {
-    const body = document.getElementById('login-body');
-    const chevron = document.getElementById('login-chevron');
-    const isOpen = body.style.display === 'block';
-    body.style.display = isOpen ? 'none' : 'block';
-    chevron.classList.toggle('open', !isOpen);
-  }
-
-  function submitLogin() {
-    const user = document.getElementById('login-user').value.trim();
-    const pass = document.getElementById('login-pass').value.trim();
-    if (!user || !pass) {
-      showMsg('login-msg', 'Bitte Benutzername und Passwort eingeben.', false);
-      return;
-    }
-    const p = new URLSearchParams(window.location.search);
-    const apiBaseUrl = p.get('apiBaseUrl') || 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com';
-    window.location.href = '/?apiBaseUrl=' + encodeURIComponent(apiBaseUrl) +
-      '&applicationId=' + encodeURIComponent(user) +
-      '&memberId=' + encodeURIComponent(pass);
   }
 </script>
 

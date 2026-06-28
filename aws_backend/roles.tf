@@ -82,3 +82,21 @@ resource "aws_iam_role_policy_attachment" "logs_policy_attachment" {
     role       = aws_iam_role.lambda_role.name
     policy_arn = aws_iam_policy.logs_policy.arn
 }
+
+resource "aws_iam_policy" "ses_policy" {
+    name = "${local.name_prefix}-ses_policy"
+
+    policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [{
+            Effect   = "Allow"
+            Action   = ["ses:SendEmail", "ses:SendRawEmail"]
+            Resource = "*"
+        }]
+    })
+}
+
+resource "aws_iam_role_policy_attachment" "ses_policy_attachment" {
+    role       = aws_iam_role.lambda_role.name
+    policy_arn = aws_iam_policy.ses_policy.arn
+}

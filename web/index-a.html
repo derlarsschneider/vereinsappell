@@ -1,4 +1,4 @@
-<!-- Variant B: Feature Cards with Preview -->
+<!-- Variant A: Phone Mockups -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -67,31 +67,39 @@
       .lp-card-body{width:100%}
       .lp-btn{width:100%}
     }
-    /* ── Feature Cards (Variant B) ── */
-    .feat-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:4px 0 12px;text-align:center}
-    .feat-card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .feat-card-hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
-    .feat-ic{font-size:26px;flex-shrink:0;margin-top:2px}
-    .feat-card-hd div{flex:1}
-    .feat-card-hd strong{display:block;font-size:13px;color:#1a3a1a;margin-bottom:2px}
-    .feat-card-hd span{font-size:11px;color:#666;line-height:1.4}
-    .feat-preview{background:#f4f8f4;border-radius:8px;padding:8px 10px}
-    .pr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:11px;color:#333}
-    .pr:last-child{border-bottom:none}
-    .pr-title{font-size:10px;font-weight:700;color:#1a3a1a;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-    .pr-sub{font-size:10px;color:#888;padding:1px 0 5px;border-bottom:1px solid rgba(0,0,0,.05);margin-bottom:4px}
-    .pv{color:#2d6a2d;font-weight:600;font-size:11px;flex-shrink:0;margin-left:8px}
-    .pv-ok{color:#2d6a2d}
-    .pv-warn{color:#c6820a}
-    .pv-red{color:#c62828}
-    .vote-bar{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px}
-    .vbl{min-width:76px;color:#444;flex-shrink:0}
-    .vbr{flex:1;height:8px;background:#e8e8e8;border-radius:4px;overflow:hidden}
-    .vbf{height:100%;background:#2d6a2d;border-radius:4px}
-    .vbf-no{background:#e53935}
-    .vbf-abs{background:#bbb}
-    .vbn{min-width:28px;text-align:right;color:#555;font-weight:600;font-size:10px}
+    /* ── Phone Mockups (Variant A) ── */
+    .feat-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:4px 0 20px;text-align:center}
+    .feat-row{display:flex;align-items:center;gap:20px;margin-bottom:28px}
+    .feat-row:nth-child(even){flex-direction:row-reverse}
+    .feat-txt{flex:1;min-width:0}
+    .feat-txt h3{font-size:16px;font-weight:800;color:#1a3a1a;margin-bottom:6px}
+    .feat-txt p{font-size:12px;color:#555;line-height:1.55}
+    .phone-w{flex-shrink:0;width:128px}
+    .phone-f{background:#1a3a1a;border-radius:20px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    .phone-s{background:#fff;border-radius:15px;overflow:hidden;min-height:120px}
+    .ps-hd{background:#2d6a2d;color:#fff;font-size:8px;font-weight:700;padding:5px 8px;letter-spacing:.6px}
+    .ps-bd{padding:5px 8px}
+    .pi{padding:4px 0;border-bottom:1px solid #f2f2f2}
+    .pi:last-child{border-bottom:none}
+    .pi-t{font-size:9px;font-weight:700;color:#1a3a1a}
+    .pi-s{font-size:8px;color:#888;margin-top:1px}
+    .pi-v{font-size:8.5px;font-weight:700;flex-shrink:0}
+    .pi-v-ok{color:#2d6a2d}
+    .pi-v-red{color:#c62828}
+    .pi-v-warn{color:#c6820a}
+    .pi-row{display:flex;justify-content:space-between;align-items:center}
+    .vbar{margin-top:2px}
+    .vbar-row{display:flex;align-items:center;gap:3px;margin-bottom:1px}
+    .vbar-label{font-size:7px;color:#555;min-width:46px}
+    .vbar-track{flex:1;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden}
+    .vbar-fill{height:100%;border-radius:3px}
+    .vbar-pct{font-size:7px;color:#666;min-width:20px;text-align:right}
     .lp-ad{margin:12px 0;min-height:50px}
+    @media(max-width:440px){
+      .feat-row,.feat-row:nth-child(even){flex-direction:column;text-align:center}
+      .phone-w{width:110px}
+      .feat-txt h3{font-size:14px}
+    }
     .lp-login{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden}
     .lp-login-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:#444}
     .lp-login-hd:hover{background:#f9fafb}
@@ -106,14 +114,6 @@
   </style>
 </head>
 <body>
-
-<script>
-  (function () {
-    var v = new URLSearchParams(location.search).get('lp') || 'b';
-    if (v === 'a') location.replace('index-a.html' + location.search);
-    else if (v === 'c') location.replace('index-c.html' + location.search);
-  })();
-</script>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -189,6 +189,12 @@
       updatePwaManifest();
     } else {
       document.getElementById('lp').style.display = 'block';
+      // Load AdSense only when landing page is shown
+      const as = document.createElement('script');
+      as.async = true;
+      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
+      as.crossOrigin = 'anonymous';
+      document.head.appendChild(as);
       // Pre-fill login form if applicationId + memberId are in the URL
       (function () {
         const loginUser = p.get('applicationId');
@@ -201,12 +207,6 @@
           document.getElementById('login-prefill-note').style.display = 'block';
         }
       })();
-      // Load AdSense only when landing page is shown
-      const as = document.createElement('script');
-      as.async = true;
-      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
-      as.crossOrigin = 'anonymous';
-      document.head.appendChild(as);
     }
   });
 </script>
@@ -221,7 +221,7 @@
   </nav>
 
   <div class="lp-hero">
-    <h1>Die App für Deinen Verein</h1>
+    <h1>Was möchtest du tun?</h1>
     <p>Vereinsverwaltung einfach gemacht — für Schützenvereine, Sportvereine und mehr.</p>
   </div>
 
@@ -273,7 +273,7 @@
       </div>
     </div>
 
-    <!-- AdSense unit 1: after CTA, before features -->
+    <!-- AdSense unit 1 -->
     <div class="lp-ad">
       <ins class="adsbygoogle"
            style="display:block"
@@ -287,52 +287,101 @@
     <p class="feat-section-title">Entdecke alle Funktionen</p>
 
     <!-- 1. Termine -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">📅</span>
-        <div>
-          <strong>Termine</strong>
-          <span>Plane Veranstaltungen und erinnere Mitglieder automatisch per Push-Notification</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>📅 Termine</h3>
+        <p>Plane Vereinstermine und erinnere alle Mitglieder automatisch per Push-Notification. Mit Zu- und Absagen immer den Überblick behalten.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>🗓️ Hauptversammlung</span><span class="pv">Sa. 14. Jun · 19:00</span></div>
-        <div class="pr"><span>🎯 Schießtraining</span><span class="pv">Di. 17. Jun · 18:00</span></div>
-        <div class="pr"><span>🎉 Sommerfest</span><span class="pv">Sa. 5. Jul · 15:00</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">📅 TERMINE</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">Hauptversammlung</div>
+                <div class="pi-s">Sa. 14. Jun · 19:00 · Vereinsheim</div>
+                <div class="pi-s" style="color:#2d6a2d">12 Zusagen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Schießtraining</div>
+                <div class="pi-s">Di. 17. Jun · 18:00 · Schießstand</div>
+                <div class="pi-s" style="color:#2d6a2d">8 Zusagen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Sommerfest</div>
+                <div class="pi-s">Sa. 5. Jul · 15:00 · Biergarten</div>
+                <div class="pi-s" style="color:#2d6a2d">23 Zusagen</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 2. Abstimmungen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">🗳️</span>
-        <div>
-          <strong>Abstimmungen</strong>
-          <span>Demokratisch entscheiden — anonym oder namentlich, live Ergebnisse</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>🗳️ Abstimmungen</h3>
+        <p>Triff Entscheidungen demokratisch und transparent. Anonym abstimmen ist genauso möglich wie namentlich — live Ergebnisse für alle.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Neue Schützenscheiben kaufen?</div>
-        <div class="vote-bar"><span class="vbl">✅ Ja</span><div class="vbr"><div class="vbf" style="width:74%"></div></div><span class="vbn">74%</span></div>
-        <div class="vote-bar"><span class="vbl">❌ Nein</span><div class="vbr"><div class="vbf vbf-no" style="width:16%"></div></div><span class="vbn">16%</span></div>
-        <div class="vote-bar"><span class="vbl">➖ Enthaltung</span><div class="vbr"><div class="vbf vbf-abs" style="width:10%"></div></div><span class="vbn">10%</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">🗳️ ABSTIMMUNGEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t" style="margin-bottom:3px">Neue Schützenscheiben?</div>
+                <div class="vbar">
+                  <div class="vbar-row"><span class="vbar-label">✅ Ja</span><div class="vbar-track"><div class="vbar-fill" style="width:74%;background:#2d6a2d"></div></div><span class="vbar-pct">74%</span></div>
+                  <div class="vbar-row"><span class="vbar-label">❌ Nein</span><div class="vbar-track"><div class="vbar-fill" style="width:16%;background:#e53935"></div></div><span class="vbar-pct">16%</span></div>
+                  <div class="vbar-row"><span class="vbar-label">➖ Enthalten</span><div class="vbar-track"><div class="vbar-fill" style="width:10%;background:#bbb"></div></div><span class="vbar-pct">10%</span></div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">Jahresbeitrag erhöhen?</div>
+                <div class="pi-s" style="color:#c6820a">8 von 19 · noch offen</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 3. Umlagen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">💶</span>
-        <div>
-          <strong>Umlagen</strong>
-          <span>Beiträge und Sonderumlagen transparent erfassen und nachverfolgen</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>💶 Umlagen</h3>
+        <p>Sonderumlagen fair verwalten und nachverfolgen. Jedes Mitglied sieht auf einen Blick was offen oder bezahlt ist.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>Vereinsfest-Umlage 2026</span><span class="pv pv-warn">11 / 16 bezahlt</span></div>
-        <div class="pr-sub">25,00 € · Frist: 30. Jun 2026</div>
-        <div class="pr"><span>Raummiete Hauptversammlung</span><span class="pv pv-ok">✓ Abgeschlossen</span></div>
-        <div class="pr-sub" style="border-bottom:none">5,00 € · 16 / 16 bezahlt</div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">💶 UMLAGEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Vereinsfest-Umlage</div>
+                  <div class="pi-v pi-v-warn">25 €</div>
+                </div>
+                <div class="pi-s" style="color:#c6820a">11 / 16 bezahlt · Frist: 30. Jun</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Raummiete HV</div>
+                  <div class="pi-v pi-v-ok">5 €</div>
+                </div>
+                <div class="pi-s" style="color:#2d6a2d">✓ Abgeschlossen · 16/16</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Trikot-Umlage</div>
+                  <div class="pi-v pi-v-warn">40 €</div>
+                </div>
+                <div class="pi-s" style="color:#c6820a">4 / 16 bezahlt</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -348,68 +397,146 @@
     </div>
 
     <!-- 4. Strafen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">⚠️</span>
-        <div>
-          <strong>Strafen</strong>
-          <span>Regelverstöße dokumentieren, transparent abrechnen und ausgleichen</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>⚠️ Strafen</h3>
+        <p>Regelverstöße transparent dokumentieren und direkt in der App ausgleichen. Schluss mit losen Zetteln und Vergessen.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>Max M. · Zu spät erschienen</span><span class="pv pv-red">5,00 €</span></div>
-        <div class="pr"><span>Lisa K. · Handy beim Meeting</span><span class="pv pv-red">3,00 €</span></div>
-        <div class="pr"><span>Tom B. · Trikot vergessen</span><span class="pv pv-red">2,00 €</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">⚠️ STRAFEN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Max M.</div>
+                  <div class="pi-v pi-v-red">5,00 €</div>
+                </div>
+                <div class="pi-s">Zu spät erschienen</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Lisa K.</div>
+                  <div class="pi-v pi-v-red">3,00 €</div>
+                </div>
+                <div class="pi-s">Handy beim Meeting</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Tom B.</div>
+                  <div class="pi-v pi-v-red">2,00 €</div>
+                </div>
+                <div class="pi-s">Trikot vergessen</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 5. Dokumente -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">📄</span>
-        <div>
-          <strong>Dokumente</strong>
-          <span>Protokolle, Satzungen und Unterlagen für alle Mitglieder griffbereit</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>📄 Dokumente</h3>
+        <p>Alle Vereinsdokumente an einem Ort. Protokolle, Satzungen und Berichte — immer und überall für alle Mitglieder verfügbar.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>📋 Protokoll HV 2025.pdf</span><span class="pv">245 KB</span></div>
-        <div class="pr"><span>📋 Satzung des Vereins.pdf</span><span class="pv">1,2 MB</span></div>
-        <div class="pr"><span>📋 Jahresbericht 2025.pdf</span><span class="pv">890 KB</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">📄 DOKUMENTE</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">📋 Protokoll HV 2025.pdf</div>
+                <div class="pi-s">245 KB · 14. Jan 2026</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">📋 Satzung des Vereins.pdf</div>
+                <div class="pi-s">1,2 MB · 03. Mär 2024</div>
+              </div>
+              <div class="pi">
+                <div class="pi-t">📋 Jahresbericht 2025.pdf</div>
+                <div class="pi-s">890 KB · 15. Feb 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 6. Getränkebestellungen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">🍺</span>
-        <div>
-          <strong>Getränkebestellungen</strong>
-          <span>Bestellungen vorab sammeln — kein Durcheinander mehr beim Ausschank</span>
-        </div>
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>🍺 Getränkebestellungen</h3>
+        <p>Bestellungen für Veranstaltungen einfach vorab sammeln. Kein Durcheinander mehr beim Ausschank — alles auf einen Blick.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Vereinsfest · 14. Jun 2026</div>
-        <div class="pr"><span>Max M.</span><span class="pv">2× Bier, 1× Wasser</span></div>
-        <div class="pr"><span>Lisa K.</span><span class="pv">1× Apfelschorle</span></div>
-        <div class="pr"><span>Tom B.</span><span class="pv">3× Bier, 1× Cola</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">🍺 GETRÄNKE</div>
+            <div class="ps-bd">
+              <div class="pi" style="padding-bottom:3px">
+                <div class="pi-t">Vereinsfest · 14. Jun</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Max M.</div>
+                </div>
+                <div class="pi-s">2× Bier, 1× Wasser</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Lisa K.</div>
+                </div>
+                <div class="pi-s">1× Apfelschorle</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-t">Tom B.</div>
+                </div>
+                <div class="pi-s">3× Bier, 1× Cola</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 7. Knobeln (Schere Stein Papier) -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">✂️</span>
-        <div>
-          <strong>Schere Stein Papier</strong>
-          <span>Entscheidet per Knobeln — fair, nachvollziehbar und direkt in der App</span>
-        </div>
+    <!-- 7. Knobeln -->
+    <div class="feat-row">
+      <div class="feat-txt">
+        <h3>✂️ Schere Stein Papier</h3>
+        <p>Wer macht was? Entscheidet per Knobeln direkt in der App — fair, nachvollziehbar und ohne Streit.</p>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Putzdienst-Reihenfolge · Jun 2026</div>
-        <div class="pr"><span>Max ✂️ vs. Lisa 🪨</span><span class="pv pv-ok">Lisa gewinnt</span></div>
-        <div class="pr"><span>Tom 📄 vs. Klaus ✂️</span><span class="pv pv-ok">Tom gewinnt</span></div>
-        <div class="pr"><span>Finale: Lisa 🪨 vs. Tom 📄</span><span class="pv" style="color:#1a3a1a">Tom 🏆</span></div>
+      <div class="phone-w">
+        <div class="phone-f">
+          <div class="phone-s">
+            <div class="ps-hd">✂️ KNOBELN</div>
+            <div class="ps-bd">
+              <div class="pi">
+                <div class="pi-t">Putzdienst-Reihenfolge</div>
+                <div class="pi-s">Turnier · Jun 2026</div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Max ✂️ vs. Lisa 🪨</div>
+                  <div class="pi-v pi-v-ok">Lisa 🏅</div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Tom 📄 vs. Klaus ✂️</div>
+                  <div class="pi-v pi-v-ok">Tom 🏅</div>
+                </div>
+              </div>
+              <div class="pi">
+                <div class="pi-row">
+                  <div class="pi-s">Lisa 🪨 vs. Tom 📄</div>
+                  <div class="pi-v" style="color:#1a3a1a">Tom 🏆</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

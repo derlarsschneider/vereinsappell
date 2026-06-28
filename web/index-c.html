@@ -1,4 +1,4 @@
-<!-- Variant B: Feature Cards with Preview -->
+<!-- Variant C: Full-Screen Sections -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -21,7 +21,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:system-ui,-apple-system,sans-serif;background:#f0f4f0}
     #lp{display:none}
-    .lp-nav{background:#1a3a1a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+    .lp-nav{background:#1a3a1a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
     .lp-nav img{width:32px;height:32px;border-radius:6px;flex-shrink:0}
     .lp-nav-title{font-weight:700;font-size:15px;letter-spacing:1px}
     .lp-nav-sub{font-size:11px;opacity:.7}
@@ -36,11 +36,11 @@
     .lp-card-body{flex:1}
     .lp-card h2{font-size:13px;font-weight:700;color:#1a3a1a;margin-bottom:3px;line-height:1.3}
     .lp-card p{font-size:12px;color:#666;line-height:1.4}
-    .lp-btn{margin-top:8px;display:inline-block;background:#2d6a2d;color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer}
+    .lp-btn{display:inline-block;background:#2d6a2d;color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer}
     .lp-btn-outline{background:#fff;color:#2d6a2d;border:1.5px solid #2d6a2d}
     .lp-hint{background:#fff;border-radius:10px;padding:12px 16px;text-align:center;font-size:12px;color:#888;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
     .lp-hint a{color:#2d6a2d;font-weight:600;text-decoration:none}
-    .lp-footer{text-align:center;padding:16px;font-size:11px;color:#aaa}
+    .lp-footer{text-align:center;padding:20px;font-size:11px;color:#aaa;background:#f0f4f0}
     .lp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:12px}
     .lp-modal.open{display:flex}
     .lp-box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
@@ -65,33 +65,47 @@
       .lp-card{flex-direction:column;align-items:center;padding:20px 12px;text-align:center}
       .lp-card .ic{margin-bottom:8px}
       .lp-card-body{width:100%}
-      .lp-btn{width:100%}
+      .lp-btn{width:100%;margin-top:8px}
     }
-    /* ── Feature Cards (Variant B) ── */
-    .feat-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:4px 0 12px;text-align:center}
-    .feat-card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .feat-card-hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
-    .feat-ic{font-size:26px;flex-shrink:0;margin-top:2px}
-    .feat-card-hd div{flex:1}
-    .feat-card-hd strong{display:block;font-size:13px;color:#1a3a1a;margin-bottom:2px}
-    .feat-card-hd span{font-size:11px;color:#666;line-height:1.4}
-    .feat-preview{background:#f4f8f4;border-radius:8px;padding:8px 10px}
-    .pr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:11px;color:#333}
-    .pr:last-child{border-bottom:none}
-    .pr-title{font-size:10px;font-weight:700;color:#1a3a1a;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-    .pr-sub{font-size:10px;color:#888;padding:1px 0 5px;border-bottom:1px solid rgba(0,0,0,.05);margin-bottom:4px}
-    .pv{color:#2d6a2d;font-weight:600;font-size:11px;flex-shrink:0;margin-left:8px}
-    .pv-ok{color:#2d6a2d}
-    .pv-warn{color:#c6820a}
-    .pv-red{color:#c62828}
-    .vote-bar{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px}
-    .vbl{min-width:76px;color:#444;flex-shrink:0}
-    .vbr{flex:1;height:8px;background:#e8e8e8;border-radius:4px;overflow:hidden}
-    .vbf{height:100%;background:#2d6a2d;border-radius:4px}
-    .vbf-no{background:#e53935}
-    .vbf-abs{background:#bbb}
-    .vbn{min-width:28px;text-align:right;color:#555;font-weight:600;font-size:10px}
-    .lp-ad{margin:12px 0;min-height:50px}
+    /* ── Full-Screen Sections (Variant C) ── */
+    .feat-screen{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+    .feat-screen:nth-child(odd){background:linear-gradient(160deg,#1a3a1a 0%,#2d6a2d 100%);color:#fff}
+    .feat-screen:nth-child(even){background:#fff;color:#1a3a1a}
+    .feat-num{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.45;margin-bottom:10px}
+    .feat-emoji{font-size:52px;margin-bottom:14px;line-height:1}
+    .feat-screen h2{font-size:30px;font-weight:900;margin-bottom:8px;line-height:1.1}
+    .feat-screen:nth-child(even) h2{color:#1a3a1a}
+    .feat-tagline{font-size:14px;opacity:.78;margin-bottom:28px;max-width:360px;line-height:1.55}
+    .feat-screen:nth-child(even) .feat-tagline{color:#555;opacity:1}
+    .feat-panel{width:100%;max-width:360px;text-align:left;border-radius:14px;padding:16px 18px;overflow:hidden}
+    .feat-screen:nth-child(odd) .feat-panel{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.15)}
+    .feat-screen:nth-child(even) .feat-panel{background:#f4f8f4;border:1px solid #e0ebe0}
+    .fp-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.55;margin-bottom:10px}
+    .fp-item{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
+    .feat-screen:nth-child(even) .fp-item{border-bottom-color:#e0ebe0}
+    .fp-item:last-child{border-bottom:none}
+    .fp-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .fp-label{font-size:13px;font-weight:500}
+    .fp-sub{font-size:11px;opacity:.65;margin-top:2px}
+    .feat-screen:nth-child(even) .fp-sub{color:#777;opacity:1}
+    .fp-val{font-size:12px;font-weight:700;flex-shrink:0;padding:2px 8px;border-radius:6px}
+    .fp-val-ok{background:rgba(255,255,255,.2);color:#fff}
+    .feat-screen:nth-child(even) .fp-val-ok{background:#e8f5e9;color:#2d6a2d}
+    .fp-val-warn{background:rgba(255,200,50,.25);color:#ffd54f}
+    .feat-screen:nth-child(even) .fp-val-warn{background:#fff3e0;color:#c6820a}
+    .fp-val-red{background:rgba(255,100,100,.25);color:#ff8a80}
+    .feat-screen:nth-child(even) .fp-val-red{background:#fdecea;color:#c62828}
+    .vbar{margin-top:4px}
+    .vbar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .vbar-label{font-size:11px;min-width:80px;opacity:.8}
+    .vbar-track{flex:1;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.2)}
+    .feat-screen:nth-child(even) .vbar-track{background:#e0e0e0}
+    .vbar-fill{height:100%;border-radius:4px}
+    .vbar-pct{font-size:11px;min-width:28px;text-align:right;opacity:.9;font-weight:600}
+    .lp-ad-wrap{background:#f0f4f0;padding:16px}
+    .lp-ad{max-width:560px;margin:0 auto;min-height:50px}
+    .feat-scroll-hint{margin-top:24px;font-size:11px;opacity:.45;letter-spacing:.5px}
+    .feat-scroll-hint::after{content:" ↓"}
     .lp-login{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden}
     .lp-login-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:#444}
     .lp-login-hd:hover{background:#f9fafb}
@@ -106,14 +120,6 @@
   </style>
 </head>
 <body>
-
-<script>
-  (function () {
-    var v = new URLSearchParams(location.search).get('lp') || 'b';
-    if (v === 'a') location.replace('index-a.html' + location.search);
-    else if (v === 'c') location.replace('index-c.html' + location.search);
-  })();
-</script>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -189,6 +195,12 @@
       updatePwaManifest();
     } else {
       document.getElementById('lp').style.display = 'block';
+      // Load AdSense only when landing page is shown
+      const as = document.createElement('script');
+      as.async = true;
+      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
+      as.crossOrigin = 'anonymous';
+      document.head.appendChild(as);
       // Pre-fill login form if applicationId + memberId are in the URL
       (function () {
         const loginUser = p.get('applicationId');
@@ -201,12 +213,6 @@
           document.getElementById('login-prefill-note').style.display = 'block';
         }
       })();
-      // Load AdSense only when landing page is shown
-      const as = document.createElement('script');
-      as.async = true;
-      as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4535258076297789';
-      as.crossOrigin = 'anonymous';
-      document.head.appendChild(as);
     }
   });
 </script>
@@ -221,7 +227,7 @@
   </nav>
 
   <div class="lp-hero">
-    <h1>Die App für Deinen Verein</h1>
+    <h1>Was möchtest du tun?</h1>
     <p>Vereinsverwaltung einfach gemacht — für Schützenvereine, Sportvereine und mehr.</p>
   </div>
 
@@ -232,7 +238,7 @@
         <div class="lp-card-body">
           <h2>Meinen Verein anmelden</h2>
           <p>Vereinsverwaltung einrichten und alle Mitglieder einladen.</p>
-          <button class="lp-btn">Jetzt anmelden</button>
+          <button class="lp-btn" style="margin-top:8px">Jetzt anmelden</button>
         </div>
       </div>
       <div class="lp-card" onclick="openModal('qr')">
@@ -240,7 +246,7 @@
         <div class="lp-card-body">
           <h2>QR-Code scannen</h2>
           <p>Einladungs-QR vom Admin scannen und sofort loslegen.</p>
-          <button class="lp-btn lp-btn-outline">QR scannen</button>
+          <button class="lp-btn lp-btn-outline" style="margin-top:8px">QR scannen</button>
         </div>
       </div>
       <div class="lp-card" onclick="openModal('member')">
@@ -248,7 +254,7 @@
         <div class="lp-card-body">
           <h2>Beitrittsanfrage</h2>
           <p>Keinen QR-Code? Anfrage an deinen Vereinsadmin schicken.</p>
-          <button class="lp-btn lp-btn-outline">Anfrage stellen</button>
+          <button class="lp-btn lp-btn-outline" style="margin-top:8px">Anfrage stellen</button>
         </div>
       </div>
     </div>
@@ -272,8 +278,10 @@
         <div id="login-prefill-note" class="lp-prefill-note" style="display:none">✓ Vom Einladungslink vorausgefüllt</div>
       </div>
     </div>
+  </div>
 
-    <!-- AdSense unit 1: after CTA, before features -->
+  <!-- AdSense unit 1: between CTA and feature screens -->
+  <div class="lp-ad-wrap">
     <div class="lp-ad">
       <ins class="adsbygoogle"
            style="display:block"
@@ -283,60 +291,104 @@
            data-full-width-responsive="true"></ins>
       <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
+  </div>
 
-    <p class="feat-section-title">Entdecke alle Funktionen</p>
+  <!-- Feature full-screen sections -->
 
-    <!-- 1. Termine -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">📅</span>
-        <div>
-          <strong>Termine</strong>
-          <span>Plane Veranstaltungen und erinnere Mitglieder automatisch per Push-Notification</span>
+  <!-- 1. Termine -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 01 von 07</div>
+    <div class="feat-emoji">📅</div>
+    <h2>Termine</h2>
+    <p class="feat-tagline">Plane Vereinstermine und erinnere alle Mitglieder automatisch per Push-Notification. Nie wieder ein verpasstes Event.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Nächste Termine</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🗓️ Hauptversammlung</div>
+          <div class="fp-val fp-val-ok">12 Zusagen</div>
         </div>
+        <div class="fp-sub">Sa. 14. Jun 2026 · 19:00 · Vereinsheim</div>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>🗓️ Hauptversammlung</span><span class="pv">Sa. 14. Jun · 19:00</span></div>
-        <div class="pr"><span>🎯 Schießtraining</span><span class="pv">Di. 17. Jun · 18:00</span></div>
-        <div class="pr"><span>🎉 Sommerfest</span><span class="pv">Sa. 5. Jul · 15:00</span></div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🎯 Schießtraining</div>
+          <div class="fp-val fp-val-ok">8 Zusagen</div>
+        </div>
+        <div class="fp-sub">Di. 17. Jun 2026 · 18:00 · Schießstand</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">🎉 Sommerfest</div>
+          <div class="fp-val fp-val-ok">23 Zusagen</div>
+        </div>
+        <div class="fp-sub">Sa. 5. Jul 2026 · 15:00 · Biergarten</div>
       </div>
     </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
 
-    <!-- 2. Abstimmungen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">🗳️</span>
-        <div>
-          <strong>Abstimmungen</strong>
-          <span>Demokratisch entscheiden — anonym oder namentlich, live Ergebnisse</span>
+  <!-- 2. Abstimmungen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 02 von 07</div>
+    <div class="feat-emoji">🗳️</div>
+    <h2>Abstimmungen</h2>
+    <p class="feat-tagline">Entscheidungen demokratisch und transparent treffen — anonym oder namentlich, live Ergebnisse für alle.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Neue Schützenscheiben kaufen?</div>
+      <div class="fp-item" style="padding:0">
+        <div class="vbar">
+          <div class="vbar-row"><span class="vbar-label">✅ Ja</span><div class="vbar-track"><div class="vbar-fill" style="width:74%;background:#4caf50"></div></div><span class="vbar-pct">74%</span></div>
+          <div class="vbar-row"><span class="vbar-label">❌ Nein</span><div class="vbar-track"><div class="vbar-fill" style="width:16%;background:#ef5350"></div></div><span class="vbar-pct">16%</span></div>
+          <div class="vbar-row"><span class="vbar-label">➖ Enthaltung</span><div class="vbar-track"><div class="vbar-fill" style="width:10%;background:#9e9e9e"></div></div><span class="vbar-pct">10%</span></div>
         </div>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Neue Schützenscheiben kaufen?</div>
-        <div class="vote-bar"><span class="vbl">✅ Ja</span><div class="vbr"><div class="vbf" style="width:74%"></div></div><span class="vbn">74%</span></div>
-        <div class="vote-bar"><span class="vbl">❌ Nein</span><div class="vbr"><div class="vbf vbf-no" style="width:16%"></div></div><span class="vbn">16%</span></div>
-        <div class="vote-bar"><span class="vbl">➖ Enthaltung</span><div class="vbr"><div class="vbf vbf-abs" style="width:10%"></div></div><span class="vbn">10%</span></div>
-      </div>
-    </div>
-
-    <!-- 3. Umlagen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">💶</span>
-        <div>
-          <strong>Umlagen</strong>
-          <span>Beiträge und Sonderumlagen transparent erfassen und nachverfolgen</span>
+      <div class="fp-item" style="margin-top:8px">
+        <div class="fp-row">
+          <div class="fp-label">Jahresbeitrag 2027 erhöhen?</div>
+          <div class="fp-val fp-val-warn">Offen</div>
         </div>
-      </div>
-      <div class="feat-preview">
-        <div class="pr"><span>Vereinsfest-Umlage 2026</span><span class="pv pv-warn">11 / 16 bezahlt</span></div>
-        <div class="pr-sub">25,00 € · Frist: 30. Jun 2026</div>
-        <div class="pr"><span>Raummiete Hauptversammlung</span><span class="pv pv-ok">✓ Abgeschlossen</span></div>
-        <div class="pr-sub" style="border-bottom:none">5,00 € · 16 / 16 bezahlt</div>
+        <div class="fp-sub">8 von 19 Mitgliedern haben abgestimmt</div>
       </div>
     </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
 
-    <!-- AdSense unit 2: mid-page -->
+  <!-- 3. Umlagen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 03 von 07</div>
+    <div class="feat-emoji">💶</div>
+    <h2>Umlagen</h2>
+    <p class="feat-tagline">Sonderumlagen und Beiträge fair verwalten. Jedes Mitglied sieht auf einen Blick, was offen oder bereits bezahlt ist.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Aktuelle Umlagen</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Vereinsfest-Umlage 2026</div>
+          <div class="fp-val fp-val-warn">25,00 €</div>
+        </div>
+        <div class="fp-sub">11 von 16 bezahlt · Frist: 30. Jun 2026</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Raummiete Hauptversammlung</div>
+          <div class="fp-val fp-val-ok">✓ Fertig</div>
+        </div>
+        <div class="fp-sub">5,00 € · alle 16 Mitglieder bezahlt</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Trikot-Umlage Sommer</div>
+          <div class="fp-val fp-val-warn">40,00 €</div>
+        </div>
+        <div class="fp-sub">4 von 16 bezahlt · Frist: 15. Jul 2026</div>
+      </div>
+    </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
+
+  <!-- AdSense unit 2: mid-page (between feature screens 3 and 4) -->
+  <div class="lp-ad-wrap">
     <div class="lp-ad">
       <ins class="adsbygoogle"
            style="display:block"
@@ -346,74 +398,142 @@
            data-full-width-responsive="true"></ins>
       <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
+  </div>
 
-    <!-- 4. Strafen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">⚠️</span>
-        <div>
-          <strong>Strafen</strong>
-          <span>Regelverstöße dokumentieren, transparent abrechnen und ausgleichen</span>
+  <!-- 4. Strafen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 04 von 07</div>
+    <div class="feat-emoji">⚠️</div>
+    <h2>Strafen</h2>
+    <p class="feat-tagline">Regelverstöße transparent dokumentieren und direkt in der App ausgleichen. Schluss mit losen Zetteln.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Strafen · Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max M.</div>
+          <div class="fp-val fp-val-red">5,00 €</div>
         </div>
+        <div class="fp-sub">Zu spät erschienen · Training 10. Jun</div>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>Max M. · Zu spät erschienen</span><span class="pv pv-red">5,00 €</span></div>
-        <div class="pr"><span>Lisa K. · Handy beim Meeting</span><span class="pv pv-red">3,00 €</span></div>
-        <div class="pr"><span>Tom B. · Trikot vergessen</span><span class="pv pv-red">2,00 €</span></div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Lisa K.</div>
+          <div class="fp-val fp-val-red">3,00 €</div>
+        </div>
+        <div class="fp-sub">Handy beim Vereinsmeeting</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom B.</div>
+          <div class="fp-val fp-val-ok">✓ Beglichen</div>
+        </div>
+        <div class="fp-sub">Trikot vergessen · 2,00 € bezahlt</div>
       </div>
     </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
 
-    <!-- 5. Dokumente -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">📄</span>
-        <div>
-          <strong>Dokumente</strong>
-          <span>Protokolle, Satzungen und Unterlagen für alle Mitglieder griffbereit</span>
+  <!-- 5. Dokumente -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 05 von 07</div>
+    <div class="feat-emoji">📄</div>
+    <h2>Dokumente</h2>
+    <p class="feat-tagline">Alle Vereinsdokumente an einem Ort — Protokolle, Satzungen, Berichte. Immer und überall für alle Mitglieder verfügbar.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Vereinsdokumente</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Protokoll HV 2025.pdf</div>
         </div>
+        <div class="fp-sub">245 KB · hochgeladen 14. Jan 2026</div>
       </div>
-      <div class="feat-preview">
-        <div class="pr"><span>📋 Protokoll HV 2025.pdf</span><span class="pv">245 KB</span></div>
-        <div class="pr"><span>📋 Satzung des Vereins.pdf</span><span class="pv">1,2 MB</span></div>
-        <div class="pr"><span>📋 Jahresbericht 2025.pdf</span><span class="pv">890 KB</span></div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Satzung des Vereins.pdf</div>
+        </div>
+        <div class="fp-sub">1,2 MB · hochgeladen 03. Mär 2024</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">📋 Jahresbericht 2025.pdf</div>
+        </div>
+        <div class="fp-sub">890 KB · hochgeladen 15. Feb 2026</div>
       </div>
     </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
 
-    <!-- 6. Getränkebestellungen -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">🍺</span>
-        <div>
-          <strong>Getränkebestellungen</strong>
-          <span>Bestellungen vorab sammeln — kein Durcheinander mehr beim Ausschank</span>
+  <!-- 6. Getränkebestellungen -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 06 von 07</div>
+    <div class="feat-emoji">🍺</div>
+    <h2>Getränkebestellungen</h2>
+    <p class="feat-tagline">Bestellungen für Veranstaltungen einfach vorab sammeln. Kein Durcheinander mehr beim Ausschank — alles übersichtlich.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Vereinsfest · 14. Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max M.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
         </div>
+        <div class="fp-sub">2× Bier, 1× Wasser</div>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Vereinsfest · 14. Jun 2026</div>
-        <div class="pr"><span>Max M.</span><span class="pv">2× Bier, 1× Wasser</span></div>
-        <div class="pr"><span>Lisa K.</span><span class="pv">1× Apfelschorle</span></div>
-        <div class="pr"><span>Tom B.</span><span class="pv">3× Bier, 1× Cola</span></div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Lisa K.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
+        </div>
+        <div class="fp-sub">1× Apfelschorle</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom B.</div>
+          <div class="fp-val fp-val-ok">Bestellt</div>
+        </div>
+        <div class="fp-sub">3× Bier, 1× Cola</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Klaus W.</div>
+          <div class="fp-val fp-val-warn">Offen</div>
+        </div>
+        <div class="fp-sub">Noch keine Bestellung aufgegeben</div>
       </div>
     </div>
+    <p class="feat-scroll-hint">Weiter scrollen</p>
+  </div>
 
-    <!-- 7. Knobeln (Schere Stein Papier) -->
-    <div class="feat-card">
-      <div class="feat-card-hd">
-        <span class="feat-ic">✂️</span>
-        <div>
-          <strong>Schere Stein Papier</strong>
-          <span>Entscheidet per Knobeln — fair, nachvollziehbar und direkt in der App</span>
+  <!-- 7. Knobeln -->
+  <div class="feat-screen">
+    <div class="feat-num">Funktion 07 von 07</div>
+    <div class="feat-emoji">✂️</div>
+    <h2>Schere Stein Papier</h2>
+    <p class="feat-tagline">Wer macht was? Entscheidet per Knobeln direkt in der App — fair, nachvollziehbar und ohne Diskussion.</p>
+    <div class="feat-panel">
+      <div class="fp-title">Turnier: Putzdienst-Reihenfolge · Jun 2026</div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Max ✂️ vs. Lisa 🪨</div>
+          <div class="fp-val fp-val-ok">Lisa gewinnt</div>
         </div>
+        <div class="fp-sub">Stein schlägt Schere</div>
       </div>
-      <div class="feat-preview">
-        <div class="pr-title">Putzdienst-Reihenfolge · Jun 2026</div>
-        <div class="pr"><span>Max ✂️ vs. Lisa 🪨</span><span class="pv pv-ok">Lisa gewinnt</span></div>
-        <div class="pr"><span>Tom 📄 vs. Klaus ✂️</span><span class="pv pv-ok">Tom gewinnt</span></div>
-        <div class="pr"><span>Finale: Lisa 🪨 vs. Tom 📄</span><span class="pv" style="color:#1a3a1a">Tom 🏆</span></div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Tom 📄 vs. Klaus ✂️</div>
+          <div class="fp-val fp-val-ok">Tom gewinnt</div>
+        </div>
+        <div class="fp-sub">Papier schlägt Stein</div>
+      </div>
+      <div class="fp-item">
+        <div class="fp-row">
+          <div class="fp-label">Finale: Lisa 🪨 vs. Tom 📄</div>
+          <div class="fp-val" style="background:rgba(255,215,0,.3);color:#ffd700;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700">Tom 🏆</div>
+        </div>
+        <div class="fp-sub">Papier schlägt Stein — Tom zieht zuerst Putzdienst</div>
       </div>
     </div>
-
-  </div><!-- /.lp-section -->
+  </div>
 
   <div class="lp-footer">© 2026 Vereins Appell</div>
 </div><!-- /#lp -->

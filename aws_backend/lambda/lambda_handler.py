@@ -144,6 +144,15 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif method == 'GET' and path == '/monitoring/perf':
         import api_monitoring
         return {**headers, **api_monitoring.handle_perf_stats(event, context)}
+    elif method == 'POST' and path == '/join/club':
+        import api_join
+        return api_join.handle_join_club(event, context)
+    elif method == 'POST' and path == '/join/member':
+        import api_join
+        return api_join.handle_join_member(event, context)
+    elif method == 'OPTIONS' and path in ('/join/club', '/join/member'):
+        import api_join
+        return api_join.handle_join_club(event, context)
     elif path.startswith('/news'):
         return {**headers, **handle_news(event, context)}
     elif path.startswith('/feedback'):

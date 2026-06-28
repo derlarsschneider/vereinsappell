@@ -17,6 +17,7 @@ resource "aws_lambda_function" "lambda_backend" {
             API_BASE_URL             = aws_apigatewayv2_api.http_api.api_endpoint,
             LAMBDA_LOG_GROUP_NAME    = "/aws/lambda/${local.name_prefix}-lambda_backend",
             PERF_LOGGING_ENABLED     = "true",
+            CONTACT_EMAIL            = "info@vereinsappell.de",
         }
     }
 }
