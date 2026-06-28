@@ -3,7 +3,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-from utils import parse_timeframe
+from utils import parse_timeframe, DecimalEncoder
 
 
 def _build_name_maps(app_ids):
@@ -391,4 +391,4 @@ def handle_errors(event, context):
         item.pop('headers', None)
         item.pop('body', None)
 
-    return {'statusCode': 200, 'body': json.dumps({'errors': items})}
+    return {'statusCode': 200, 'body': json.dumps({'errors': items}, cls=DecimalEncoder)}
