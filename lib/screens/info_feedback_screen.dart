@@ -299,7 +299,8 @@ class _NewsTabState extends State<_NewsTab> {
     bool useOptions = false;
     List<String> options = [];
 
-    await showDialog<void>(
+    try {
+      await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
@@ -490,6 +491,12 @@ class _NewsTabState extends State<_NewsTab> {
         ),
       ),
     );
+    } finally {
+      titleCtrl.dispose();
+      bodyCtrl.dispose();
+      questionCtrl.dispose();
+      optionCtrl.dispose();
+    }
   }
 
   @override
@@ -1075,6 +1082,7 @@ class _AdminFeedbackCardState extends State<_AdminFeedbackCard> {
                       onPressed: () {
                         if (_replyCtrl.text.trim().isEmpty) return;
                         widget.onReply(_replyCtrl.text.trim());
+                        _replyCtrl.clear();
                       },
                       child: const Text('↩️ Antworten'),
                     ),
