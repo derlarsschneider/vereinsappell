@@ -133,9 +133,9 @@ def get_feedback(event):
 def post_reply(event):
     if not _is_superadmin(event):
         return _ERROR_403
+    application_id = event.get('headers', {}).get('applicationid', '')
     feedback_id = (event.get('pathParameters') or {}).get('feedbackId', '')
     body = json.loads(event.get('body', '{}'))
-    application_id = body.get('applicationId', '')
     reply_text = body.get('reply', '')
     replied_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
 

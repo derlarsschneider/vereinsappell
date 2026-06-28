@@ -125,7 +125,7 @@ class TestPostReply(unittest.TestCase):
     def test_reply_updates_feedback_item(self):
         self.mock_members_table.get_item.return_value = {'Item': {'isSuperAdmin': True}}
         event = _event('POST', '/feedback/1/reply', member_id='superadmin1',
-                       body={'reply': 'Danke!', 'applicationId': APP_ID}, feedback_id='1')
+                       body={'reply': 'Danke!'}, feedback_id='1')
         response = api_feedback.post_reply(event)
         self.assertEqual(response['statusCode'], 200)
         self.mock_table.update_item.assert_called_once()
