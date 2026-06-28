@@ -1,5 +1,6 @@
 // lib/screens/info_feedback_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import '../api/feedback_api.dart';
@@ -178,6 +179,7 @@ class _LegalTabState extends State<_LegalTab> {
         _ExpandableSection(
           title: '📄 Impressum',
           content: _impressum.isEmpty ? 'Noch kein Text hinterlegt.' : _impressum,
+
         ),
       ],
     );
@@ -210,8 +212,11 @@ class _ExpandableSectionState extends State<_ExpandableSection> {
           if (_expanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(widget.content,
-                  style: const TextStyle(fontSize: 13, height: 1.5)),
+              child: MarkdownBody(
+                data: widget.content,
+                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
+                    .copyWith(p: const TextStyle(fontSize: 13, height: 1.5)),
+              ),
             ),
         ],
       ),
@@ -399,7 +404,9 @@ class _NewsTabState extends State<_NewsTab> {
                         labelText: 'Fragetext', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+
+                  Wrap(
+                    spacing: 6,
                     children: [
                       const Text('Antworttyp: '),
                       ChoiceChip(
