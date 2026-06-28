@@ -23,6 +23,7 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
   Map<String, dynamic>? _perfStats;
   String _timeframe = 'day';
   String? _selectedClub;
+  List<dynamic>? _errors;
 
   @override
   void initState() {
@@ -40,10 +41,15 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
       try {
         perfData = await _api.getPerfStats(_timeframe);
       } catch (_) {}
+      List<dynamic> errorsData = [];
+      try {
+        errorsData = await _api.getErrors();
+      } catch (_) {}
       setState(() {
         _stats = data;
         _startupStats = startupData;
         _perfStats = perfData;
+        _errors = errorsData;
         isLoading = false;
       });
     } catch (e) {
@@ -85,6 +91,8 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _buildErrorsTable(),
+                  const SizedBox(height: 16),
                   _buildTimeframeSelector(),
                   const SizedBox(height: 16),
                   if (_stats != null) ...[
@@ -107,6 +115,80 @@ class _MonitoringScreenState extends DefaultScreenState<MonitoringScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildErrorsTable() {
+    final errors = _errors ?? [];
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Backend-Fehler',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            if (errors.isEmpty)
+              const Text('Keine Fehler', style: TextStyle(color: Colors.grey))
+            else
+              ...errors.map((e) {
+                final entry = e as Map<String, dynamic>;
+                final time = entry['time'] as String? ?? '';
+                final route = entry['route_key'] as String? ?? '—';
+                final message = entry['error'] as String? ?? '—';
+                final stacktrace = entry['stacktrace'] as String? ?? '';
+                return InkWell(
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text(route),
+                      content: SingleChildScrollView(
+                        child: SelectableText(
+                          stacktrace,
+                          style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Schließen'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 130,
+                          child: Text(time,
+                              style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(route,
+                                  style: const TextStyle(
+                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                              Text(message,
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.red),
+                                  overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
     );
   }
 
