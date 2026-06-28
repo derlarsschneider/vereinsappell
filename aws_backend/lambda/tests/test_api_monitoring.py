@@ -88,3 +88,55 @@ class TestHandleMonitoringNewFields(unittest.TestCase):
         self.assertIn('calls_per_club', body)
         self.assertIn('active_members', body)
         self.assertIn('timeframe', body)
+
+
+class TestHandleErrors(unittest.TestCase):
+    def setUp(self):
+        mock_table = MagicMock()
+        mock_table.scan.return_value = {
+            'Items': [
+                {'id': '1', 'time': '2026-06-28T10:00:00', 'error': 'boom', 'stacktrace': 'Traceback...', 'route_key': 'GET /customers/{id}', 'headers': {'auth': 'secret'}, 'body': {'password': 'pw'}},
+                {'id': '2', 'time': '2026-06-28T09:00:00', 'error': 'oops', 'stacktrace': 'Traceback2...', 'route_key': 'GET /members', 'headers': {}, 'body': {}},
+            ]
+        }
+        mock_dynamodb = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        _boto3_mock.resource.return_value = mock_dynamodb
+
+    def test_returns_errors_sorted_by_time_descending(self):
+        event = {'queryStringParameters': None}
+        response = api_monitoring.handle_errors(event, _context())
+        self.assertEqual(response['statusCode'], 200)
+        body = json.loads(response['body'])
+        self.assertIn('errors', body)
+        times = [e['time'] for e in body['errors']]
+        self.assertEqual(times, sorted(times, reverse=True))
+
+    def test_strips_sensitive_fields(self):
+        event = {'queryStringParameters': None}
+        response = api_monitoring.handle_errors(event, _context())
+        body = json.loads(response['body'])
+        for entry in body['errors']:
+            self.assertNotIn('headers', entry)
+            self.assertNotIn('body', entry)
+
+    def test_includes_required_fields(self):
+        event = {'queryStringParameters': None}
+        response = api_monitoring.handle_errors(event, _context())
+        body = json.loads(response['body'])
+        entry = body['errors'][0]
+        for field in ('id', 'time', 'error', 'stacktrace', 'route_key'):
+            self.assertIn(field, entry)
+
+    def test_limits_to_50_entries(self):
+        mock_table = MagicMock()
+        mock_table.scan.return_value = {
+            'Items': [{'id': str(i), 'time': f'2026-06-28T{i:02d}:00:00', 'error': 'e', 'stacktrace': 's', 'route_key': 'r'} for i in range(60)]
+        }
+        mock_dynamodb = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        _boto3_mock.resource.return_value = mock_dynamodb
+
+        response = api_monitoring.handle_errors({}, _context())
+        body = json.loads(response['body'])
+        self.assertLessEqual(len(body['errors']), 50)
