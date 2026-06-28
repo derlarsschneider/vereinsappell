@@ -138,6 +138,9 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif method == 'GET' and path == '/monitoring/perf':
         import api_monitoring
         return {**headers, **api_monitoring.handle_perf_stats(event, context)}
+    elif method == 'GET' and path == '/monitoring/errors':
+        import api_monitoring
+        return {**headers, **api_monitoring.handle_errors(event, context)}
     elif method == 'POST' and path == '/join/club':
         import api_join
         return api_join.handle_join_club(event, context)
