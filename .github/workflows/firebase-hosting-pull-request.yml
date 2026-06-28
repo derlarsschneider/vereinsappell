@@ -38,6 +38,7 @@ jobs:
 
     outputs:
       preview_url: ${{ steps.deploy.outputs.details_url }}
+      deploy_outcome: ${{ steps.deploy.outcome }}
 
     steps:
     - name: 📥 Checkout Repository
@@ -76,6 +77,7 @@ jobs:
 
     - name: 🚀 Deploy Preview to Firebase Hosting
       id: deploy
+      continue-on-error: true
       uses: FirebaseExtended/action-hosting-deploy@v0
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -170,19 +172,23 @@ jobs:
       run: |
         FRONTEND_RESULT="${{ needs.frontend.result }}"
         BACKEND_RESULT="${{ needs.backend.result }}"
+        DEPLOY_OUTCOME="${{ needs.frontend.outputs.deploy_outcome }}"
+        PREVIEW_URL="${{ needs.frontend.outputs.preview_url }}"
 
-        if [ "$FRONTEND_RESULT" = "success" ] && [ "$BACKEND_RESULT" = "success" ]; then
+        if [ "$FRONTEND_RESULT" = "success" ] && [ "$DEPLOY_OUTCOME" = "success" ] && [ "$BACKEND_RESULT" = "success" ]; then
           ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
-          PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+          PREVIEW_LINK="${PREVIEW_URL}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
           MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        elif [ "$FRONTEND_RESULT" = "success" ] && [ "$DEPLOY_OUTCOME" = "success" ]; then
+          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
+          PREVIEW_LINK="${PREVIEW_URL}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+        elif [ "$FRONTEND_RESULT" = "success" ] && [ "$DEPLOY_OUTCOME" != "success" ]; then
+          MSG=$(printf '⚠️ Flutter Build ok, Firebase Deploy fehlgeschlagen (Preview bereits aktiv?)\n${{ github.event.pull_request.title }}')
         elif [ "$FRONTEND_RESULT" = "skipped" ] && [ "$BACKEND_RESULT" = "success" ]; then
           MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}')
         elif [ "$FRONTEND_RESULT" = "skipped" ]; then
           MSG=$(printf '❌ Backend fehlgeschlagen\n${{ github.event.pull_request.title }}')
-        elif [ "$FRONTEND_RESULT" = "success" ]; then
-          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
-          PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
         else
           MSG=$(printf '❌ PR Build fehlgeschlagen\n${{ github.event.pull_request.title }}\nFrontend: %s | Backend: %s' "$FRONTEND_RESULT" "$BACKEND_RESULT")
         fi
