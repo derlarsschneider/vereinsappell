@@ -140,3 +140,22 @@ class TestHandleErrors(unittest.TestCase):
         response = api_monitoring.handle_errors({}, _context())
         body = json.loads(response['body'])
         self.assertLessEqual(len(body['errors']), 50)
+
+    def test_paginates_across_multiple_pages(self):
+        page1 = {
+            'Items': [{'id': '1', 'time': '2026-06-28T10:00:00', 'error': 'e1', 'stacktrace': 's1', 'route_key': 'r1'}],
+            'LastEvaluatedKey': {'id': '1'},
+        }
+        page2 = {
+            'Items': [{'id': '2', 'time': '2026-06-28T09:00:00', 'error': 'e2', 'stacktrace': 's2', 'route_key': 'r2'}],
+        }
+        mock_table = MagicMock()
+        mock_table.scan.side_effect = [page1, page2]
+        mock_dynamodb = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        _boto3_mock.resource.return_value = mock_dynamodb
+
+        response = api_monitoring.handle_errors({}, _context())
+        body = json.loads(response['body'])
+        self.assertEqual(len(body['errors']), 2)
+        self.assertEqual(mock_table.scan.call_count, 2)
