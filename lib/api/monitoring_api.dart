@@ -46,6 +46,19 @@ class MonitoringApi {
     }
   }
 
+  Future<List<dynamic>> getErrors() async {
+    final response = await _client.get(
+      Uri.parse('${config.apiBaseUrl}/monitoring/errors'),
+      headers: headers(config),
+    );
+    if (response.statusCode == 200) {
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      return body['errors'] as List<dynamic>? ?? [];
+    } else {
+      throw Exception('Fehler beim Laden der Fehler-Logs: ${response.statusCode}');
+    }
+  }
+
   Future<void> sendStartupTiming(Map<String, dynamic> timingData) async {
     try {
       final response = await _client.post(

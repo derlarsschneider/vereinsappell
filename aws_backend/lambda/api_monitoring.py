@@ -3,7 +3,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-from utils import parse_timeframe
+from utils import parse_timeframe, DecimalEncoder
 
 
 def _build_name_maps(app_ids):
@@ -372,3 +372,23 @@ def handle_startup_stats(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
         }
+
+
+def handle_errors(event, context):
+    dynamodb = boto3.resource('dynamodb')
+    error_table = dynamodb.Table(os.environ.get('ERROR_TABLE_NAME', ''))
+
+    response = error_table.scan()
+    items = list(response.get('Items', []))
+    while 'LastEvaluatedKey' in response:
+        response = error_table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        items.extend(response.get('Items', []))
+
+    items.sort(key=lambda x: x.get('time', ''), reverse=True)
+    items = items[:50]
+
+    for item in items:
+        item.pop('headers', None)
+        item.pop('body', None)
+
+    return {'statusCode': 200, 'body': json.dumps({'errors': items}, cls=DecimalEncoder)}

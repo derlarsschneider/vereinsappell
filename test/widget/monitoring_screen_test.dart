@@ -47,8 +47,28 @@ Map<String, dynamic> _startupPayload() => {
       'timeframe': 'day',
     };
 
+List<dynamic> _errorsPayload() => [
+  {
+    'id': 'e1',
+    'time': '2026-06-28T10:00:00',
+    'error': 'NullPointerException',
+    'stacktrace': 'Traceback (most recent call last):\n  File "lambda_handler.py", line 84\nNullPointerException',
+    'route_key': 'GET /customers/{id}',
+  },
+  {
+    'id': 'e2',
+    'time': '2026-06-28T09:00:00',
+    'error': 'KeyError: memberId',
+    'stacktrace': 'Traceback...',
+    'route_key': 'GET /members',
+  },
+];
+
 Future<MonitoringApi> _makeApi(WidgetTester tester) async {
   final client = MockClient((request) async {
+    if (request.url.path.contains('/monitoring/errors')) {
+      return http.Response(jsonEncode({'errors': _errorsPayload()}), 200);
+    }
     if (request.url.path.contains('/monitoring/startup')) {
       return http.Response(jsonEncode(_startupPayload()), 200);
     }
@@ -159,6 +179,64 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpansionTile), findsNothing);
+    });
+  });
+
+  group('MonitoringScreen errors', () {
+    testWidgets('shows error table section heading', (tester) async {
+      final api = await _makeApi(tester);
+      final config = await makeConfig(tester);
+      await tester.pumpWidget(
+        wrapScreen(MonitoringScreen(config: config, monitoringApi: api), config),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Backend-Fehler'), findsOneWidget);
+    });
+
+    testWidgets('shows error route and message', (tester) async {
+      final api = await _makeApi(tester);
+      final config = await makeConfig(tester);
+      await tester.pumpWidget(
+        wrapScreen(MonitoringScreen(config: config, monitoringApi: api), config),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('GET /customers/{id}'), findsOneWidget);
+      expect(find.text('NullPointerException'), findsOneWidget);
+    });
+
+    testWidgets('tapping an error row opens stacktrace dialog', (tester) async {
+      final api = await _makeApi(tester);
+      final config = await makeConfig(tester);
+      await tester.pumpWidget(
+        wrapScreen(MonitoringScreen(config: config, monitoringApi: api), config),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GET /customers/{id}'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.textContaining('lambda_handler.py'), findsOneWidget);
+    });
+
+    testWidgets('shows placeholder when errors list is empty', (tester) async {
+      final client = MockClient((request) async {
+        if (request.url.path.contains('/monitoring/errors')) {
+          return http.Response(jsonEncode({'errors': []}), 200);
+        }
+        if (request.url.path.contains('/monitoring/startup')) {
+          return http.Response(jsonEncode(_startupPayload()), 200);
+        }
+        if (request.url.path.contains('/monitoring')) {
+          return http.Response(jsonEncode(_statsPayload()), 200);
+        }
+        return http.Response('{}', 200);
+      });
+      final config = await makeConfig(tester);
+      final api = MonitoringApi(config, client: client);
+      await tester.pumpWidget(
+        wrapScreen(MonitoringScreen(config: config, monitoringApi: api), config),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Keine Fehler'), findsOneWidget);
     });
   });
 }
