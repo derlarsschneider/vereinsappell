@@ -53,3 +53,14 @@ class TestAuthorizer(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestGetMember(unittest.TestCase):
+    def test_uses_module_level_table_without_creating_a_new_resource(self):
+        table = MagicMock()
+        table.get_item.return_value = {'Item': {'memberId': 'm'}}
+        with patch.object(authorizer, '_members_table', table), \
+             patch.object(authorizer.boto3, 'resource') as resource:
+            self.assertEqual(authorizer._get_member('a', 'm'), {'memberId': 'm'})
+        table.get_item.assert_called_once_with(Key={'applicationId': 'a', 'memberId': 'm'})
+        resource.assert_not_called()

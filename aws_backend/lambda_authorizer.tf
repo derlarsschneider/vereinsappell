@@ -4,6 +4,9 @@ resource "aws_lambda_function" "lambda_authorizer" {
     handler       = "authorizer.lambda_authorizer"
     runtime       = "python3.10"
     filename      = "authorizer/lambda.zip"
+    # Default 3 s / 128 MB caused cold-start timeouts (API Gateway then answers 500).
+    timeout       = 10
+    memory_size   = 256
 
     environment {
         variables = {

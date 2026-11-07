@@ -2,6 +2,10 @@ import os
 
 import boto3
 
+# Created once per container (init phase), not per request: building the
+# resource costs several hundred ms warm and seconds on a cold 128 MB instance.
+_members_table = boto3.resource('dynamodb').Table(os.environ.get('MEMBERS_TABLE_NAME', ''))
+
 
 def lambda_authorizer(event, context):
     if event.get('source') == 'aws.events':
@@ -24,7 +28,5 @@ def lambda_authorizer(event, context):
 
 
 def _get_member(application_id, member_id):
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(os.environ['MEMBERS_TABLE_NAME'])
-    response = table.get_item(Key={'applicationId': application_id, 'memberId': member_id})
+    response = _members_table.get_item(Key={'applicationId': application_id, 'memberId': member_id})
     return response.get('Item')
