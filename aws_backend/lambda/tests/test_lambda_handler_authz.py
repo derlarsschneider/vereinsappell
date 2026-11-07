@@ -7,19 +7,20 @@ from unittest.mock import MagicMock, patch
 os.environ.setdefault('MEMBERS_TABLE_NAME', 'members-test')
 os.environ.setdefault('AWS_DEFAULT_REGION', 'eu-central-1')
 
-_boto3_mock = MagicMock()
-_conditions_mock = MagicMock()
-sys.modules.setdefault('boto3', _boto3_mock)
-sys.modules.setdefault('boto3.dynamodb', MagicMock())
-sys.modules.setdefault('boto3.dynamodb.conditions', _conditions_mock)
-sys.modules['push_notifications'] = MagicMock()
-sys.modules['error_handler'] = MagicMock()
-sys.modules['api_members'] = MagicMock()
-sys.modules['api_docs'] = MagicMock()
-
+# Stub heavy dependencies only while importing, so the stubs do not leak into other test modules.
+_stubs = {
+    'boto3': MagicMock(),
+    'boto3.dynamodb': MagicMock(),
+    'boto3.dynamodb.conditions': MagicMock(),
+    'push_notifications': MagicMock(),
+    'error_handler': MagicMock(),
+    'api_members': MagicMock(),
+    'api_docs': MagicMock(),
+}
 sys.path.insert(0, '.')
-import lambda_handler
-from authz import Caller
+with patch.dict(sys.modules, _stubs):
+    import lambda_handler
+    from authz import Caller
 
 OWN = 'club-a'
 OTHER = 'club-b'
@@ -123,6 +124,46 @@ class TestCustomerRoutes(AuthzTestCase):
                       make_caller(super_admin=True))
         self.assertEqual(r['statusCode'], 200)
         self.api.update_customer.assert_called_once()
+
+
+class TestMonitoringRoutes(AuthzTestCase):
+    READ_ROUTES = {
+        '/monitoring/stats': 'handle_monitoring',
+        '/monitoring/startup': 'handle_startup_stats',
+        '/monitoring/perf': 'handle_perf_stats',
+        '/monitoring/errors': 'handle_errors',
+    }
+
+    def setUp(self):
+        self.api = MagicMock()
+        for name in list(self.READ_ROUTES.values()) + ['handle_timing']:
+            getattr(self.api, name).return_value = {'statusCode': 200, 'body': '{}'}
+        patcher = patch.dict(sys.modules, {'api_monitoring': self.api})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_read_routes_forbidden_for_plain_member(self):
+        for path, fn in self.READ_ROUTES.items():
+            with self.subTest(path=path):
+                self.assertForbidden(self.call(make_event('GET', path), make_caller()))
+                getattr(self.api, fn).assert_not_called()
+
+    def test_read_routes_forbidden_for_club_admin(self):
+        for path in self.READ_ROUTES:
+            with self.subTest(path=path):
+                self.assertForbidden(self.call(make_event('GET', path), make_caller(admin=True)))
+
+    def test_read_routes_allowed_for_super_admin(self):
+        for path, fn in self.READ_ROUTES.items():
+            with self.subTest(path=path):
+                r = self.call(make_event('GET', path), make_caller(super_admin=True))
+                self.assertEqual(r['statusCode'], 200)
+                getattr(self.api, fn).assert_called_once()
+
+    def test_timing_allowed_for_plain_member(self):
+        r = self.call(make_event('POST', '/monitoring/timing', body={}), make_caller())
+        self.assertEqual(r['statusCode'], 200)
+        self.api.handle_timing.assert_called_once()
 
 
 if __name__ == '__main__':

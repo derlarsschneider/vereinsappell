@@ -147,18 +147,26 @@ def _dispatch(event, context, method, path, application_id, headers):
         import api_calendar
         return {**headers, **api_calendar.get_calendar(event, context)}
     elif method == 'GET' and path == '/monitoring/stats':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_monitoring(event, context)}
     elif method == 'POST' and path == '/monitoring/timing':
         import api_monitoring
         return {**headers, **api_monitoring.handle_timing(event, context)}
     elif method == 'GET' and path == '/monitoring/startup':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_startup_stats(event, context)}
     elif method == 'GET' and path == '/monitoring/perf':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_perf_stats(event, context)}
     elif method == 'GET' and path == '/monitoring/errors':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_errors(event, context)}
     elif method == 'POST' and path == '/join/club':
