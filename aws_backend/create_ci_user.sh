@@ -106,6 +106,7 @@ POLICY_DOC=$(cat <<EOF
         "dynamodb:TagResource",
         "dynamodb:UntagResource",
         "dynamodb:DescribeContinuousBackups",
+        "dynamodb:UpdateContinuousBackups",
         "dynamodb:DescribeTimeToLive",
         "dynamodb:UpdateTimeToLive",
         "dynamodb:PutItem",
