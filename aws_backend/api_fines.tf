@@ -13,6 +13,10 @@ resource "aws_dynamodb_table" "fines_table" {
         name = "fineId"
         type = "S"
     }
+
+    point_in_time_recovery {
+        enabled = true
+    }
 }
 
 resource "aws_apigatewayv2_route" "fines_get" {

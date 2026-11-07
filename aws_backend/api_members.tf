@@ -13,6 +13,10 @@ resource "aws_dynamodb_table" "members_table" {
         name = "memberId"
         type = "S"
     }
+
+    point_in_time_recovery {
+        enabled = true
+    }
 }
 
 resource "aws_apigatewayv2_route" "members_get" {
