@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../api/backup_api.dart';
 import 'default_screen.dart';
 
-const _clearableTables = ['marschbefehl', 'fines'];
-
 class BackupScreen extends DefaultScreen {
   const BackupScreen({super.key, required super.config})
       : super(title: 'Backup & Restore');
@@ -58,22 +56,6 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
     );
   }
 
-  void _showErrorDialog(String title, String details) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(child: Text(details)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _createBackup() async {
     setState(() => _actionInProgress = true);
     try {
@@ -83,81 +65,6 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
       final summary = counts.entries.map((e) => '${e.key}: ${e.value}').join('\n');
       _showInfoDialog('Backup erstellt', '${result['s3_path']}\n\n$summary');
       await _loadBackups();
-    } catch (e) {
-      if (mounted) showNotification('Fehler: $e');
-    } finally {
-      if (mounted) setState(() => _actionInProgress = false);
-    }
-  }
-
-  Future<void> _restoreBackup(String timestamp) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Backup einspielen?'),
-        content: Text(
-          'Achtung: Alle aktuellen Daten werden mit dem Stand vom $timestamp überschrieben. Wirklich wiederherstellen?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Wiederherstellen', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    setState(() => _actionInProgress = true);
-    try {
-      final result = await _api.restoreBackup(timestamp);
-      if (!mounted) return;
-      final counts = result['counts'] as Map<String, dynamic>? ?? {};
-      final failed = result['failed'] as List;
-      final summary = counts.entries.map((e) => '${e.key}: ${e.value}').join('\n');
-      if (failed.isEmpty) {
-        _showInfoDialog('Restore abgeschlossen', summary);
-      } else {
-        final errors = failed.map((f) => '${f['table']}: ${f['error']}').join('\n');
-        _showErrorDialog('Restore-Fehler', '$summary\n\nFehler:\n$errors');
-      }
-    } catch (e) {
-      if (mounted) showNotification('Fehler: $e');
-    } finally {
-      if (mounted) setState(() => _actionInProgress = false);
-    }
-  }
-
-  Future<void> _clearTable(String tableName) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Tabelle "$tableName" leeren?'),
-        content: Text(
-          'Achtung: Alle Einträge in "$tableName" werden unwiderruflich gelöscht!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Leeren', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    setState(() => _actionInProgress = true);
-    try {
-      await _api.clearTable(tableName);
-      if (mounted) showNotification('"$tableName" wurde geleert.');
     } catch (e) {
       if (mounted) showNotification('Fehler: $e');
     } finally {
@@ -199,26 +106,8 @@ class _BackupScreenState extends DefaultScreenState<BackupScreen> {
                     ..._backups.map((ts) => Card(
                           child: ListTile(
                             title: Text(ts, style: const TextStyle(fontFamily: 'monospace')),
-                            trailing: TextButton(
-                              onPressed: _actionInProgress ? null : () => _restoreBackup(ts),
-                              child: const Text('Einspielen', style: TextStyle(color: Colors.orange)),
-                            ),
                           ),
                         )),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Tabellen leeren',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._clearableTables.map((table) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: OutlinedButton(
-                          onPressed: _actionInProgress ? null : () => _clearTable(table),
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                          child: Text('$table leeren'),
-                        ),
-                      )),
                 ],
               ),
             ),

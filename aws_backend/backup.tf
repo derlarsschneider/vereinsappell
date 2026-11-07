@@ -290,14 +290,12 @@ resource "aws_apigatewayv2_route" "admin_restore_post" {
     api_id             = aws_apigatewayv2_api.http_api.id
     route_key          = "POST /admin/backup/{timestamp}/restore"
     target             = "integrations/${aws_apigatewayv2_integration.restore_lambda_integration.id}"
-    authorization_type = "CUSTOM"
-    authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
+    authorization_type = "AWS_IAM"
 }
 
 resource "aws_apigatewayv2_route" "admin_table_clear" {
     api_id             = aws_apigatewayv2_api.http_api.id
     route_key          = "DELETE /admin/table/{tableName}/items"
     target             = "integrations/${aws_apigatewayv2_integration.restore_lambda_integration.id}"
-    authorization_type = "CUSTOM"
-    authorizer_id      = aws_apigatewayv2_authorizer.lambda_authorizer.id
+    authorization_type = "AWS_IAM"
 }

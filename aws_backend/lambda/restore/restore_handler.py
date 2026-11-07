@@ -1,3 +1,17 @@
+"""Restore and table-clear handler.
+
+These routes are IAM-authorized and not callable with a memberId alone.
+Operators invoke them via `aws lambda invoke` with an HTTP API v2 event, e.g.:
+
+    {"requestContext": {"http": {"method": "POST",
+                                 "path": "/admin/backup/<timestamp>/restore"}},
+     "pathParameters": {"timestamp": "<timestamp>"},
+     "headers": {"applicationid": "<app id>", "memberid": "<super-admin memberId>"}}
+
+For a table clear use method DELETE, path "/admin/table/<name>/items" and
+pathParameters {"tableName": "<name>"}. The headers must identify a member
+row with isSuperAdmin set.
+"""
 import decimal
 import json
 import os
