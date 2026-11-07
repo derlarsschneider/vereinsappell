@@ -4,6 +4,12 @@ resource "aws_lambda_function" "lambda_authorizer" {
     handler       = "authorizer.lambda_authorizer"
     runtime       = "python3.10"
     filename      = "authorizer/lambda.zip"
+
+    environment {
+        variables = {
+            MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name
+        }
+    }
 }
 
 # Berechtigung: API Gateway darf Authorizer aufrufen

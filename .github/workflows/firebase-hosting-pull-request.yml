@@ -81,6 +81,10 @@ jobs:
       working-directory: aws_backend/lambda
       run: pytest tests/
 
+    - name: 🧪 Run Authorizer Tests
+      working-directory: aws_backend/authorizer
+      run: pytest tests/
+
     - name: 🔧 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
