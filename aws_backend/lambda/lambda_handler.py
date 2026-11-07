@@ -16,6 +16,7 @@ import error_handler
 
 from api_members import handle_members
 from api_docs import handle_docs
+from authz import get_caller, forbidden
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -89,6 +90,14 @@ def lambda_handler(event, context):
 
 
 def _dispatch(event, context, method, path, application_id, headers):
+    _caller = []
+
+    def caller():
+        # Resolve the caller lazily, at most once per request.
+        if not _caller:
+            _caller.append(get_caller(event))
+        return _caller[0]
+
     if path.startswith('/members'):
         return handle_members(event, context)
     elif path.startswith('/docs'):
@@ -112,15 +121,26 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif method == 'DELETE' and path.startswith('/photos/'):
         return {**headers, **delete_photo(event, application_id)}
     elif method == 'GET' and path.startswith('/customers/'):
+        customer_id = (event.get('pathParameters') or {}).get('customerId')
+        c = caller()
+        if not (c.is_super_admin or (customer_id and customer_id == c.application_id)):
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.get_customer_by_id(event, context)}
     elif method == 'GET' and path == '/customers':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.list_customers()}
     elif method == 'POST' and path == '/customers':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.create_customer(event)}
     elif method == 'PUT' and path.startswith('/customers/'):
+        customer_id = (event.get('pathParameters') or {}).get('customerId')
+        if not caller().can_manage_club(customer_id):
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.update_customer(event)}
     elif method == 'GET' and path.startswith('/calendar'):
