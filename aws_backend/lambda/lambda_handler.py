@@ -103,22 +103,38 @@ def _dispatch(event, context, method, path, application_id, headers):
     elif path.startswith('/docs'):
         return handle_docs(event, context)
     elif method == 'GET' and path == '/fines':
+        requested = (event.get('queryStringParameters') or {}).get('memberId')
+        c = caller()
+        if not (requested == c.member_id or c.is_spiess or c.is_admin):
+            return forbidden(headers)
         return {**headers, **get_fines(event, application_id)}
     elif method == 'POST' and path == '/fines':
+        c = caller()
+        if not (c.is_spiess or c.is_admin):
+            return forbidden(headers)
         return {**headers, **add_fine(event, application_id)}
     elif method == 'DELETE' and path.startswith('/fines/'):
-        return {**headers, **delete_fine(event, application_id)}
+        c = caller()
+        if not (c.is_spiess or c.is_admin):
+            return forbidden(headers)
+        return {**headers, **delete_fine(event, c.application_id)}
     elif method == 'GET' and path == '/marschbefehl':
         return {**headers, **get_marschbefehl(event, application_id)}
     elif method == 'POST' and path == '/marschbefehl':
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **add_marschbefehl(event, application_id)}
     elif method == 'DELETE' and path == '/marschbefehl':
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **delete_marschbefehl(event, application_id)}
     elif method == 'GET' and path.startswith('/photos'):
         return {**headers, **get_photos(event, application_id)}
     elif method == 'POST' and path.startswith('/photos'):
         return {**headers, **add_photo(event, application_id)}
     elif method == 'DELETE' and path.startswith('/photos/'):
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **delete_photo(event, application_id)}
     elif method == 'GET' and path.startswith('/customers/'):
         customer_id = (event.get('pathParameters') or {}).get('customerId')

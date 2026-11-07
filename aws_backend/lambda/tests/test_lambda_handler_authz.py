@@ -166,5 +166,131 @@ class TestMonitoringRoutes(AuthzTestCase):
         self.api.handle_timing.assert_called_once()
 
 
+class TestFinesMarschbefehlPhotoRoutes(AuthzTestCase):
+    def setUp(self):
+        self.fines = MagicMock()
+        self.members = MagicMock()
+        self.marsch = MagicMock()
+        self.s3 = MagicMock()
+        self.fines.query.return_value = {'Items': []}
+        self.marsch.query.return_value = {'Items': []}
+        self.members.get_item.return_value = {}
+        for attr, mock in (('fines_table', self.fines), ('members_table', self.members),
+                           ('marschbefehl_table', self.marsch)):
+            patcher = patch.object(lambda_handler, attr, mock)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        for name, rv in (('add_photo', {'statusCode': 200, 'body': '{}'}),
+                         ('delete_photo', {'statusCode': 200, 'body': '{}'}),
+                         ('get_photos', {'statusCode': 200, 'body': '{}'}),
+                         ('add_fine', {'statusCode': 200, 'body': '{}'})):
+            patcher = patch.object(lambda_handler, name, return_value=rv)
+            setattr(self, name, patcher.start())
+            self.addCleanup(patcher.stop)
+
+    def fines_event(self, member_id='m1'):
+        event = make_event('GET', '/fines')
+        event['queryStringParameters'] = {'memberId': member_id}
+        return event
+
+    # GET /fines
+    def test_get_own_fines_as_plain_member_allowed(self):
+        r = self.call(self.fines_event('m1'), make_caller())
+        self.assertEqual(r['statusCode'], 200)
+
+    def test_get_fines_of_other_member_as_plain_member_forbidden(self):
+        self.assertForbidden(self.call(self.fines_event('m2'), make_caller()))
+        self.fines.query.assert_not_called()
+
+    def test_get_fines_of_other_member_as_spiess_allowed(self):
+        self.assertEqual(self.call(self.fines_event('m2'), make_caller(spiess=True))['statusCode'], 200)
+
+    def test_get_fines_of_other_member_as_admin_allowed(self):
+        self.assertEqual(self.call(self.fines_event('m2'), make_caller(admin=True))['statusCode'], 200)
+
+    # POST /fines
+    def test_add_fine_plain_member_forbidden(self):
+        self.assertForbidden(self.call(make_event('POST', '/fines', body={}), make_caller()))
+        self.add_fine.assert_not_called()
+
+    def test_add_fine_spiess_allowed(self):
+        r = self.call(make_event('POST', '/fines', body={}), make_caller(spiess=True))
+        self.assertEqual(r['statusCode'], 200)
+
+    def test_add_fine_admin_allowed(self):
+        r = self.call(make_event('POST', '/fines', body={}), make_caller(admin=True))
+        self.assertEqual(r['statusCode'], 200)
+
+    # DELETE /fines/{id}
+    def delete_fine_event(self):
+        return make_event('DELETE', '/fines/f1', {'fineId': 'f1'})
+
+    def test_delete_fine_plain_member_forbidden(self):
+        self.assertForbidden(self.call(self.delete_fine_event(), make_caller()))
+        self.fines.delete_item.assert_not_called()
+
+    def test_delete_fine_spiess_allowed(self):
+        r = self.call(self.delete_fine_event(), make_caller(spiess=True))
+        self.assertEqual(r['statusCode'], 200)
+        self.fines.delete_item.assert_called_once()
+
+    def test_delete_fine_admin_allowed(self):
+        r = self.call(self.delete_fine_event(), make_caller(admin=True))
+        self.assertEqual(r['statusCode'], 200)
+
+    def test_delete_fine_uses_caller_application_id(self):
+        event = self.delete_fine_event()
+        event['headers']['applicationid'] = OTHER
+        self.call(event, make_caller(spiess=True, application_id=OWN))
+        self.fines.delete_item.assert_called_once_with(
+            Key={'applicationId': OWN, 'fineId': 'f1'})
+
+    # marschbefehl
+    def test_get_marschbefehl_plain_member_allowed(self):
+        r = self.call(make_event('GET', '/marschbefehl'), make_caller())
+        self.assertEqual(r['statusCode'], 200)
+
+    def test_add_marschbefehl_plain_member_forbidden(self):
+        self.assertForbidden(self.call(make_event('POST', '/marschbefehl', body={}),
+                                       make_caller(spiess=True)))
+        self.marsch.put_item.assert_not_called()
+
+    def test_add_marschbefehl_admin_allowed(self):
+        body = {'datetime': '2026-01-01', 'text': 't'}
+        r = self.call(make_event('POST', '/marschbefehl', body=body), make_caller(admin=True))
+        self.assertEqual(r['statusCode'], 200)
+        self.marsch.put_item.assert_called_once()
+
+    def test_delete_marschbefehl_non_admin_forbidden(self):
+        event = make_event('DELETE', '/marschbefehl')
+        event['queryStringParameters'] = {'datetime': 'x'}
+        self.assertForbidden(self.call(event, make_caller(spiess=True)))
+        self.marsch.delete_item.assert_not_called()
+
+    def test_delete_marschbefehl_admin_allowed(self):
+        event = make_event('DELETE', '/marschbefehl')
+        event['queryStringParameters'] = {'datetime': 'x'}
+        r = self.call(event, make_caller(admin=True))
+        self.assertEqual(r['statusCode'], 200)
+        self.marsch.delete_item.assert_called_once()
+
+    # photos
+    def test_get_photos_plain_member_allowed(self):
+        self.assertEqual(self.call(make_event('GET', '/photos'), make_caller())['statusCode'], 200)
+
+    def test_post_photo_plain_member_allowed(self):
+        self.assertEqual(self.call(make_event('POST', '/photos', body={}), make_caller())['statusCode'], 200)
+
+    def test_delete_photo_non_admin_forbidden(self):
+        event = make_event('DELETE', '/photos/a.jpg', {'proxy': 'a.jpg'})
+        self.assertForbidden(self.call(event, make_caller(spiess=True)))
+        self.delete_photo.assert_not_called()
+
+    def test_delete_photo_admin_allowed(self):
+        event = make_event('DELETE', '/photos/a.jpg', {'proxy': 'a.jpg'})
+        self.assertEqual(self.call(event, make_caller(admin=True))['statusCode'], 200)
+        self.delete_photo.assert_called_once()
+
+
 if __name__ == '__main__':
     unittest.main()
