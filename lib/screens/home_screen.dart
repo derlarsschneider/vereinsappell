@@ -204,26 +204,17 @@ class _HomeScreenState extends DefaultScreenState<HomeScreen> {
                         },
                       )
                     : null,
-                onTap: () async {
+                onTap: () {
                   if (localIndex != -1) {
                     _switchToAccount(localIndex, ctx);
                   } else {
-                    // Add as new local account using the SuperAdmin's credentials.
+                    // Each club has its own memberId, so the current one cannot be
+                    // reused here. The account must be added via its invite link.
                     Navigator.pop(ctx);
-                    final newConfig = AppConfig(
-                      apiBaseUrl: widget.config.apiBaseUrl,
-                      applicationId: appId,
-                      memberId: widget.config.memberId,
-                      label: label,
+                    showInfo(
+                      'Kein Konto für "$label" auf diesem Gerät. '
+                      'Bitte den Einladungslink dieses Vereins öffnen.',
                     );
-                    await addOrActivateAccount(newConfig);
-                    if (kIsWeb) {
-                      _jsHardReload();
-                    } else {
-                      if (!mounted) return;
-                      Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/', (route) => false);
-                    }
                   }
                 },
               );
