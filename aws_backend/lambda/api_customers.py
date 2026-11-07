@@ -123,7 +123,8 @@ def _fetch_banner_image(url):
             data = resp.read(MAX_BANNER_BYTES + 1)
     except InvalidImageUrl:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ banner download failed: {type(e).__name__}: {e}")
         raise InvalidImageUrl('download failed')
     if len(data) > MAX_BANNER_BYTES:
         raise InvalidImageUrl('image too large')

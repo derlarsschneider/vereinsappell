@@ -1,7 +1,9 @@
 import json
 import os
 import sys
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import MagicMock, patch
 
 sys.modules.setdefault('boto3', MagicMock())
@@ -249,3 +251,36 @@ class TestFetchBannerImage(unittest.TestCase):
         self.assertEqual(response['statusCode'], 400)
         self.assertEqual(json.loads(response['body']), {'error': 'Ungültige Bild-URL'})
         mock_table.update_item.assert_not_called()
+
+
+class TestBannerRedirectAndDns(unittest.TestCase):
+    def test_real_opener_refuses_redirect(self):
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(302)
+                self.send_header('Location', 'http://169.254.169.254/')
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever)
+        thread.start()
+        try:
+            with self.assertRaises(api_customers.InvalidImageUrl):
+                api_customers._build_opener().open(f'http://127.0.0.1:{server.server_port}/', timeout=5)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def test_rejects_mixed_public_and_private_resolution(self):
+        opener = MagicMock()
+        infos = _addrinfo('93.184.216.34') + _addrinfo('10.0.0.1')
+        with patch.object(api_customers.socket, 'getaddrinfo', return_value=infos), \
+                patch.object(api_customers, '_build_opener', return_value=opener):
+            with self.assertRaises(api_customers.InvalidImageUrl):
+                api_customers._fetch_banner_image('https://example.com/a.png')
+        opener.open.assert_not_called()
