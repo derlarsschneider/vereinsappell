@@ -250,7 +250,7 @@ class TestFinesMarschbefehlPhotoRoutes(AuthzTestCase):
         r = self.call(make_event('GET', '/marschbefehl'), make_caller())
         self.assertEqual(r['statusCode'], 200)
 
-    def test_add_marschbefehl_plain_member_forbidden(self):
+    def test_add_marschbefehl_spiess_forbidden(self):
         self.assertForbidden(self.call(make_event('POST', '/marschbefehl', body={}),
                                        make_caller(spiess=True)))
         self.marsch.put_item.assert_not_called()

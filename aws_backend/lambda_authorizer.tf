@@ -30,5 +30,6 @@ resource "aws_apigatewayv2_authorizer" "lambda_authorizer" {
     identity_sources                  = ["$request.header.applicationId", "$request.header.memberId"]
     authorizer_payload_format_version = "2.0"
     enable_simple_responses           = true
+    # Cached decisions: deactivation/deletion of a member takes effect after up to 300 s.
     authorizer_result_ttl_in_seconds  = 300
 }
