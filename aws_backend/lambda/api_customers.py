@@ -196,7 +196,8 @@ def create_customer(event):
     api_url = body.get('api_url') or API_BASE_URL
     application_logo = body.get('application_logo', '')
     active_screens = body.get('active_screens', ALL_SCREEN_KEYS)
-    requesting_member_id = event.get('headers', {}).get('memberid', '')
+    # Fresh id per club: never copy the caller's (super admin) memberId.
+    new_member_id = str(uuid.uuid4())
     requesting_member_name = f'Lars ({application_name})'
 
     item = {
@@ -209,21 +210,20 @@ def create_customer(event):
     }
     table().put_item(Item=item)
 
-    if requesting_member_id:
-        _members_table().put_item(Item={
-            'applicationId': application_id,
-            'memberId': requesting_member_id,
-            'isAdmin': True,
-            'isSuperAdmin': True,
-            'isActive': True,
-            'name': requesting_member_name,
-        })
+    _members_table().put_item(Item={
+        'applicationId': application_id,
+        'memberId': new_member_id,
+        'isAdmin': True,
+        'isSuperAdmin': True,
+        'isActive': True,
+        'name': requesting_member_name,
+    })
 
     return {
         'statusCode': 200,
         'body': json.dumps({
             **item,
-            'member_id': requesting_member_id,
+            'member_id': new_member_id,
             'api_base_url': API_BASE_URL,
         })
     }

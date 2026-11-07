@@ -1,3 +1,4 @@
+import uuid
 import json
 import os
 import sys
@@ -130,7 +131,11 @@ class TestCreateCustomer(unittest.TestCase):
         response = api_customers.create_customer(event)
         self.assertEqual(response['statusCode'], 200)
         body = json.loads(response['body'])
-        self.assertEqual(body['member_id'], 'super123')
+        # a fresh UUID, never the caller's own memberId
+        self.assertEqual(str(uuid.UUID(body['member_id'])), body['member_id'])
+        self.assertNotEqual(body['member_id'], 'super123')
+        item = self.mock_members_table.put_item.call_args.kwargs['Item']
+        self.assertEqual(item['memberId'], body['member_id'])
 
     def test_create_customer_response_includes_api_base_url(self):
         with patch.object(api_customers, 'API_BASE_URL', 'https://api.example.com'):
@@ -141,14 +146,16 @@ class TestCreateCustomer(unittest.TestCase):
         body = json.loads(response['body'])
         self.assertEqual(body['api_base_url'], 'https://api.example.com')
 
-    def test_create_customer_response_member_id_empty_when_no_header(self):
+    def test_create_customer_member_id_generated_when_no_header(self):
         event = _event('POST', '/customers', body={'application_name': 'New Club'})
-        # no 'headers' key — must not crash
+        # no 'headers' key - must not crash
         event.pop('headers', None)
         response = api_customers.create_customer(event)
         self.assertEqual(response['statusCode'], 200)
         body = json.loads(response['body'])
-        self.assertEqual(body['member_id'], '')
+        self.assertEqual(str(uuid.UUID(body['member_id'])), body['member_id'])
+        item = self.mock_members_table.put_item.call_args.kwargs['Item']
+        self.assertEqual(item['memberId'], body['member_id'])
 
     def test_create_customer_adds_creator_as_admin_and_superadmin(self):
         event = _event('POST', '/customers', body={'application_name': 'New Club'})
@@ -159,13 +166,8 @@ class TestCreateCustomer(unittest.TestCase):
         self.assertTrue(item['isAdmin'])
         self.assertTrue(item['isSuperAdmin'])
         self.assertTrue(item['isActive'])
-        self.assertEqual(item['memberId'], 'super123')
-
-    def test_create_customer_no_member_created_without_requester(self):
-        event = _event('POST', '/customers', body={'application_name': 'New Club'})
-        event['headers'] = {}
-        api_customers.create_customer(event)
-        self.mock_members_table.put_item.assert_not_called()
+        self.assertNotEqual(item['memberId'], 'super123')
+        uuid.UUID(item['memberId'])
 
 
 class _FakeResponse:
