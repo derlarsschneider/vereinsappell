@@ -25,22 +25,23 @@ def handle_members(event, context):
     is_admin = executing_member.get('isAdmin', False)
     is_spiess = executing_member.get('isSpiess', False)
     is_myself = executing_member.get('memberId') == member_id
+    is_super_admin = bool(executing_member.get('isSuperAdmin'))
 
     if method == 'GET' and path == '/members':
         if not is_admin and not is_spiess:
             return ERROR_403
-        return add_headers(list_members(application_id), event=event)
+        return add_headers(list_members(application_id, include_super_admins=is_super_admin), event=event)
     elif method == 'GET':
         if path.endswith('/all'):
             if not is_admin:
                 return ERROR_403
             cached = executing_member if is_myself else None
-            return add_headers(get_member(application_id, member_id, True, cached), event=event)
+            return add_headers(get_member(application_id, member_id, True, cached, hide_super_admin=not is_super_admin), event=event)
         else:
             if not is_admin and not is_spiess and not is_myself:
                 return ERROR_403
             cached = executing_member if is_myself else None
-            return add_headers(get_member(application_id, member_id, False, cached), event=event)
+            return add_headers(get_member(application_id, member_id, False, cached, hide_super_admin=not is_super_admin), event=event)
     elif method == 'POST':
         body_data = json.loads(event.get('body', '{}'))
         posting_own_id = body_data.get('memberId') == executing_member_id
@@ -76,9 +77,10 @@ def _get_member_by_id(application_id, member_id):
     return response.get('Item')
 
 
-def get_member(application_id, member_id, all_details, cached_item=None):
+def get_member(application_id, member_id, all_details, cached_item=None, hide_super_admin=False):
     item = cached_item or _get_member_by_id(application_id, member_id)
-    if not item:
+    # Super-admin ids are credentials; hide those rows from non-super-admins.
+    if not item or (hide_super_admin and item.get('isSuperAdmin')):
         return {
             'statusCode': 404,
             'body': json.dumps({'error': 'Mitglied nicht gefunden'})
@@ -97,7 +99,7 @@ def get_member(application_id, member_id, all_details, cached_item=None):
     return {'statusCode': 200, 'body': json.dumps(result, cls=DecimalEncoder)}
 
 
-def list_members(application_id):
+def list_members(application_id, include_super_admins=False):
     from boto3.dynamodb.conditions import Key
     items = []
     response = members_table.query(
@@ -110,6 +112,8 @@ def list_members(application_id):
             ExclusiveStartKey=response['LastEvaluatedKey'],
         )
         items.extend(response['Items'])
+    if not include_super_admins:
+        items = [i for i in items if not i.get('isSuperAdmin')]
     return {'statusCode': 200, 'body': json.dumps(items, cls=DecimalEncoder)}
 
 

@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, patch
 
 # Pre-patch modules that api_members imports at module level
 sys.modules.setdefault('boto3', MagicMock())
+sys.modules.setdefault('boto3.dynamodb', MagicMock())
+sys.modules.setdefault('boto3.dynamodb.conditions', MagicMock())
 
 sys.path.insert(0, '.')
 import api_members
@@ -185,12 +187,15 @@ class TestSuperAdmin(unittest.TestCase):
             'token': '',
         }
 
+        self.admin = {'applicationId': APP_ID, 'memberId': 'admin1', 'name': 'Admin', 'isAdmin': True}
+
         def get_item_side_effect(Key):
-            data = {'super1': self.super_admin}
+            data = {'super1': self.super_admin, 'admin1': self.admin}
             item = data.get(Key.get('memberId'))
             return {'Item': item} if item else {}
 
         self.mock_table.get_item.side_effect = get_item_side_effect
+        self.mock_table.query.return_value = {'Items': [self.super_admin, self.admin]}
 
     def test_get_member_includes_is_super_admin(self):
         event = {
@@ -203,6 +208,27 @@ class TestSuperAdmin(unittest.TestCase):
         body = json.loads(response['body'])
         self.assertIn('isSuperAdmin', body)
         self.assertTrue(body['isSuperAdmin'])
+
+    def test_list_members_hides_super_admins_for_admin(self):
+        response = api_members.handle_members(_admin_event('GET', '/members'), {})
+        self.assertEqual(response['statusCode'], 200)
+        ids = [m['memberId'] for m in json.loads(response['body'])]
+        self.assertEqual(ids, ['admin1'])
+
+    def test_list_members_shows_super_admins_for_super_admin(self):
+        event = _event('GET', '/members', headers={'memberid': 'super1'})
+        response = api_members.handle_members(event, {})
+        self.assertEqual(response['statusCode'], 200)
+        ids = [m['memberId'] for m in json.loads(response['body'])]
+        self.assertEqual(ids, ['super1', 'admin1'])
+
+    def test_get_super_admin_member_as_admin_not_found(self):
+        for path in ('/members/super1', '/members/super1/all'):
+            event = _admin_event('GET', path, member_id='super1')
+            response = api_members.handle_members(event, {})
+            self.assertEqual(response['statusCode'], 404)
+            self.assertEqual(json.loads(response['body']),
+                             {'error': 'Mitglied nicht gefunden'})
 
     def test_add_member_does_not_overwrite_is_super_admin(self):
         self.mock_table.update_item.return_value = {}
