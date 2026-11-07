@@ -23,6 +23,22 @@ void main() {
       expect(result.containsKey('password'), false);
     });
 
+    test('falls back to the default apiBaseUrl when absent', () {
+      final result = parseInviteLink(
+        'https://vereinsappell.web.app?applicationId=app-1&memberId=mem-1',
+      );
+      expect(result['apiBaseUrl'], kDefaultApiBaseUrl);
+      expect(result['applicationId'], 'app-1');
+      expect(result['memberId'], 'mem-1');
+    });
+
+    test('returns empty map when memberId is missing', () {
+      expect(
+        parseInviteLink('https://vereinsappell.web.app?applicationId=app-1'),
+        isEmpty,
+      );
+    });
+
     test('returns empty map for non-URL input', () {
       expect(parseInviteLink('not a url'), isEmpty);
     });

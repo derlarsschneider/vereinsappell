@@ -13,6 +13,7 @@ import 'package:vereinsappell/screens/home_screen.dart';
 import 'package:vereinsappell/screens/marschbefehl_screen.dart';
 import 'package:vereinsappell/screens/mitglieder_screen.dart';
 import 'package:vereinsappell/screens/strafen_screen.dart';
+import 'package:vereinsappell/utils/invite_link.dart';
 import 'package:vereinsappell/utils/startup_timer.dart';
 import 'package:window_size/window_size.dart';
 
@@ -71,12 +72,13 @@ void main() async {
 
   if (kIsWeb) {
     final url = Uri.base;
-    final apiBaseUrlParam = url.queryParameters['apiBaseUrl'];
+    final apiBaseUrlParam = url.queryParameters['apiBaseUrl'] ?? kDefaultApiBaseUrl;
     final applicationIdParam = url.queryParameters['applicationId'];
     final memberIdParam = url.queryParameters['memberId'];
     final passwordParam = url.queryParameters['password'];
 
-    if (apiBaseUrlParam != null && applicationIdParam != null && memberIdParam != null) {
+    // Invite links from the member screen carry no apiBaseUrl; fall back to prod.
+    if (applicationIdParam != null && memberIdParam != null) {
       final incoming = AppConfig(
         apiBaseUrl: apiBaseUrlParam,
         applicationId: applicationIdParam,
