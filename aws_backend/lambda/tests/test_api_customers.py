@@ -164,3 +164,88 @@ class TestCreateCustomer(unittest.TestCase):
         event['headers'] = {}
         api_customers.create_customer(event)
         self.mock_members_table.put_item.assert_not_called()
+
+
+class _FakeResponse:
+    def __init__(self, data=b'img', content_type='image/png'):
+        self._data = data
+        self.headers = {'Content-Type': content_type}
+
+    def read(self, n=-1):
+        return self._data if n is None or n < 0 else self._data[:n]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _addrinfo(ip):
+    return [(2, 1, 6, '', (ip, 443))]
+
+
+class TestFetchBannerImage(unittest.TestCase):
+    def _fetch(self, url, ip='93.184.216.34', response=None):
+        opener = MagicMock()
+        opener.open.return_value = response or _FakeResponse()
+        with patch.object(api_customers.socket, 'getaddrinfo', return_value=_addrinfo(ip)), \
+                patch.object(api_customers, '_build_opener', return_value=opener):
+            return api_customers._fetch_banner_image(url)
+
+    def test_rejects_http(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('http://example.com/a.png')
+
+    def test_rejects_file_scheme(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('file:///etc/passwd')
+
+    def test_rejects_ip_literal(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://93.184.216.34/a.png')
+
+    def test_rejects_localhost(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://localhost/a.png')
+
+    def test_rejects_non_443_port(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com:8443/a.png')
+
+    def test_rejects_private_resolution(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com/a.png', ip='10.0.0.1')
+
+    def test_rejects_link_local(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com/a.png', ip='169.254.169.254')
+
+    def test_rejects_loopback(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com/a.png', ip='127.0.0.1')
+
+    def test_rejects_non_image_content_type(self):
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com/a.png', response=_FakeResponse(content_type='text/plain'))
+
+    def test_rejects_oversized(self):
+        big = b'x' * (5 * 1024 * 1024 + 1)
+        with self.assertRaises(api_customers.InvalidImageUrl):
+            self._fetch('https://example.com/a.png', response=_FakeResponse(data=big))
+
+    def test_accepts_public_https_image(self):
+        self.assertEqual(self._fetch('https://example.com/a.png'), b'img')
+
+    def test_update_customer_invalid_url_returns_400_and_no_db_write(self):
+        mock_table = MagicMock()
+        api_customers.table = MagicMock(return_value=mock_table)
+        event = _event(
+            'PUT', '/customers/club1',
+            body={'application_name': 'X', 'ad_banner_image_source_url': 'file:///etc/passwd'},
+            customer_id='club1',
+        )
+        response = api_customers.update_customer(event)
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(json.loads(response['body']), {'error': 'Ungültige Bild-URL'})
+        mock_table.update_item.assert_not_called()

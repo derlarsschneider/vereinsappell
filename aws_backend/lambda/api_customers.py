@@ -1,6 +1,9 @@
 import base64
+import ipaddress
 import json
 import os
+import socket
+import urllib.parse
 import urllib.request
 import uuid
 import boto3
@@ -65,6 +68,68 @@ def list_customers():
     }
 
 
+MAX_BANNER_BYTES = 5 * 1024 * 1024
+
+
+class InvalidImageUrl(ValueError):
+    pass
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise InvalidImageUrl('redirects are not allowed')
+
+
+def _build_opener():
+    return urllib.request.build_opener(_NoRedirect)
+
+
+def _fetch_banner_image(url):
+    """Download a banner image from a public https host (SSRF-safe).
+
+    Known limitation: DNS is resolved here and again by the opener (rebinding TOCTOU).
+    """
+    try:
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.hostname
+        port = parsed.port
+    except ValueError:
+        raise InvalidImageUrl('malformed url')
+    if parsed.scheme != 'https' or not host or parsed.username is not None or port not in (None, 443):
+        raise InvalidImageUrl('url not allowed')
+    if host.lower() == 'localhost':
+        raise InvalidImageUrl('host not allowed')
+    try:
+        ipaddress.ip_address(host.strip('[]'))
+        raise InvalidImageUrl('ip literals not allowed')
+    except ValueError as e:
+        if isinstance(e, InvalidImageUrl):
+            raise
+    try:
+        infos = socket.getaddrinfo(host, 443)
+    except OSError:
+        raise InvalidImageUrl('host does not resolve')
+    if not infos:
+        raise InvalidImageUrl('host does not resolve')
+    for info in infos:
+        addr = info[4][0].split('%')[0]
+        if not ipaddress.ip_address(addr).is_global:
+            raise InvalidImageUrl('host resolves to non-public address')
+
+    try:
+        with _build_opener().open(url, timeout=10) as resp:  # noqa: S310
+            if not str(resp.headers.get('Content-Type', '')).lower().startswith('image/'):
+                raise InvalidImageUrl('not an image')
+            data = resp.read(MAX_BANNER_BYTES + 1)
+    except InvalidImageUrl:
+        raise
+    except Exception:
+        raise InvalidImageUrl('download failed')
+    if len(data) > MAX_BANNER_BYTES:
+        raise InvalidImageUrl('image too large')
+    return data
+
+
 def update_customer(event):
     customer_id = event['pathParameters']['customerId']
     body = json.loads(event['body'])
@@ -97,8 +162,10 @@ def update_customer(event):
         update_expr += ', ad_banner_s3_key = :ad_banner_s3_key'
         expr_values[':ad_banner_s3_key'] = s3_key
     elif image_source_url:
-        with urllib.request.urlopen(image_source_url, timeout=10) as resp:  # noqa: S310
-            image_bytes = resp.read()
+        try:
+            image_bytes = _fetch_banner_image(image_source_url)
+        except InvalidImageUrl:
+            return {'statusCode': 400, 'body': json.dumps({'error': 'Ungültige Bild-URL'})}
         s3_key = _upload_ad_banner(customer_id, image_bytes)
         update_expr += ', ad_banner_s3_key = :ad_banner_s3_key'
         expr_values[':ad_banner_s3_key'] = s3_key
