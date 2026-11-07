@@ -13,6 +13,10 @@ resource "aws_dynamodb_table" "marschbefehl_table" {
         name = "datetime"
         type = "S"
     }
+
+    point_in_time_recovery {
+        enabled = true
+    }
 }
 
 resource "aws_apigatewayv2_route" "marschbefehl_get" {

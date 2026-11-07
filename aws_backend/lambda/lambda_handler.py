@@ -19,6 +19,7 @@ from api_docs import handle_docs
 from api_legal import handle_legal
 from api_news import handle_news
 from api_feedback import handle_feedback
+from authz import get_caller, forbidden
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -95,56 +96,99 @@ def lambda_handler(event, context):
 
 
 def _dispatch(event, context, method, path, application_id, headers):
+    _caller = []
+
+    def caller():
+        # Resolve the caller lazily, at most once per request.
+        if not _caller:
+            _caller.append(get_caller(event))
+        return _caller[0]
+
     if path.startswith('/members'):
         return handle_members(event, context)
     elif path.startswith('/docs'):
         return handle_docs(event, context)
     elif method == 'GET' and path == '/fines':
+        requested = (event.get('queryStringParameters') or {}).get('memberId')
+        c = caller()
+        if not (requested == c.member_id or c.is_spiess or c.is_admin):
+            return forbidden(headers)
         return {**headers, **get_fines(event, application_id)}
     elif method == 'POST' and path == '/fines':
+        c = caller()
+        if not (c.is_spiess or c.is_admin):
+            return forbidden(headers)
         return {**headers, **add_fine(event, application_id)}
     elif method == 'DELETE' and path.startswith('/fines/'):
-        return {**headers, **delete_fine(event, application_id)}
+        c = caller()
+        if not (c.is_spiess or c.is_admin):
+            return forbidden(headers)
+        return {**headers, **delete_fine(event, c.application_id)}
     elif method == 'GET' and path == '/marschbefehl':
         return {**headers, **get_marschbefehl(event, application_id)}
     elif method == 'POST' and path == '/marschbefehl':
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **add_marschbefehl(event, application_id)}
     elif method == 'DELETE' and path == '/marschbefehl':
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **delete_marschbefehl(event, application_id)}
     elif method == 'GET' and path.startswith('/photos'):
         return {**headers, **get_photos(event, application_id)}
     elif method == 'POST' and path.startswith('/photos'):
         return {**headers, **add_photo(event, application_id)}
     elif method == 'DELETE' and path.startswith('/photos/'):
+        if not caller().is_admin:
+            return forbidden(headers)
         return {**headers, **delete_photo(event, application_id)}
     elif method == 'GET' and path.startswith('/customers/'):
+        customer_id = (event.get('pathParameters') or {}).get('customerId')
+        c = caller()
+        if not (c.is_super_admin or (customer_id and customer_id == c.application_id)):
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.get_customer_by_id(event, context)}
     elif method == 'GET' and path == '/customers':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.list_customers()}
     elif method == 'POST' and path == '/customers':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.create_customer(event)}
     elif method == 'PUT' and path.startswith('/customers/'):
+        customer_id = (event.get('pathParameters') or {}).get('customerId')
+        if not caller().can_manage_club(customer_id):
+            return forbidden(headers)
         import api_customers
         return {**headers, **api_customers.update_customer(event)}
     elif method == 'GET' and path.startswith('/calendar'):
         import api_calendar
         return {**headers, **api_calendar.get_calendar(event, context)}
     elif method == 'GET' and path == '/monitoring/stats':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_monitoring(event, context)}
     elif method == 'POST' and path == '/monitoring/timing':
         import api_monitoring
         return {**headers, **api_monitoring.handle_timing(event, context)}
     elif method == 'GET' and path == '/monitoring/startup':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_startup_stats(event, context)}
     elif method == 'GET' and path == '/monitoring/perf':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_perf_stats(event, context)}
     elif method == 'GET' and path == '/monitoring/errors':
+        if not caller().is_super_admin:
+            return forbidden(headers)
         import api_monitoring
         return {**headers, **api_monitoring.handle_errors(event, context)}
     elif method == 'POST' and path == '/join/club':

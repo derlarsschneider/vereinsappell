@@ -7,6 +7,10 @@ resource "aws_dynamodb_table" "customer_config_table" {
         name = "application_id"
         type = "S"
     }
+
+    point_in_time_recovery {
+        enabled = true
+    }
 }
 
 resource "aws_apigatewayv2_route" "customer_get" {

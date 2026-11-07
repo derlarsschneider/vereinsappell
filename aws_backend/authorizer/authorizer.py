@@ -1,37 +1,30 @@
+import os
+
 import boto3
+
 
 def lambda_authorizer(event, context):
     if event.get('source') == 'aws.events':
         return {'isAuthorized': True}
-    headers = event.get("headers", {})
-    application_id = headers.get("applicationid", "")
-    member_id = headers.get("memberid", "")
-    password = headers.get("password", "")
-    # check DynamoDB for registered clients
-    if application_id in get_application_ids():
-        return {
-            "isAuthorized": True,
-            # "context": {
-            #     "user": "trusted-client"
-            # }
-        }
-    else:
-        return {
-            "isAuthorized": False,
-            # "context": {},
-            # "headers": {
-            #     "Access-Control-Allow-Origin": "https://vereinsappell.web.app",
-            #     "Access-Control-Allow-Headers": "applicationId,content-type",
-            #     "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS"
-            # }
-        }
+    headers = event.get('headers') or {}
+    application_id = headers.get('applicationid', '')
+    member_id = headers.get('memberid', '')
+    if not application_id or not member_id:
+        return {'isAuthorized': False}
+
+    member = _get_member(application_id, member_id)
+    if member is None:
+        return {'isAuthorized': False}
+
+    # Legacy rows without isActive count as active; super admins may always pass
+    is_active = member.get('isActive', True)
+    if is_active or member.get('isSuperAdmin'):
+        return {'isAuthorized': True}
+    return {'isAuthorized': False}
 
 
-def get_application_ids():
-    # print("get_application_ids")
+def _get_member(application_id, member_id):
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('vereinsappell-customers')
-    response = table.scan()
-    application_ids = [item['application_id'] for item in response['Items']]
-    # print("application_ids:", application_ids)
-    return application_ids
+    table = dynamodb.Table(os.environ['MEMBERS_TABLE_NAME'])
+    response = table.get_item(Key={'applicationId': application_id, 'memberId': member_id})
+    return response.get('Item')

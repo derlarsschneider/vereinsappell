@@ -34,25 +34,4 @@ class BackupApi {
     }
     throw Exception('Fehler beim Laden: ${response.statusCode}');
   }
-
-  Future<Map<String, dynamic>> restoreBackup(String timestamp) async {
-    final response = await _client.post(
-      Uri.parse('${config.apiBaseUrl}/admin/backup/$timestamp/restore'),
-      headers: headers(config),
-    );
-    if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('Fehler beim Restore: ${response.statusCode}');
-  }
-
-  Future<void> clearTable(String tableName) async {
-    final response = await _client.delete(
-      Uri.parse('${config.apiBaseUrl}/admin/table/$tableName/items'),
-      headers: headers(config),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Fehler beim Leeren: ${response.statusCode}');
-    }
-  }
 }

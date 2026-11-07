@@ -21,6 +21,7 @@ resource "aws_lambda_function" "lambda_backend" {
             LAMBDA_LOG_GROUP_NAME    = "/aws/lambda/${local.name_prefix}-lambda_backend",
             PERF_LOGGING_ENABLED     = "true",
             CONTACT_EMAIL            = "info@vereinsappell.de",
+            DOCS_PASSWORD            = data.aws_secretsmanager_secret_version.docs_password.secret_string,
         }
     }
 }

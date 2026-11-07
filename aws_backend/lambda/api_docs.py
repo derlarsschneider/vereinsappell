@@ -1,14 +1,17 @@
 import base64
+import hmac
 import json
 import os
 import urllib.parse
 import boto3
 import re
 
+from authz import get_caller, forbidden
+
 s3 = boto3.client('s3')
 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
 
-DOCS_PASSWORD = os.environ.get('DOCS_PASSWORD', 'geheim123')
+DOCS_PASSWORD = os.environ.get('DOCS_PASSWORD') or ''
 
 _VALID_DOC_NAME = re.compile(r'^[A-Za-z0-9._\-/]+$')
 
@@ -16,7 +19,7 @@ _VALID_DOC_NAME = re.compile(r'^[A-Za-z0-9._\-/]+$')
 def _is_valid_doc_name(name: str) -> bool:
     if not name or not _VALID_DOC_NAME.match(name):
         return False
-    if '..' in name.split('/'):
+    if any(seg in ('', '.', '..') for seg in name.split('/')):
         return False
     return True
 
@@ -32,9 +35,24 @@ def handle_docs(event, context):
     elif method == 'GET' and path.startswith('/docs/'):
         return _add_headers(get_doc(event, prefix), event=event)
     elif method == 'POST' and path.startswith('/docs'):
+        denied = _require_admin(event)
+        if denied:
+            return denied
         return _add_headers(add_doc(event, prefix), event=event)
     elif method == 'DELETE' and path.startswith('/docs/'):
+        denied = _require_admin(event)
+        if denied:
+            return denied
         return _add_headers(delete_doc(event, prefix), event=event)
+
+
+def _require_admin(event):
+    """Return a 401/403 response if the docs password is wrong or the caller is no admin."""
+    if not _check_password(event):
+        return _add_headers(_unauthorized(), event=event)
+    if not get_caller(event).is_admin:
+        return forbidden(_add_headers({}, event=event))
+    return None
 
 
 def _add_headers(response, more_fields={}, event=None):
@@ -61,7 +79,11 @@ def _unauthorized():
 
 def _check_password(event):
     headers = event.get('headers') or {}
-    return headers.get('password') == DOCS_PASSWORD
+    expected = DOCS_PASSWORD
+    provided = headers.get('password')
+    if not expected or not isinstance(provided, str):
+        return False
+    return hmac.compare_digest(provided.encode('utf-8'), expected.encode('utf-8'))
 
 
 def get_docs(event, prefix: str):
@@ -86,6 +108,8 @@ def get_doc(event, prefix: str):
         return _unauthorized()
 
     file_name = urllib.parse.unquote(event['pathParameters']['fileName'])
+    if not _is_valid_doc_name(file_name):
+        return {'statusCode': 400, 'body': json.dumps({'error': 'Ungültiger Dateiname'})}
     key = f'{prefix}/{file_name}'
 
     try:
@@ -138,6 +162,8 @@ def delete_doc(event, prefix: str):
         return _unauthorized()
 
     file_name = urllib.parse.unquote(event['pathParameters']['fileName'])
+    if not _is_valid_doc_name(file_name):
+        return {'statusCode': 400, 'body': json.dumps({'error': 'Ungültiger Dateiname'})}
     s3.delete_object(Bucket=s3_bucket_name, Key=f'{prefix}/{file_name}')
     return {
         'statusCode': 200,
