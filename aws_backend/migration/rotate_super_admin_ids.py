@@ -59,6 +59,8 @@ from boto3.dynamodb.types import TypeSerializer
 REGION = 'eu-central-1'
 CUSTOMERS_TABLE = 'vereinsappell-customers'
 INVITE_BASE_URL = 'https://vereinsappell.web.app'
+# Production API endpoint; the app only adds an account from a link that names it.
+API_BASE_URL = 'https://v49kyt4758.execute-api.eu-central-1.amazonaws.com'
 
 _serializer = TypeSerializer()
 
@@ -77,7 +79,12 @@ def build_rotated_item(item: dict, new_member_id: str) -> dict:
 
 
 def invite_link(application_id: str, member_id: str) -> str:
-    return f'{INVITE_BASE_URL}?{urlencode({"applicationId": application_id, "memberId": member_id})}'
+    query = urlencode({
+        'apiBaseUrl': API_BASE_URL,
+        'applicationId': application_id,
+        'memberId': member_id,
+    })
+    return f'{INVITE_BASE_URL}?{query}'
 
 
 MAX_TRANSACTION_ITEMS = 100

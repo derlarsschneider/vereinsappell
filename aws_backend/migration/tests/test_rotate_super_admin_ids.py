@@ -36,7 +36,11 @@ class TestInviteLink(unittest.TestCase):
         link = rot.invite_link('app 1', 'id&x')
         parsed = urlparse(link)
         self.assertEqual(f'{parsed.scheme}://{parsed.netloc}', 'https://vereinsappell.web.app')
-        self.assertEqual(parse_qs(parsed.query), {'applicationId': ['app 1'], 'memberId': ['id&x']})
+        self.assertEqual(parse_qs(parsed.query), {
+            'apiBaseUrl': [rot.API_BASE_URL],
+            'applicationId': ['app 1'],
+            'memberId': ['id&x'],
+        })
 
 
 class TestRotationTransaction(unittest.TestCase):
