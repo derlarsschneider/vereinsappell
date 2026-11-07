@@ -230,5 +230,34 @@ class TestHandleDocsAuthorization(unittest.TestCase):
         gc.assert_not_called()
 
 
+class TestDocNameValidationOnReadDelete(unittest.TestCase):
+    BAD = ['..%2Fother%2Fdocs%2Fx', '/abs', '%2Fabs', 'a//b', './x']
+
+    def setUp(self):
+        self.mock_s3 = MagicMock()
+        api_docs.s3 = self.mock_s3
+        api_docs.s3_bucket_name = 'test-bucket'
+        api_docs.DOCS_PASSWORD = 'testpw'
+        self.mock_s3.exceptions.ClientError = ClientError
+
+    def test_get_doc_rejects_invalid_names(self):
+        for name in self.BAD:
+            response = api_docs.get_doc(_auth_event('GET', '/docs/x', file_name=name), PREFIX)
+            self.assertEqual(response['statusCode'], 400, name)
+        self.mock_s3.get_object.assert_not_called()
+
+    def test_delete_doc_rejects_invalid_names(self):
+        for name in self.BAD:
+            response = api_docs.delete_doc(_auth_event('DELETE', '/docs/x', file_name=name), PREFIX)
+            self.assertEqual(response['statusCode'], 400, name)
+        self.mock_s3.delete_object.assert_not_called()
+
+    def test_add_doc_rejects_leading_slash(self):
+        body = {'name': '/abs', 'file': base64.b64encode(b'x').decode()}
+        response = api_docs.add_doc(_auth_event('POST', '/docs', body=body), PREFIX)
+        self.assertEqual(response['statusCode'], 400)
+        self.mock_s3.put_object.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

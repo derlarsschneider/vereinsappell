@@ -19,7 +19,7 @@ _VALID_DOC_NAME = re.compile(r'^[A-Za-z0-9._\-/]+$')
 def _is_valid_doc_name(name: str) -> bool:
     if not name or not _VALID_DOC_NAME.match(name):
         return False
-    if '..' in name.split('/'):
+    if any(seg in ('', '.', '..') for seg in name.split('/')):
         return False
     return True
 
@@ -108,6 +108,8 @@ def get_doc(event, prefix: str):
         return _unauthorized()
 
     file_name = urllib.parse.unquote(event['pathParameters']['fileName'])
+    if not _is_valid_doc_name(file_name):
+        return {'statusCode': 400, 'body': json.dumps({'error': 'Ungültiger Dateiname'})}
     key = f'{prefix}/{file_name}'
 
     try:
@@ -160,6 +162,8 @@ def delete_doc(event, prefix: str):
         return _unauthorized()
 
     file_name = urllib.parse.unquote(event['pathParameters']['fileName'])
+    if not _is_valid_doc_name(file_name):
+        return {'statusCode': 400, 'body': json.dumps({'error': 'Ungültiger Dateiname'})}
     s3.delete_object(Bucket=s3_bucket_name, Key=f'{prefix}/{file_name}')
     return {
         'statusCode': 200,
