@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 from decimal import Decimal
+import unittest.mock
 from unittest.mock import MagicMock
 from urllib.parse import parse_qs, urlparse
 
@@ -110,6 +111,77 @@ class TestFinesByMember(unittest.TestCase):
         ]}
         self.assertEqual(rot.fines_by_member(table, [OLD]), {('app-1', 'old-id'): ['f1', 'f2']})
         self.assertIn('fineId', table.scan.call_args.kwargs['ProjectionExpression'])
+
+
+class TestBuildConsolidatedItem(unittest.TestCase):
+    def test_kept_row_stays_super_admin(self):
+        item = rot.build_consolidated_item(OLD, 'new-id', keep_super_admin=True)
+        self.assertEqual(item['memberId'], 'new-id')
+        self.assertIs(item['isSuperAdmin'], True)
+
+    def test_other_rows_become_club_admins(self):
+        row = {**OLD, 'isAdmin': False}
+        item = rot.build_consolidated_item(row, 'new-id', keep_super_admin=False)
+        self.assertEqual(item['memberId'], 'new-id')
+        self.assertIs(item['isSuperAdmin'], False)
+        self.assertIs(item['isAdmin'], True)
+        self.assertEqual(item['name'], OLD['name'])
+
+    def test_original_is_not_mutated(self):
+        rot.build_consolidated_item(OLD, 'new-id', keep_super_admin=False)
+        self.assertIs(OLD['isSuperAdmin'], True)
+        self.assertEqual(OLD['memberId'], 'old-id')
+
+
+class TestRunConsolidate(unittest.TestCase):
+    def _run(self, rows, fines_items, keep='app-1', apply=False, answer='consolidate'):
+        args = MagicMock(workspace='ws', keep=keep, apply=apply)
+        members = MagicMock()
+        members.scan.return_value = {'Items': rows}
+        customers = MagicMock()
+        customers.scan.return_value = {'Items': []}
+        fines = MagicMock()
+        fines.scan.return_value = {'Items': fines_items}
+        dynamodb = MagicMock()
+        dynamodb.Table.side_effect = lambda name: {
+            rot.CUSTOMERS_TABLE: customers, 'ws-fines': fines}[name]
+        client = MagicMock()
+        with unittest.mock.patch('builtins.input', return_value=answer), \
+             unittest.mock.patch.object(rot, 'write_backup', return_value='b.json'), \
+             unittest.mock.patch('builtins.print'):
+            code = rot.run_consolidate(args, dynamodb, client, 'ws-members', members)
+        return code, client
+
+    def test_refuses_rows_with_fines(self):
+        code, client = self._run([OLD], [{'applicationId': 'app-1', 'memberId': 'old-id', 'fineId': 'f'}])
+        self.assertEqual(code, 1)
+        client.transact_write_items.assert_not_called()
+
+    def test_refuses_unknown_keep_club(self):
+        code, client = self._run([OLD], [], keep='nope', apply=True)
+        self.assertEqual(code, 1)
+        client.transact_write_items.assert_not_called()
+
+    def test_dry_run_changes_nothing(self):
+        code, client = self._run([OLD], [])
+        self.assertEqual(code, 0)
+        client.transact_write_items.assert_not_called()
+
+    def test_apply_keeps_one_super_admin(self):
+        other = {**OLD, 'applicationId': 'app-2'}
+        code, client = self._run([OLD, other], [], apply=True)
+        self.assertEqual(code, 0)
+        puts = [c.kwargs['TransactItems'][0]['Put']['Item'] for c in client.transact_write_items.call_args_list]
+        by_app = {p['applicationId']['S']: p for p in puts}
+        self.assertEqual(by_app['app-1']['isSuperAdmin'], {'BOOL': True})
+        self.assertEqual(by_app['app-2']['isSuperAdmin'], {'BOOL': False})
+        self.assertEqual(by_app['app-2']['isAdmin'], {'BOOL': True})
+        self.assertNotEqual(by_app['app-1']['memberId'], {'S': 'old-id'})
+
+    def test_wrong_confirmation_aborts(self):
+        code, client = self._run([OLD], [], apply=True, answer='yes')
+        self.assertEqual(code, 1)
+        client.transact_write_items.assert_not_called()
 
 
 class TestDefaultAdminName(unittest.TestCase):

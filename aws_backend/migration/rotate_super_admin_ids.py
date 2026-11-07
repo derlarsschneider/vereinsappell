@@ -20,6 +20,16 @@ personal row. The personal row keeps its memberId and all its data; if that
 id leaks, it only grants the personal (club-level) rights. Run --split before
 rotating, so the rotation no longer picks up the personal row.
 
+--consolidate --keep X: keep a single super admin. Every super-admin row gets
+a fresh memberId; the row in club X stays super admin, all others become plain
+club admins (isAdmin). Platform-wide functions only need that one super-admin
+account; club work uses the per-club admin accounts. Refuses rows that have
+fines (personal accounts) — run --split for those first.
+
+Recommended order:
+    1. --split <club where you are a real member> --apply
+    2. --consolidate --keep <club for the super-admin account> --apply
+
 Default is a dry run. Nothing is changed without --apply.
 
 Usage:
@@ -160,6 +170,78 @@ def write_backup(rows: list, directory: str) -> str:
     return path
 
 
+def build_consolidated_item(item: dict, new_member_id: str, keep_super_admin: bool) -> dict:
+    """Rotated row; outside the kept club it becomes a plain club admin."""
+    rotated = build_rotated_item(item, new_member_id)
+    if not keep_super_admin:
+        rotated['isSuperAdmin'] = False
+        rotated['isAdmin'] = True
+    return rotated
+
+
+def run_consolidate(args, dynamodb, client, members_name, members_table) -> int:
+    rows = find_super_admins(members_table, None)
+    if not rows:
+        print('No super-admin rows found.')
+        return 0
+    if args.keep not in {r['applicationId'] for r in rows}:
+        print(f'No super-admin row in the club to keep ({args.keep}).')
+        return 1
+
+    names = club_names(dynamodb.Table(CUSTOMERS_TABLE))
+    fines_name = fines_table_name(args.workspace)
+    fines = fines_by_member(dynamodb.Table(fines_name), rows)
+    with_fines = [r for r in rows if fines.get((r['applicationId'], r['memberId']))]
+    if with_fines:
+        print('These super-admin rows look like personal accounts (they have fines). '
+              'Separate them with --split first:')
+        for r in with_fines:
+            print(f'  {names.get(r["applicationId"], "?")}  {r["applicationId"]}  '
+                  f'name={r.get("name", "")!r}')
+        return 1
+
+    print(f'{len(rows)} super-admin row(s); every one gets a fresh memberId:')
+    for r in rows:
+        role = 'stays SUPER ADMIN' if r['applicationId'] == args.keep else 'becomes club admin'
+        print(f'  {names.get(r["applicationId"], "?"):<30} name={r.get("name", "")!r:<40} {role}')
+    print('⚠️  Not migrated: Firebase data keyed by memberId (drink tallies, umlagen, poll votes) '
+          'and own feedback history.')
+
+    if not args.apply:
+        print('\nDry run — nothing changed. Re-run with --apply to consolidate.')
+        return 0
+
+    answer = input(f'\nConsolidate {len(rows)} row(s)? Type "consolidate" to continue: ')
+    if answer.strip() != 'consolidate':
+        print('Aborted.')
+        return 1
+
+    backup = write_backup(rows, os.path.dirname(os.path.abspath(__file__)))
+    print(f'Backup of old rows: {backup}')
+
+    print('\nNew invite links (treat like passwords):')
+    failed = 0
+    for r in rows:
+        keep = r['applicationId'] == args.keep
+        new_id = str(uuid.uuid4())
+        new_item = build_consolidated_item(r, new_id, keep_super_admin=keep)
+        try:
+            client.transact_write_items(TransactItems=rotation_transaction(members_name, r, new_item))
+        except Exception as e:  # report and continue with the next row
+            failed += 1
+            print(f'  ❌ {r["applicationId"]} {r["memberId"]}: {e}')
+            continue
+        label = 'SUPER ADMIN' if keep else 'club admin '
+        print(f'  [{label}] {names.get(r["applicationId"], "?"):<30} '
+              f'{invite_link(r["applicationId"], new_id)}')
+
+    if failed:
+        print(f'\n{failed} row(s) failed and were left unchanged.')
+        return 1
+    print('\nDone. Old memberIds stop working within 5 minutes.')
+    return 0
+
+
 def default_admin_name(personal_name: str, club_name: str) -> str:
     """'Lars Schiller' + 'Club' -> 'Lars (Club)', matching rows created by POST /customers."""
     first = (personal_name or 'Admin').split()[0]
@@ -259,10 +341,18 @@ def main() -> int:
     parser.add_argument('--member-id', help='with --split: the personal row, if the club has several')
     parser.add_argument('--name', help='with --split: name of the new admin row '
                                        '(default: "<first name> (<club>)")')
+    parser.add_argument('--consolidate', action='store_true',
+                        help='rotate all super-admin rows; only the club given by --keep stays '
+                             'super admin, all others become club admins')
+    parser.add_argument('--keep', metavar='APPLICATION_ID',
+                        help='with --consolidate: the club whose row stays super admin')
     parser.add_argument('--apply', action='store_true', help='actually change data (default: dry run)')
     args = parser.parse_args()
-    if args.split and args.application_id:
-        parser.error('--split and --application-id cannot be combined')
+    modes = [m for m in ('split', 'application_id', 'consolidate') if getattr(args, m)]
+    if len(modes) > 1:
+        parser.error('--split, --application-id and --consolidate cannot be combined')
+    if args.consolidate and not args.keep:
+        parser.error('--consolidate needs --keep APPLICATION_ID')
 
     dynamodb = boto3.resource('dynamodb', region_name=REGION)
     client = boto3.client('dynamodb', region_name=REGION)
@@ -271,6 +361,8 @@ def main() -> int:
 
     if args.split:
         return run_split(args, dynamodb, client, members_name, members_table)
+    if args.consolidate:
+        return run_consolidate(args, dynamodb, client, members_name, members_table)
 
     rows = find_super_admins(members_table, args.application_id)
     if not rows:
