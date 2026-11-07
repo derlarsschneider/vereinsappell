@@ -12,6 +12,15 @@ resource "aws_secretsmanager_secret_version" "firebase_credentials_version" {
     }
 }
 
+resource "aws_secretsmanager_secret" "docs_password" {
+    name        = "docs-password"
+    description = "Shared password for the club documents area (value is set manually)"
+}
+
+data "aws_secretsmanager_secret_version" "docs_password" {
+    secret_id = aws_secretsmanager_secret.docs_password.id
+}
+
 resource "aws_iam_policy" "secretsmanager_policy" {
     name = "${local.name_prefix}-lambda-secretsmanager-access"
 
