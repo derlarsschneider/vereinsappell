@@ -70,15 +70,46 @@ class TestFindSuperAdmins(unittest.TestCase):
         self.assertEqual(table.scan.call_count, 2)
 
 
-class TestCountFines(unittest.TestCase):
-    def test_counts_only_rotated_keys(self):
+class TestRotationTransactionWithFines(unittest.TestCase):
+    def setUp(self):
+        self.tx = rot.rotation_transaction(
+            't-members', OLD, rot.build_rotated_item(OLD, 'new-id'), 't-fines', ['f1', 'f2'])
+
+    def test_member_ops_then_one_update_per_fine(self):
+        self.assertEqual([list(op)[0] for op in self.tx], ['Put', 'Delete', 'Update', 'Update'])
+
+    def test_fine_update_moves_member_id_with_guard(self):
+        update = self.tx[2]['Update']
+        self.assertEqual(update['TableName'], 't-fines')
+        self.assertEqual(update['Key'], {'applicationId': {'S': 'app-1'}, 'fineId': {'S': 'f1'}})
+        self.assertEqual(update['UpdateExpression'], 'SET memberId = :new')
+        self.assertEqual(update['ConditionExpression'], 'memberId = :old')
+        self.assertEqual(update['ExpressionAttributeValues'],
+                         {':new': {'S': 'new-id'}, ':old': {'S': 'old-id'}})
+        self.assertEqual(self.tx[3]['Update']['Key']['fineId'], {'S': 'f2'})
+
+    def test_too_many_fines_for_one_transaction_raises(self):
+        with self.assertRaises(ValueError):
+            rot.rotation_transaction('t-members', OLD, rot.build_rotated_item(OLD, 'new-id'),
+                                     't-fines', [f'f{i}' for i in range(99)])
+
+    def test_98_fines_fit(self):
+        tx = rot.rotation_transaction('t-members', OLD, rot.build_rotated_item(OLD, 'new-id'),
+                                      't-fines', [f'f{i}' for i in range(98)])
+        self.assertEqual(len(tx), 100)
+
+
+class TestFinesByMember(unittest.TestCase):
+    def test_collects_fine_ids_only_for_rotated_keys(self):
         table = MagicMock()
         table.scan.return_value = {'Items': [
-            {'applicationId': 'app-1', 'memberId': 'old-id'},
-            {'applicationId': 'app-1', 'memberId': 'old-id'},
-            {'applicationId': 'app-2', 'memberId': 'old-id'},
+            {'applicationId': 'app-1', 'memberId': 'old-id', 'fineId': 'f1'},
+            {'applicationId': 'app-1', 'memberId': 'old-id', 'fineId': 'f2'},
+            {'applicationId': 'app-2', 'memberId': 'old-id', 'fineId': 'f3'},
+            {'applicationId': 'app-1', 'memberId': 'other', 'fineId': 'f4'},
         ]}
-        self.assertEqual(rot.count_fines(table, [OLD]), {('app-1', 'old-id'): 2})
+        self.assertEqual(rot.fines_by_member(table, [OLD]), {('app-1', 'old-id'): ['f1', 'f2']})
+        self.assertIn('fineId', table.scan.call_args.kwargs['ProjectionExpression'])
 
 
 if __name__ == '__main__':

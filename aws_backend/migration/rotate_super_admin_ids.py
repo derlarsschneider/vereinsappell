@@ -6,8 +6,12 @@ Old super-admin memberIds may have leaked (open Firebase polls/umlagen data,
 GET /members before the security hotfix). memberId is the only credential, so
 each super-admin row gets a fresh random memberId and the old row is removed.
 
-Per row, one DynamoDB transaction writes the copy with the new memberId and
-deletes the old row, so a row is never lost or duplicated.
+Per row, one DynamoDB transaction writes the copy with the new memberId,
+moves the member's fines to the new memberId and deletes the old row, so a
+row is never lost, duplicated or separated from its fines.
+
+Not migrated: Firebase data keyed by memberId (drink tallies, umlagen, poll
+votes) and the member's own feedback history.
 
 Default is a dry run. Nothing is changed without --apply.
 
@@ -57,8 +61,32 @@ def invite_link(application_id: str, member_id: str) -> str:
     return f'{INVITE_BASE_URL}?{urlencode({"applicationId": application_id, "memberId": member_id})}'
 
 
-def rotation_transaction(table_name: str, old_item: dict, new_item: dict) -> list:
-    """TransactItems that put the new row and delete the old one atomically."""
+MAX_TRANSACTION_ITEMS = 100
+
+
+def rotation_transaction(table_name: str, old_item: dict, new_item: dict,
+                         fines_table: str = '', fine_ids: list = ()) -> list:
+    """TransactItems that put the new row, move the fines and delete the old row atomically."""
+    if len(fine_ids) + 2 > MAX_TRANSACTION_ITEMS:
+        raise ValueError(f'too many fines ({len(fine_ids)}) for one transaction')
+    fine_updates = [
+        {
+            'Update': {
+                'TableName': fines_table,
+                'Key': {
+                    'applicationId': _serializer.serialize(old_item['applicationId']),
+                    'fineId': _serializer.serialize(fine_id),
+                },
+                'UpdateExpression': 'SET memberId = :new',
+                'ConditionExpression': 'memberId = :old',
+                'ExpressionAttributeValues': {
+                    ':new': _serializer.serialize(new_item['memberId']),
+                    ':old': _serializer.serialize(old_item['memberId']),
+                },
+            }
+        }
+        for fine_id in fine_ids
+    ]
     return [
         {
             'Put': {
@@ -77,6 +105,7 @@ def rotation_transaction(table_name: str, old_item: dict, new_item: dict) -> lis
                 'ConditionExpression': 'attribute_exists(memberId)',
             }
         },
+        *fine_updates,
     ]
 
 
@@ -103,15 +132,15 @@ def club_names(customers_table) -> dict:
             for c in scan_all(customers_table)}
 
 
-def count_fines(fines_table, rows: list) -> dict:
-    """Number of fines referencing each old (applicationId, memberId)."""
+def fines_by_member(fines_table, rows: list) -> dict:
+    """fineIds referencing each old (applicationId, memberId)."""
     keys = {(r['applicationId'], r['memberId']) for r in rows}
-    counts = {}
-    for fine in scan_all(fines_table, ProjectionExpression='applicationId, memberId'):
+    result = {}
+    for fine in scan_all(fines_table, ProjectionExpression='applicationId, memberId, fineId'):
         key = (fine.get('applicationId'), fine.get('memberId'))
         if key in keys:
-            counts[key] = counts.get(key, 0) + 1
-    return counts
+            result.setdefault(key, []).append(fine['fineId'])
+    return result
 
 
 def write_backup(rows: list, directory: str) -> str:
@@ -140,18 +169,20 @@ def main() -> int:
         return 0
 
     names = club_names(dynamodb.Table(CUSTOMERS_TABLE))
-    fines = count_fines(dynamodb.Table(fines_table_name(args.workspace)), rows)
+    fines_name = fines_table_name(args.workspace)
+    fines = fines_by_member(dynamodb.Table(fines_name), rows)
 
     print(f'{len(rows)} super-admin row(s) in {members_name}:')
     for r in rows:
         club = names.get(r['applicationId'], '?')
-        n_fines = fines.get((r['applicationId'], r['memberId']), 0)
+        n_fines = len(fines.get((r['applicationId'], r['memberId']), []))
         print(f'  {club:<30} {r["applicationId"]}  memberId={r["memberId"]}  '
               f'name={r.get("name", "")!r}  fines={n_fines}')
 
     if any(fines.values()):
-        print('\n⚠️  Some rows have fines. Fines keep the old memberId and will no longer show '
-              'for the rotated account. Rotate anyway only if that is acceptable.')
+        print('\nℹ️  Fines are moved to the new memberId in the same transaction.')
+    print('⚠️  Not migrated: Firebase data keyed by memberId (drink tallies, umlagen, poll votes) '
+          'and own feedback history.')
 
     if not args.apply:
         print('\nDry run — nothing changed. Re-run with --apply to rotate.')
@@ -171,8 +202,9 @@ def main() -> int:
         new_id = str(uuid.uuid4())
         new_item = build_rotated_item(r, new_id)
         try:
+            fine_ids = fines.get((r['applicationId'], r['memberId']), [])
             client.transact_write_items(
-                TransactItems=rotation_transaction(members_name, r, new_item)
+                TransactItems=rotation_transaction(members_name, r, new_item, fines_name, fine_ids)
             )
         except Exception as e:  # report and continue with the next row
             failed += 1
