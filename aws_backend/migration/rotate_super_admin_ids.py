@@ -13,6 +13,13 @@ row is never lost, duplicated or separated from its fines.
 Not migrated: Firebase data keyed by memberId (drink tallies, umlagen, poll
 votes) and the member's own feedback history.
 
+Alternative for a club where the super admin is also a real member (fines,
+drink tallies, votes): --split. It creates a separate super-admin row with a
+fresh memberId for administration only, and removes isSuperAdmin from the
+personal row. The personal row keeps its memberId and all its data; if that
+id leaks, it only grants the personal (club-level) rights. Run --split before
+rotating, so the rotation no longer picks up the personal row.
+
 Default is a dry run. Nothing is changed without --apply.
 
 Usage:
@@ -20,6 +27,8 @@ Usage:
     python3 rotate_super_admin_ids.py --application-id X    # dry run, one club
     python3 rotate_super_admin_ids.py --application-id X --apply
     python3 rotate_super_admin_ids.py --apply               # all clubs
+    python3 rotate_super_admin_ids.py --split X             # dry run, role split
+    python3 rotate_super_admin_ids.py --split X --apply
 
 After --apply:
   - the printed invite links are the new logins (treat them like passwords),
@@ -151,17 +160,117 @@ def write_backup(rows: list, directory: str) -> str:
     return path
 
 
+def default_admin_name(personal_name: str, club_name: str) -> str:
+    """'Lars Schiller' + 'Club' -> 'Lars (Club)', matching rows created by POST /customers."""
+    first = (personal_name or 'Admin').split()[0]
+    return f'{first} ({club_name})'
+
+
+def build_split_admin_item(application_id: str, new_member_id: str, name: str) -> dict:
+    """Dedicated super-admin row, used only for administration."""
+    return {
+        'applicationId': application_id,
+        'memberId': new_member_id,
+        'name': name,
+        'isSuperAdmin': True,
+        'isAdmin': True,
+        'isActive': True,
+    }
+
+
+def split_transaction(table_name: str, personal_item: dict, admin_item: dict) -> list:
+    """TransactItems that add the admin row and drop isSuperAdmin from the personal row."""
+    return [
+        {
+            'Put': {
+                'TableName': table_name,
+                'Item': {k: _serializer.serialize(v) for k, v in admin_item.items()},
+                'ConditionExpression': 'attribute_not_exists(memberId)',
+            }
+        },
+        {
+            'Update': {
+                'TableName': table_name,
+                'Key': {
+                    'applicationId': _serializer.serialize(personal_item['applicationId']),
+                    'memberId': _serializer.serialize(personal_item['memberId']),
+                },
+                'UpdateExpression': 'SET isSuperAdmin = :false',
+                'ConditionExpression': 'isSuperAdmin = :true',
+                'ExpressionAttributeValues': {
+                    ':false': _serializer.serialize(False),
+                    ':true': _serializer.serialize(True),
+                },
+            }
+        },
+    ]
+
+
+def run_split(args, dynamodb, client, members_name, members_table) -> int:
+    rows = find_super_admins(members_table, args.split)
+    if args.member_id:
+        rows = [r for r in rows if r['memberId'] == args.member_id]
+    if len(rows) != 1:
+        print(f'Expected exactly one super-admin row in {args.split}, found {len(rows)}. '
+              'Use --member-id to pick one.')
+        for r in rows:
+            print(f'  memberId={r["memberId"]}  name={r.get("name", "")!r}')
+        return 1
+    personal = rows[0]
+    club = club_names(dynamodb.Table(CUSTOMERS_TABLE)).get(args.split, args.split)
+    admin_name = args.name or default_admin_name(personal.get('name', ''), club)
+
+    print(f'Club:          {club} ({args.split})')
+    print(f'Personal row:  memberId={personal["memberId"]}  name={personal.get("name", "")!r}')
+    print(f'               → keeps everything (fines, Firebase data, isAdmin, token), '
+          f'loses isSuperAdmin')
+    print(f'New admin row: name={admin_name!r}, isSuperAdmin + isAdmin, fresh random memberId')
+
+    if not args.apply:
+        print('\nDry run — nothing changed. Re-run with --apply to split.')
+        return 0
+
+    answer = input('\nSplit roles? Type "split" to continue: ')
+    if answer.strip() != 'split':
+        print('Aborted.')
+        return 1
+
+    backup = write_backup([personal], os.path.dirname(os.path.abspath(__file__)))
+    print(f'Backup of personal row: {backup}')
+
+    new_id = str(uuid.uuid4())
+    admin_item = build_split_admin_item(args.split, new_id, admin_name)
+    client.transact_write_items(TransactItems=split_transaction(members_name, personal, admin_item))
+
+    print('\nNew super-admin invite link (treat like a password; use it only for administration):')
+    print(f'  {club:<30} {invite_link(args.split, new_id)}')
+    print('\nDone. The personal account loses super-admin rights immediately '
+          '(the backend re-reads roles on every request).')
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--workspace', default='vereins-app-beta')
     parser.add_argument('--application-id', help='only rotate super admins of this club')
-    parser.add_argument('--apply', action='store_true', help='actually rotate (default: dry run)')
+    parser.add_argument('--split', metavar='APPLICATION_ID',
+                        help='instead of rotating: give this club a separate super-admin row and '
+                             'remove isSuperAdmin from the existing (personal) row')
+    parser.add_argument('--member-id', help='with --split: the personal row, if the club has several')
+    parser.add_argument('--name', help='with --split: name of the new admin row '
+                                       '(default: "<first name> (<club>)")')
+    parser.add_argument('--apply', action='store_true', help='actually change data (default: dry run)')
     args = parser.parse_args()
+    if args.split and args.application_id:
+        parser.error('--split and --application-id cannot be combined')
 
     dynamodb = boto3.resource('dynamodb', region_name=REGION)
     client = boto3.client('dynamodb', region_name=REGION)
     members_name = members_table_name(args.workspace)
     members_table = dynamodb.Table(members_name)
+
+    if args.split:
+        return run_split(args, dynamodb, client, members_name, members_table)
 
     rows = find_super_admins(members_table, args.application_id)
     if not rows:

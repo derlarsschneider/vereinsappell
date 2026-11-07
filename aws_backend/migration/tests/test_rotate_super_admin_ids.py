@@ -112,5 +112,40 @@ class TestFinesByMember(unittest.TestCase):
         self.assertIn('fineId', table.scan.call_args.kwargs['ProjectionExpression'])
 
 
+class TestDefaultAdminName(unittest.TestCase):
+    def test_first_name_and_club(self):
+        self.assertEqual(rot.default_admin_name('Lars Schiller', 'Neuss'), 'Lars (Neuss)')
+
+    def test_empty_name_falls_back(self):
+        self.assertEqual(rot.default_admin_name('', 'Neuss'), 'Admin (Neuss)')
+
+
+class TestSplitTransaction(unittest.TestCase):
+    def setUp(self):
+        admin = rot.build_split_admin_item('app-1', 'admin-id', 'Lars (Club)')
+        self.tx = rot.split_transaction('t-members', OLD, admin)
+
+    def test_put_admin_then_update_personal(self):
+        self.assertEqual([list(op)[0] for op in self.tx], ['Put', 'Update'])
+
+    def test_admin_row_is_super_admin_with_new_id(self):
+        put = self.tx[0]['Put']
+        self.assertEqual(put['Item']['memberId'], {'S': 'admin-id'})
+        self.assertEqual(put['Item']['applicationId'], {'S': 'app-1'})
+        self.assertEqual(put['Item']['isSuperAdmin'], {'BOOL': True})
+        self.assertEqual(put['Item']['isAdmin'], {'BOOL': True})
+        self.assertEqual(put['Item']['isActive'], {'BOOL': True})
+        self.assertNotIn('token', put['Item'])
+        self.assertEqual(put['ConditionExpression'], 'attribute_not_exists(memberId)')
+
+    def test_personal_row_only_loses_super_admin(self):
+        update = self.tx[1]['Update']
+        self.assertEqual(update['Key'], {'applicationId': {'S': 'app-1'}, 'memberId': {'S': 'old-id'}})
+        self.assertEqual(update['UpdateExpression'], 'SET isSuperAdmin = :false')
+        self.assertEqual(update['ConditionExpression'], 'isSuperAdmin = :true')
+        self.assertEqual(update['ExpressionAttributeValues'],
+                         {':false': {'BOOL': False}, ':true': {'BOOL': True}})
+
+
 if __name__ == '__main__':
     unittest.main()
