@@ -228,6 +228,27 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-central-1
 
+    - name: 🔍 Debug Authorizer
+      run: |
+        echo "=== Lambda function config ==="
+        aws lambda get-function-configuration \
+          --function-name vereins-app-beta-lambda_authorizer \
+          --query '{Runtime:Runtime,Architectures:Architectures,LastModified:LastModified}'
+        echo "=== Direct Lambda invoke ==="
+        aws lambda invoke \
+          --function-name vereins-app-beta-lambda_authorizer \
+          --payload "$(echo '{"headers":{"applicationid":"'"$APP_ID"'","memberid":"'"$MEMBER_ID"'"}}' | base64)" \
+          --cli-binary-format raw-in-base64-out \
+          /tmp/auth-response.json && cat /tmp/auth-response.json || true
+        echo "=== Direct API call ==="
+        curl -s -o /tmp/api-response.json -w "%{http_code}" \
+          -H "applicationId: $APP_ID" -H "memberId: $MEMBER_ID" \
+          "$BASE_URL/members" && echo "" && cat /tmp/api-response.json || true
+      env:
+        APP_ID: ${{ secrets.PREVIEW_APPLICATION_ID }}
+        MEMBER_ID: ${{ secrets.PREVIEW_MEMBER_ID }}
+        BASE_URL: ${{ needs.backend.outputs.dev_url }}
+
     - name: 🧪 Run Integration Tests
       working-directory: aws_backend/lambda
       env:
