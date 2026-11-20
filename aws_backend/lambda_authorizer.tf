@@ -14,6 +14,11 @@ resource "aws_lambda_function" "lambda_authorizer" {
         apply_on = "PublishedVersions"
     }
 
+    timeouts {
+        create = "20m"
+        update = "20m"
+    }
+
     environment {
         variables = {
             MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.name

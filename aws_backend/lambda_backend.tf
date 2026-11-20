@@ -11,6 +11,11 @@ resource "aws_lambda_function" "lambda_backend" {
         apply_on = "PublishedVersions"
     }
 
+    timeouts {
+        create = "20m"
+        update = "20m"
+    }
+
     environment {
         variables = {
             ERROR_TABLE_NAME = aws_dynamodb_table.error_table.name,

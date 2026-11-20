@@ -159,6 +159,10 @@ jobs:
       working-directory: aws_backend/lambda
       run: ./zip.sh
 
+    - name: 📦 Zip Authorizer
+      working-directory: aws_backend/authorizer
+      run: ./zip.sh
+
     - name: 🏗️ Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
