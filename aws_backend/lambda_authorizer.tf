@@ -5,19 +5,9 @@ resource "aws_lambda_function" "lambda_authorizer" {
     runtime       = "python3.12"
     architectures = ["arm64"]
     filename      = "authorizer/lambda.zip"
-    publish       = true
     # Default 3 s / 128 MB caused cold-start timeouts (API Gateway then answers 500).
     timeout       = 10
     memory_size   = 256
-
-    snap_start {
-        apply_on = "PublishedVersions"
-    }
-
-    timeouts {
-        create = "20m"
-        update = "20m"
-    }
 
     environment {
         variables = {
@@ -26,22 +16,11 @@ resource "aws_lambda_function" "lambda_authorizer" {
     }
 }
 
-resource "aws_lambda_alias" "authorizer_prod" {
-    name             = "prod"
-    function_name    = aws_lambda_function.lambda_authorizer.function_name
-    function_version = aws_lambda_function.lambda_authorizer.version
-
-    lifecycle {
-        ignore_changes = [function_version]
-    }
-}
-
 # Berechtigung: API Gateway darf Authorizer aufrufen
 resource "aws_lambda_permission" "auth_api_permission" {
     statement_id  = "AllowExecutionFromAPIGatewayAuthorizer"
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.lambda_authorizer.function_name
-    qualifier     = aws_lambda_alias.authorizer_prod.name
     principal     = "apigateway.amazonaws.com"
     source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/authorizers/${aws_apigatewayv2_authorizer.lambda_authorizer.id}"
 }
@@ -51,7 +30,7 @@ resource "aws_apigatewayv2_authorizer" "lambda_authorizer" {
     name                              = "${local.name_prefix}-lambda_authorizer"
     api_id                            = aws_apigatewayv2_api.http_api.id
     authorizer_type                   = "REQUEST"
-    authorizer_uri                    = aws_lambda_alias.authorizer_prod.invoke_arn
+    authorizer_uri                    = aws_lambda_function.lambda_authorizer.invoke_arn
     identity_sources                  = ["$request.header.applicationId", "$request.header.memberId"]
     authorizer_payload_format_version = "2.0"
     enable_simple_responses           = true
