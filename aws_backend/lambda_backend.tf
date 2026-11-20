@@ -2,9 +2,14 @@ resource "aws_lambda_function" "lambda_backend" {
     function_name = "${local.name_prefix}-lambda_backend"
     role          = aws_iam_role.lambda_role.arn
     handler       = "lambda_handler.lambda_handler"
-    runtime       = "python3.10"
+    runtime       = "python3.12"
+    architectures = ["arm64"]
     filename      = "lambda/lambda.zip"
     publish       = true
+
+    snap_start {
+        apply_on = "PublishedVersions"
+    }
 
     environment {
         variables = {
