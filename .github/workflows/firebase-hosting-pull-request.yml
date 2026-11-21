@@ -131,7 +131,7 @@ jobs:
     - name: 🐍 Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12'
 
     - name: 📦 Install Test Dependencies
       run: pip install pytest boto3 requests pillow
@@ -157,6 +157,10 @@ jobs:
 
     - name: 📦 Zip Lambda
       working-directory: aws_backend/lambda
+      run: ./zip.sh
+
+    - name: 📦 Zip Authorizer
+      working-directory: aws_backend/authorizer
       run: ./zip.sh
 
     - name: 🏗️ Setup Terraform
@@ -212,7 +216,7 @@ jobs:
     - name: 🐍 Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12'
 
     - name: 📦 Install Dependencies
       run: pip install pytest requests
@@ -223,6 +227,28 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-central-1
+
+    - name: 🌱 Ensure preview member exists in DynamoDB
+      run: |
+        aws dynamodb put-item \
+          --table-name vereins-app-beta-members \
+          --item "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"},\"name\":{\"S\":\"CI Preview\"},\"isActive\":{\"BOOL\":true},\"isAdmin\":{\"BOOL\":true},\"isSuperAdmin\":{\"BOOL\":true}}"
+        echo "✅ Preview member upserted — flushing authorizer cache"
+        API_ID=$(aws apigatewayv2 get-apis \
+          --query "Items[?Name=='vereins-app-beta-api'].ApiId | [0]" \
+          --output text)
+        AUTHORIZER_ID=$(aws apigatewayv2 get-authorizers --api-id "$API_ID" \
+          --query 'Items[0].AuthorizerId' --output text)
+        aws apigatewayv2 update-authorizer --api-id "$API_ID" \
+          --authorizer-id "$AUTHORIZER_ID" \
+          --authorizer-result-ttl-in-seconds 0
+        aws apigatewayv2 update-authorizer --api-id "$API_ID" \
+          --authorizer-id "$AUTHORIZER_ID" \
+          --authorizer-result-ttl-in-seconds 300
+        echo "✅ Authorizer cache flushed"
+      env:
+        APP_ID: ${{ secrets.PREVIEW_APPLICATION_ID }}
+        MEMBER_ID: ${{ secrets.PREVIEW_MEMBER_ID }}
 
     - name: 🧪 Run Integration Tests
       working-directory: aws_backend/lambda
@@ -244,18 +270,20 @@ jobs:
         FRONTEND_RESULT="${{ needs.frontend.result }}"
         BACKEND_RESULT="${{ needs.backend.result }}"
 
+        DEV_URL="${{ needs.backend.outputs.dev_url }}"
+        ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${DEV_URL}', safe=''))")
+        PROD_WITH_DEV="https://vereinsappell.web.app/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+
         if [ "$FRONTEND_RESULT" = "success" ] && [ "$BACKEND_RESULT" = "success" ]; then
-          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-          MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+          MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n\n🔀 Preview Frontend:\n%s\n\n🌐 Prod App + Test Backend:\n%s\n\n🔧 Dev API:\n%s' "${PREVIEW_LINK}" "${PROD_WITH_DEV}" "${DEV_URL}")
         elif [ "$FRONTEND_RESULT" = "skipped" ] && [ "$BACKEND_RESULT" = "success" ]; then
-          MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}')
+          MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}\n\n🌐 Prod App + Test Backend:\n%s\n\n🔧 Dev API:\n%s' "${PROD_WITH_DEV}" "${DEV_URL}")
         elif [ "$FRONTEND_RESULT" = "skipped" ]; then
           MSG=$(printf '❌ Backend fehlgeschlagen\n${{ github.event.pull_request.title }}')
         elif [ "$FRONTEND_RESULT" = "success" ]; then
-          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n\n🔀 Preview Frontend:\n%s' "${PREVIEW_LINK}")
         else
           MSG=$(printf '❌ PR Build fehlgeschlagen\n${{ github.event.pull_request.title }}\nFrontend: %s | Backend: %s' "$FRONTEND_RESULT" "$BACKEND_RESULT")
         fi

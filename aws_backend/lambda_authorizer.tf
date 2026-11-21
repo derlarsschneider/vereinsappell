@@ -2,7 +2,8 @@ resource "aws_lambda_function" "lambda_authorizer" {
     function_name = "${local.name_prefix}-lambda_authorizer"
     role          = aws_iam_role.lambda_role.arn
     handler       = "authorizer.lambda_authorizer"
-    runtime       = "python3.10"
+    runtime       = "python3.12"
+    architectures = ["arm64"]
     filename      = "authorizer/lambda.zip"
     # Default 3 s / 128 MB caused cold-start timeouts (API Gateway then answers 500).
     timeout       = 10

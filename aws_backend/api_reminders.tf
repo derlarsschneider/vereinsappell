@@ -25,7 +25,8 @@ resource "aws_lambda_function" "lambda_reminders" {
   function_name = "${local.name_prefix}-lambda_reminders"
   role          = aws_iam_role.lambda_role.arn
   handler       = "reminder_handler.lambda_handler"
-  runtime       = "python3.10"
+  runtime       = "python3.12"
+  architectures = ["arm64"]
   filename      = "lambda/lambda.zip"
   timeout       = 300
 

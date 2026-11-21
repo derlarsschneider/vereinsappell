@@ -89,7 +89,8 @@ resource "aws_lambda_function" "backup_lambda" {
     function_name = "${local.name_prefix}-backup"
     role          = aws_iam_role.backup_lambda_role.arn
     handler       = "backup_handler.lambda_handler"
-    runtime       = "python3.10"
+    runtime       = "python3.12"
+    architectures = ["arm64"]
     filename      = "lambda/backup/lambda.zip"
     timeout       = 300
 
@@ -182,7 +183,8 @@ resource "aws_lambda_function" "restore_lambda" {
     function_name = "${local.name_prefix}-restore"
     role          = aws_iam_role.restore_lambda_role.arn
     handler       = "restore_handler.lambda_handler"
-    runtime       = "python3.10"
+    runtime       = "python3.12"
+    architectures = ["arm64"]
     filename      = "lambda/restore/lambda.zip"
     timeout       = 300
 
