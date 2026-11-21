@@ -238,7 +238,7 @@ jobs:
           echo "Preview member not found — creating it"
           aws dynamodb put-item \
             --table-name vereins-app-beta-members \
-            --item "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"},\"name\":{\"S\":\"CI Preview\"},\"isActive\":{\"BOOL\":true},\"isSuperAdmin\":{\"BOOL\":true}}"
+            --item "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"},\"name\":{\"S\":\"CI Preview\"},\"isActive\":{\"BOOL\":true},\"isAdmin\":{\"BOOL\":true},\"isSuperAdmin\":{\"BOOL\":true}}"
           echo "✅ Preview member created — flushing authorizer cache"
           API_ID=$(aws apigatewayv2 get-apis \
             --query "Items[?Name=='vereins-app-beta-api'].ApiId | [0]" \
