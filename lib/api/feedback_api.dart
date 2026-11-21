@@ -93,11 +93,12 @@ class FeedbackApi {
   Future<void> postReply({
     required String feedbackId,
     required String reply,
+    required String applicationId,
   }) async {
     final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/feedback/$feedbackId/reply'),
       headers: headers(config),
-      body: json.encode({'reply': reply}),
+      body: json.encode({'reply': reply, 'applicationId': applicationId}),
     );
     if (response.statusCode != 200) {
       throw Exception('Fehler beim Antworten: ${response.statusCode}');
