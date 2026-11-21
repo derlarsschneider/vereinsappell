@@ -267,18 +267,20 @@ jobs:
         FRONTEND_RESULT="${{ needs.frontend.result }}"
         BACKEND_RESULT="${{ needs.backend.result }}"
 
+        DEV_URL="${{ needs.backend.outputs.dev_url }}"
+        ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${DEV_URL}', safe=''))")
+        PROD_WITH_DEV="https://vereinsappell.web.app/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
+
         if [ "$FRONTEND_RESULT" = "success" ] && [ "$BACKEND_RESULT" = "success" ]; then
-          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-          MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+          MSG=$(printf '✅ PR Preview bereit\n${{ github.event.pull_request.title }}\n\n🔀 Preview Frontend:\n%s\n\n🌐 Prod App + Test Backend:\n%s\n\n🔧 Dev API:\n%s' "${PREVIEW_LINK}" "${PROD_WITH_DEV}" "${DEV_URL}")
         elif [ "$FRONTEND_RESULT" = "skipped" ] && [ "$BACKEND_RESULT" = "success" ]; then
-          MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}')
+          MSG=$(printf '✅ Backend deployed (kein Flutter-Build nötig)\n${{ github.event.pull_request.title }}\n\n🌐 Prod App + Test Backend:\n%s\n\n🔧 Dev API:\n%s' "${PROD_WITH_DEV}" "${DEV_URL}")
         elif [ "$FRONTEND_RESULT" = "skipped" ]; then
           MSG=$(printf '❌ Backend fehlgeschlagen\n${{ github.event.pull_request.title }}')
         elif [ "$FRONTEND_RESULT" = "success" ]; then
-          ENCODED_API=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${{ needs.backend.outputs.dev_url }}', safe=''))")
           PREVIEW_LINK="${{ needs.frontend.outputs.preview_url }}/?apiBaseUrl=${ENCODED_API}&applicationId=${{ secrets.PREVIEW_APPLICATION_ID }}&memberId=${{ secrets.PREVIEW_MEMBER_ID }}"
-          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n%s' "${PREVIEW_LINK}")
+          MSG=$(printf '⚠️ PR Preview bereit (Backend fehlgeschlagen)\n${{ github.event.pull_request.title }}\n\n🔀 Preview Frontend:\n%s' "${PREVIEW_LINK}")
         else
           MSG=$(printf '❌ PR Build fehlgeschlagen\n${{ github.event.pull_request.title }}\nFrontend: %s | Backend: %s' "$FRONTEND_RESULT" "$BACKEND_RESULT")
         fi
