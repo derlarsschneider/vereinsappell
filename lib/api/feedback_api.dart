@@ -33,12 +33,12 @@ class FeedbackItem {
   });
 
   factory FeedbackItem.fromJson(Map<String, dynamic> json) => FeedbackItem(
-        applicationId: json['applicationId'] as String,
-        feedbackId: json['feedbackId'] as String,
-        memberId: json['memberId'] as String,
+        applicationId: json['applicationId'] as String? ?? '',
+        feedbackId: json['feedbackId'] as String? ?? '',
+        memberId: json['memberId'] as String? ?? '',
         memberName: json['memberName'] as String? ?? '',
-        message: json['message'] as String,
-        date: json['date'] as String,
+        message: json['message'] as String? ?? '',
+        date: json['date'] as String? ?? '',
         newsId: json['newsId'] as String?,
         newsTitle: json['newsTitle'] as String?,
         newsQuestion: json['newsQuestion'] as String?,
