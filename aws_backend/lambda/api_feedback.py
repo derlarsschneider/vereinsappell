@@ -50,6 +50,19 @@ def post_feedback(event):
     ).get('Item', {})
     member_name = member.get('name', member_id)
 
+    if body.get('newsId'):
+        existing = feedback_table.query(
+            KeyConditionExpression='applicationId = :appId',
+            FilterExpression='memberId = :memberId AND newsId = :newsId',
+            ExpressionAttributeValues={
+                ':appId': application_id,
+                ':memberId': member_id,
+                ':newsId': body['newsId'],
+            },
+        )
+        if existing.get('Items'):
+            return {'statusCode': 409, 'body': json.dumps({'error': 'Already answered'})}
+
     feedback_id = str(uuid.uuid4())
     item = {
         'applicationId': application_id,
