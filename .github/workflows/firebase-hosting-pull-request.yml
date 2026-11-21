@@ -230,16 +230,18 @@ jobs:
 
     - name: 🔍 Debug Authorizer
       run: |
+        echo "=== Check secrets are set ==="
+        if [ -z "$APP_ID" ]; then echo "ERROR: PREVIEW_APPLICATION_ID is empty!"; else echo "PREVIEW_APPLICATION_ID: set (length ${#APP_ID})"; fi
+        if [ -z "$MEMBER_ID" ]; then echo "ERROR: PREVIEW_MEMBER_ID is empty!"; else echo "PREVIEW_MEMBER_ID: set (length ${#MEMBER_ID})"; fi
         echo "=== Lambda function config ==="
         aws lambda get-function-configuration \
           --function-name vereins-app-beta-lambda_authorizer \
           --query '{Runtime:Runtime,Architectures:Architectures,LastModified:LastModified}'
-        echo "=== Direct Lambda invoke ==="
-        aws lambda invoke \
-          --function-name vereins-app-beta-lambda_authorizer \
-          --payload "$(echo '{"headers":{"applicationid":"'"$APP_ID"'","memberid":"'"$MEMBER_ID"'"}}' | base64)" \
-          --cli-binary-format raw-in-base64-out \
-          /tmp/auth-response.json && cat /tmp/auth-response.json || true
+        echo "=== DynamoDB member lookup ==="
+        aws dynamodb get-item \
+          --table-name vereins-app-beta-members \
+          --key "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"}}" \
+          --query 'Item.{memberId:memberId.S,isActive:isActive.BOOL}' || echo "DynamoDB lookup failed"
         echo "=== Direct API call ==="
         curl -s -o /tmp/api-response.json -w "%{http_code}" \
           -H "applicationId: $APP_ID" -H "memberId: $MEMBER_ID" \
