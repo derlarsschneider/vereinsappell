@@ -807,6 +807,7 @@ class _FeedbackTabState extends State<_FeedbackTab> {
       await FeedbackApi(widget.config).postReply(
         feedbackId: item.feedbackId,
         reply: replyText,
+        applicationId: item.applicationId,
       );
       if (!mounted) return;
       await _load();

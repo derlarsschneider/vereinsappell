@@ -33,12 +33,12 @@ class FeedbackItem {
   });
 
   factory FeedbackItem.fromJson(Map<String, dynamic> json) => FeedbackItem(
-        applicationId: json['applicationId'] as String,
-        feedbackId: json['feedbackId'] as String,
-        memberId: json['memberId'] as String,
+        applicationId: json['applicationId'] as String? ?? '',
+        feedbackId: json['feedbackId'] as String? ?? '',
+        memberId: json['memberId'] as String? ?? '',
         memberName: json['memberName'] as String? ?? '',
-        message: json['message'] as String,
-        date: json['date'] as String,
+        message: json['message'] as String? ?? '',
+        date: json['date'] as String? ?? '',
         newsId: json['newsId'] as String?,
         newsTitle: json['newsTitle'] as String?,
         newsQuestion: json['newsQuestion'] as String?,
@@ -93,11 +93,12 @@ class FeedbackApi {
   Future<void> postReply({
     required String feedbackId,
     required String reply,
+    required String applicationId,
   }) async {
     final response = await _client.post(
       Uri.parse('${config.apiBaseUrl}/feedback/$feedbackId/reply'),
       headers: headers(config),
-      body: json.encode({'reply': reply}),
+      body: json.encode({'reply': reply, 'applicationId': applicationId}),
     );
     if (response.statusCode != 200) {
       throw Exception('Fehler beim Antworten: ${response.statusCode}');

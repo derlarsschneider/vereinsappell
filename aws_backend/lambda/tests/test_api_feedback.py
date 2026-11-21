@@ -125,10 +125,20 @@ class TestPostReply(unittest.TestCase):
     def test_reply_updates_feedback_item(self):
         self.mock_members_table.get_item.return_value = {'Item': {'isSuperAdmin': True}}
         event = _event('POST', '/feedback/1/reply', member_id='superadmin1',
-                       body={'reply': 'Danke!'}, feedback_id='1')
+                       body={'reply': 'Danke!', 'applicationId': APP_ID}, feedback_id='1')
         response = api_feedback.post_reply(event)
         self.assertEqual(response['statusCode'], 200)
         self.mock_table.update_item.assert_called_once()
+
+    def test_reply_uses_body_application_id_not_header(self):
+        """Superadmin replies to feedback from a different app — must use that app's applicationId."""
+        self.mock_members_table.get_item.return_value = {'Item': {'isSuperAdmin': True}}
+        other_app_id = 'other-app-456'
+        event = _event('POST', '/feedback/1/reply', member_id='superadmin1',
+                       body={'reply': 'Danke!', 'applicationId': other_app_id}, feedback_id='1')
+        api_feedback.post_reply(event)
+        key_used = self.mock_table.update_item.call_args[1]['Key']
+        self.assertEqual(key_used['applicationId'], other_app_id)
 
 
 class TestHandleFeedback(unittest.TestCase):
