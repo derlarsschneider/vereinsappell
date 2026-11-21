@@ -196,25 +196,6 @@ jobs:
           --output text)
         echo "dev_url=https://${API_ID}.execute-api.eu-central-1.amazonaws.com/dev" >> $GITHUB_OUTPUT
 
-    - name: 🌱 Ensure preview member exists in DynamoDB
-      run: |
-        EXISTING=$(aws dynamodb get-item \
-          --table-name vereins-app-beta-members \
-          --key "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"}}" \
-          --query 'Item.memberId.S' --output text 2>/dev/null || echo "")
-        if [ -z "$EXISTING" ] || [ "$EXISTING" = "None" ]; then
-          echo "Preview member not found — creating it"
-          aws dynamodb put-item \
-            --table-name vereins-app-beta-members \
-            --item "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"},\"name\":{\"S\":\"CI Preview\"},\"isActive\":{\"BOOL\":true},\"isSuperAdmin\":{\"BOOL\":true}}"
-          echo "✅ Preview member created"
-        else
-          echo "✅ Preview member already exists"
-        fi
-      env:
-        APP_ID: ${{ secrets.PREVIEW_APPLICATION_ID }}
-        MEMBER_ID: ${{ secrets.PREVIEW_MEMBER_ID }}
-
     - name: 🔧 Setup Firebase CLI
       run: npm install -g firebase-tools
 
@@ -246,6 +227,37 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-central-1
+
+    - name: 🌱 Ensure preview member exists in DynamoDB
+      run: |
+        EXISTING=$(aws dynamodb get-item \
+          --table-name vereins-app-beta-members \
+          --key "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"}}" \
+          --query 'Item.memberId.S' --output text 2>/dev/null || echo "")
+        if [ -z "$EXISTING" ] || [ "$EXISTING" = "None" ]; then
+          echo "Preview member not found — creating it"
+          aws dynamodb put-item \
+            --table-name vereins-app-beta-members \
+            --item "{\"applicationId\":{\"S\":\"$APP_ID\"},\"memberId\":{\"S\":\"$MEMBER_ID\"},\"name\":{\"S\":\"CI Preview\"},\"isActive\":{\"BOOL\":true},\"isSuperAdmin\":{\"BOOL\":true}}"
+          echo "✅ Preview member created — flushing authorizer cache"
+          API_ID=$(aws apigatewayv2 get-apis \
+            --query "Items[?Name=='vereins-app-beta-api'].ApiId | [0]" \
+            --output text)
+          AUTHORIZER_ID=$(aws apigatewayv2 get-authorizers --api-id "$API_ID" \
+            --query 'Items[0].AuthorizerId' --output text)
+          aws apigatewayv2 update-authorizer --api-id "$API_ID" \
+            --authorizer-id "$AUTHORIZER_ID" \
+            --authorizer-result-ttl-in-seconds 0
+          aws apigatewayv2 update-authorizer --api-id "$API_ID" \
+            --authorizer-id "$AUTHORIZER_ID" \
+            --authorizer-result-ttl-in-seconds 300
+          echo "✅ Authorizer cache flushed"
+        else
+          echo "✅ Preview member already exists"
+        fi
+      env:
+        APP_ID: ${{ secrets.PREVIEW_APPLICATION_ID }}
+        MEMBER_ID: ${{ secrets.PREVIEW_MEMBER_ID }}
 
     - name: 🧪 Run Integration Tests
       working-directory: aws_backend/lambda
