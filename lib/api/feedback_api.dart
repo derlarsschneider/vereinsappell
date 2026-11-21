@@ -85,6 +85,9 @@ class FeedbackApi {
       headers: headers(config),
       body: json.encode(payload),
     );
+    if (response.statusCode == 409) {
+      throw Exception('already_answered');
+    }
     if (response.statusCode != 200) {
       throw Exception('Fehler beim Senden: ${response.statusCode}');
     }

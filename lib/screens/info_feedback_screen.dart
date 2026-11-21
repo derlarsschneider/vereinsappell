@@ -248,10 +248,18 @@ class _NewsTabState extends State<_NewsTab> {
 
   Future<void> _load() async {
     try {
-      final items = await NewsApi(widget.config).getNews();
+      final newsItems = await NewsApi(widget.config).getNews();
+      List<FeedbackItem> feedbackItems = [];
+      try {
+        feedbackItems = await FeedbackApi(widget.config).getFeedback();
+      } catch (_) {}
       if (!mounted) return;
+      _answered.clear();
+      for (final f in feedbackItems) {
+        if (f.newsId != null) _answered[f.newsId!] = true;
+      }
       setState(() {
-        _items = items;
+        _items = newsItems;
         _loading = false;
       });
     } catch (e) {
@@ -288,6 +296,10 @@ class _NewsTabState extends State<_NewsTab> {
       setState(() => _answered[item.newsId] = true);
     } catch (e) {
       if (!mounted) return;
+      if (e.toString().contains('already_answered')) {
+        setState(() => _answered[item.newsId] = true);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
       );

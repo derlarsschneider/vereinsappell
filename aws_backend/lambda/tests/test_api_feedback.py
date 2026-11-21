@@ -62,6 +62,7 @@ class TestPostFeedback(unittest.TestCase):
     @patch('api_feedback.send_push_notification')
     @patch('api_feedback._send_ses_email')
     def test_post_feedback_stores_news_fields(self, mock_email, mock_push):
+        self.mock_table.query.return_value = {'Items': []}
         event = _event('POST', '/feedback', member_id='user1', body={
             'message': 'Juli',
             'newsId': 'news-1',
@@ -72,6 +73,18 @@ class TestPostFeedback(unittest.TestCase):
         item = self.mock_table.put_item.call_args[1]['Item']
         self.assertEqual(item['newsId'], 'news-1')
         self.assertEqual(item['newsQuestion'], 'Wann?')
+
+    @patch('api_feedback.send_push_notification')
+    @patch('api_feedback._send_ses_email')
+    def test_post_feedback_rejects_duplicate_news_answer(self, mock_email, mock_push):
+        self.mock_table.query.return_value = {'Items': [{'feedbackId': 'existing'}]}
+        event = _event('POST', '/feedback', member_id='user1', body={
+            'message': 'Juli',
+            'newsId': 'news-1',
+        })
+        response = api_feedback.post_feedback(event)
+        self.assertEqual(response['statusCode'], 409)
+        self.mock_table.put_item.assert_not_called()
 
 
 class TestGetFeedback(unittest.TestCase):
