@@ -3,12 +3,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FUNC_NAME="vereins-app-beta-lambda_backend"
 ZIP="lambda.zip"
 cd "$SCRIPT_DIR"
-# Install dependencies inside the Amazon Linux 2 container that matches the Lambda runtime.
-# This ensures native extensions (e.g. cryptography) are compiled for the correct GLIBC.
+# Install dependencies for arm64/Python 3.12 Lambda runtime.
+# manylinux2014_aarch64 matches the Amazon Linux 2 arm64 environment.
 pip install --upgrade \
-  --platform manylinux2014_x86_64 \
+  --platform manylinux2014_aarch64 \
   --implementation cp \
-  --python-version 310 \
+  --python-version 312 \
   --only-binary=:all: \
   -r requirements.txt \
   -t "$SCRIPT_DIR"
